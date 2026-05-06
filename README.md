@@ -1,13 +1,7 @@
 <h1 align="center">Arkade Kotlin Multiplatform SDK</h1>
 <p align="center">
-<a href="https://github.com/shubertm/arkade-kotlin/actions/workflows/build.yml">
-<img src="https://github.com/shubertm/arkade-kotlin/actions/workflows/build.yml/badge.svg" alt="build status">
-</a>
-<a href="https://github.com/shubertm/arkade-kotlin/actions/workflows/unit.yml">
-<img src="https://github.com/shubertm/arkade-kotlin/actions/workflows/unit.yml/badge.svg" alt="unit tests status">
-</a>
-<a href="https://github.com/shubertm/arkade-kotlin/actions/workflows/e2e.yml">
-<img src="https://github.com/shubertm/arkade-kotlin/actions/workflows/e2e.yml/badge.svg" alt="e2e tests status">
+<a href="https://github.com/shubertm/arkade-kotlin/actions/workflows/ci.yml">
+<img src="https://github.com/shubertm/arkade-kotlin/actions/workflows/ci.yml/badge.svg" alt="CI status">
 </a>
 </p>
 
