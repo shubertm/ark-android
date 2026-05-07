@@ -81,10 +81,17 @@ kotlin {
             }
         }
 
+        jvmMain {
+            dependencies {
+                implementation(libs.dev.cel)
+            }
+        }
+
         androidMain {
             dependencies {
                 implementation(libs.androidx.room.sqlite.wrapper)
                 implementation(libs.koin.android)
+                implementation(libs.dev.cel)
             }
         }
 

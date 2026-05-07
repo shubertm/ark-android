@@ -24,6 +24,7 @@ sqlite = "2.6.2"
 ksp = "2.3.6"
 robolectric = "4.16.1"
 koin = "4.2.0"
+cel = "0.12.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -79,6 +80,8 @@ robolectric = { group = "org.robolectric", name = "robolectric", version.ref = "
 koin-core = { group = "io.insert-koin", name = "koin-core", version.ref = "koin"}
 koin-android = { group = "io.insert-koin", name = "koin-android", version.ref = "koin"}
 koin-test = { group = "io.insert-koin", name = "koin-test", version.ref = "koin"}
+
+dev-cel = { group = "dev.cel", name = "cel", version.ref = "cel" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
