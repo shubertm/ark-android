@@ -1,7 +1,7 @@
 package com.arkade.core.fees
 
 data class FeeInfo(
-    val intent: IntentFeeInfo,
+    val intent: IntentFeeInfo?,
     val rate: Float,
 ) {
     companion object {

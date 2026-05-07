@@ -1,29 +1,42 @@
 package com.arkade.core.fees
 
+import com.arkade.cel.Program
 import com.arkade.cel.parseAndInvoke
+import com.arkade.cel.validate
 import com.arkade.core.bitcoin.Coin
 
 class DefaultFeeEstimator(
     private val intentFeeInfo: IntentFeeInfo,
 ) {
+    init {
+        if (intentFeeInfo.onChainInput != null) validate(Program.OnChainInputProgram(intentFeeInfo.onChainInput))
+        if (intentFeeInfo.onChainOutput != null) validate(Program.OnChainOutputProgram(intentFeeInfo.onChainOutput))
+        if (intentFeeInfo.offChainInput != null) validate(Program.OffChainInputProgram(intentFeeInfo.offChainInput))
+        if (intentFeeInfo.offChainOutput != null) validate(Program.OffChainOutputProgram(intentFeeInfo.offChainOutput))
+    }
+
     fun estimateOnChainInputFee(input: OnChainInput): Fee {
+        if (intentFeeInfo.onChainInput == null) return Fee.ZERO
         val args = input.toCelArgs()
-        return parseAndInvokeIntentFeeProgram(intentFeeInfo.onChainInput, args)
+        return parseAndInvokeIntentFeeProgram(Program.OnChainInputProgram(intentFeeInfo.onChainInput), args)
     }
 
     fun estimateOffChainInputFee(input: OffChainInput): Fee {
+        if (intentFeeInfo.offChainInput == null) return Fee.ZERO
         val args = input.toCelArgs()
-        return parseAndInvokeIntentFeeProgram(intentFeeInfo.offChainInput, args)
+        return parseAndInvokeIntentFeeProgram(Program.OffChainInputProgram(intentFeeInfo.offChainInput), args)
     }
 
     fun estimateOnChainOutputFee(output: FeeOutput): Fee {
+        if (intentFeeInfo.onChainOutput == null) return Fee.ZERO
         val args = output.toCelArgs()
-        return parseAndInvokeIntentFeeProgram(intentFeeInfo.onChainOutput, args)
+        return parseAndInvokeIntentFeeProgram(Program.OnChainOutputProgram(intentFeeInfo.onChainOutput), args)
     }
 
     fun estimateOffChainOutputFee(output: FeeOutput): Fee {
+        if (intentFeeInfo.offChainOutput == null) return Fee.ZERO
         val args = output.toCelArgs()
-        return parseAndInvokeIntentFeeProgram(intentFeeInfo.offChainOutput, args)
+        return parseAndInvokeIntentFeeProgram(Program.OffChainOutputProgram(intentFeeInfo.offChainOutput), args)
     }
 
     fun estimateFee(
@@ -54,7 +67,7 @@ class DefaultFeeEstimator(
     }
 
     private fun parseAndInvokeIntentFeeProgram(
-        program: String,
+        program: Program,
         args: Map<String, Any>,
     ): Fee {
         val fee = parseAndInvoke(program, args)

@@ -101,6 +101,7 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.koin.test)
                 implementation(libs.androidx.sqlite.bundled)
+                implementation(libs.kotlinx.serialization.json.okio)
             }
         }
 
