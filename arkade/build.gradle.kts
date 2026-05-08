@@ -65,6 +65,13 @@ kotlin {
         }
     }
 
+    configurations.all {
+        // cel-java introduced some conflicts with the following modules
+        // That is why they are excluded
+        exclude(group = "com.google.code.findbugs", module = "annotations")
+        exclude(group = "com.google.protobuf", module = "protobuf-javalite")
+    }
+
     sourceSets {
         commonMain {
             dependencies {
