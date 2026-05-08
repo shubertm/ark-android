@@ -10,7 +10,7 @@
         {
             "name": "invalid CEL syntax in onchain input program",
             "config": {
-                "onchainInputProgram": "amount + 6"
+                "onchainInputProgram": "amount +"
             },
             "err": "Syntax error"
         },

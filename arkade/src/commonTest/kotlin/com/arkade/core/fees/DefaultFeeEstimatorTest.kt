@@ -1,7 +1,5 @@
 package com.arkade.core.fees
 
-import com.arkade.utils.Log
-import com.arkade.utils.info
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -9,6 +7,7 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM
 import kotlin.test.Test
+import kotlin.test.assertTrue
 
 class DefaultFeeEstimatorTest {
     val validTestDataPath = "./src/commonTest/kotlin/com/arkade/fixtures/arkfee-valid.json".toPath()
@@ -50,8 +49,33 @@ class DefaultFeeEstimatorTest {
             runCatching {
                 DefaultFeeEstimator(intentFeeInfo)
             }.onFailure { actualError ->
-                val error = config.jsonObject["err"]
-                Log.info("EstimatorTest", "$actualError")
+                val expectedError = config.jsonObject["err"].toString()
+                if (expectedError.contains("syntax error", true)) {
+                    assertTrue(
+                        actualError.message?.contains("syntax", true)!! ||
+                            actualError.message?.contains("unexpected", true)!! ||
+                            actualError.message?.contains("unterminated", true)!! ||
+                            actualError.message?.contains("token", true)!! ||
+                            actualError.message?.contains("EOF", true)!!,
+                    )
+                    return@onFailure
+                }
+                if (expectedError.contains("undeclared reference", true)) {
+                    assertTrue(
+                        actualError.message?.contains("undeclared", true)!! ||
+                            actualError.message?.contains("unknown variable", true)!! ||
+                            actualError.message?.contains("found no matching overload", true)!!,
+                    )
+                    return@onFailure
+                }
+                if (expectedError.contains("found no matching overload", true)) {
+                    assertTrue(
+                        actualError.message?.contains("no such overload", true)!! ||
+                            actualError.message?.contains("matching overload", true)!!,
+                    )
+                    return@onFailure
+                }
+                assertTrue(expectedError.contains(actualError.message!!))
             }
         }
     }
