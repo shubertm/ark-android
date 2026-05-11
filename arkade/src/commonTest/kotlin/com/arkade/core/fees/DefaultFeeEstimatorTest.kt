@@ -400,4 +400,97 @@ class DefaultFeeEstimatorTest {
         }
         println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
     }
+
+    @Test
+    fun `should estimate fees correctly`() {
+        val onChainInputProgramData = validTestData.jsonObject["eval"]?.jsonArray!!
+        println("Fee Estimation")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        for (programData in onChainInputProgramData) {
+            val name = programData.jsonObject["name"]!!.toString()
+            val onChainInputProgram = programData.jsonObject["onchainInputProgram"]?.toString()?.removeSurrounding("\"")
+            val offChainInputProgram = programData.jsonObject["offchainInputProgram"]?.toString()?.removeSurrounding("\"")
+            val onChainOutputProgram = programData.jsonObject["onchainOutputProgram"]?.toString()?.removeSurrounding("\"")
+            val offChainOutputProgram = programData.jsonObject["offchainOutputProgram"]?.toString()?.removeSurrounding("\"")
+            val cases = programData.jsonObject["cases"]?.jsonArray!!
+            val intentInfo =
+                IntentFeeInfo(
+                    onChainInputProgram,
+                    onChainOutputProgram,
+                    offChainInputProgram,
+                    offChainOutputProgram,
+                )
+            val feeEstimator = DefaultFeeEstimator(intentInfo)
+
+            println()
+
+            for (case in cases) {
+                val caseName = case.jsonObject["name"]!!.toString().removeSurrounding("\"")
+                val onChainInputs =
+                    (case.jsonObject["onchainInputs"]?.jsonArray ?: emptyList()).map {
+                        OnChainInput(Coin.fromSatoshi(it.jsonObject["amount"]?.jsonPrimitive?.long ?: 0))
+                    }
+                val offChainInputs =
+                    (case.jsonObject["offchainInputs"]?.jsonArray ?: emptyList()).map {
+                        OffChainInput(
+                            Coin.fromSatoshi(it.jsonObject["amount"]?.jsonPrimitive?.long ?: 0),
+                            it.jsonObject["expiry"]
+                                ?.jsonPrimitive
+                                ?.long
+                                ?.toDuration(DurationUnit.SECONDS) ?: Duration.ZERO,
+                            it.jsonObject["birth"]
+                                ?.jsonPrimitive
+                                ?.long
+                                ?.toDuration(DurationUnit.SECONDS) ?: Duration.ZERO,
+                            OffChainInput.Companion.Type.fromString(
+                                it.jsonObject["type"]
+                                    ?.jsonPrimitive
+                                    ?.toString()
+                                    ?.removeSurrounding("\"") ?: "vtxo",
+                            ),
+                            it.jsonObject["weight"]?.jsonPrimitive?.double ?: 0.0,
+                        )
+                    }
+                val onChainOutputs =
+                    (case.jsonObject["onchainOutputs"]?.jsonArray ?: emptyList()).map {
+                        FeeOutput(
+                            Coin.fromSatoshi(it.jsonObject["amount"]?.jsonPrimitive?.long ?: 0),
+                            it.jsonObject["script"]
+                                ?.jsonPrimitive
+                                ?.toString()
+                                ?.removeSurrounding("\"") ?: "",
+                        )
+                    }
+                val offChainOutputs =
+                    (case.jsonObject["offchainOutputs"]?.jsonArray ?: emptyList()).map {
+                        FeeOutput(
+                            Coin.fromSatoshi(it.jsonObject["amount"]?.jsonPrimitive?.long ?: 0),
+                            it.jsonObject["script"]
+                                ?.jsonPrimitive
+                                ?.toString()
+                                ?.removeSurrounding("\"") ?: "",
+                        )
+                    }
+
+                val expectedFeeAmount = case.jsonObject["expected"]!!.jsonPrimitive.double
+                runCatching {
+                    val fee =
+                        feeEstimator.estimateFee(
+                            onChainInputs,
+                            offChainInputs,
+                            onChainOutputs,
+                            offChainOutputs,
+                        )
+                    assertEquals(expectedFeeAmount.toBigDecimal(), fee.coin.amount)
+                }.onFailure {
+                    println("   ❌ FAILED: $caseName")
+                    throw it
+                }
+                println("   ✓ PASSED: $caseName")
+            }
+
+            println("✓ PASSED: $name")
+        }
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+    }
 }
