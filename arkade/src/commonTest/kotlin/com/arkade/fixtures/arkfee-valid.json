@@ -13,7 +13,7 @@
                         "type": "vtxo",
                         "weight": 1.0
                     },
-                    "expected": 5000
+                    "expected": 0
                 },
                 {
                     "name": "close expiry",

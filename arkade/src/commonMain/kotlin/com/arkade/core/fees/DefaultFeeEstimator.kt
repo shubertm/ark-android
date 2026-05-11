@@ -72,6 +72,6 @@ class DefaultFeeEstimator(
     ): Fee {
         val fee = parseAndInvoke(program, args)
         if (fee !is Double) throw Error("Expected return type to be double, got ${fee::class.simpleName}")
-        return Fee(Coin.fromSatoshi(fee.toLong()))
+        return Fee(Coin.fromSatoshi(fee))
     }
 }

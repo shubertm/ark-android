@@ -1,13 +1,24 @@
 package com.arkade.core.fees
 
+import com.arkade.core.bitcoin.Coin
+import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.double
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.days
+import kotlin.time.DurationUnit
+import kotlin.time.toDuration
 
 class DefaultFeeEstimatorTest {
     val validTestDataPath = "./src/commonTest/kotlin/com/arkade/fixtures/arkfee-valid.json".toPath()
@@ -78,5 +89,315 @@ class DefaultFeeEstimatorTest {
                 assertTrue(expectedError.contains(actualError.message!!))
             }
         }
+    }
+
+    @Test
+    fun `should return zero on estimate on-chain input program missing`() {
+        val intentFeeInfo =
+            IntentFeeInfo(
+                null,
+                null,
+                null,
+                null,
+            )
+        val feeEstimator = DefaultFeeEstimator(intentFeeInfo)
+
+        val fee = feeEstimator.estimateOnChainInputFee(OnChainInput(Coin.fromSatoshi(1000)))
+
+        assertEquals(Fee.ZERO, fee)
+    }
+
+    @Test
+    fun `should estimate on-chain input fee correctly`() {
+        val onChainInputProgramData = validTestData.jsonObject["evalOnchainInput"]?.jsonArray!!
+        println("On-chain Input Fee Estimation")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        for (programData in onChainInputProgramData) {
+            val name = programData.jsonObject["name"]!!.toString()
+            val program = programData.jsonObject["program"]!!.toString().removeSurrounding("\"")
+            val cases = programData.jsonObject["cases"]!!.jsonArray
+            val intentInfo =
+                IntentFeeInfo(
+                    program,
+                    null,
+                    null,
+                    null,
+                )
+            val feeEstimator = DefaultFeeEstimator(intentInfo)
+
+            println()
+
+            for (case in cases) {
+                val caseName = case.jsonObject["name"]!!.toString().removeSurrounding("\"")
+                val inputAmount =
+                    case.jsonObject["input"]!!
+                        .jsonObject["amount"]!!
+                        .jsonPrimitive.double
+                val expectedFeeAmount = case.jsonObject["expected"]!!.jsonPrimitive.double
+                runCatching {
+                    val fee = feeEstimator.estimateOnChainInputFee(OnChainInput(Coin.fromSatoshi(inputAmount.toLong())))
+                    assertEquals(expectedFeeAmount, fee.coin.amount.doubleValue())
+                }.onFailure {
+                    println("   ❌ FAILED: $caseName")
+                    throw it
+                }
+                println("   ✓ PASSED: $caseName")
+            }
+
+            println("✓ PASSED: $name")
+        }
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+    }
+
+    @Test
+    fun `should return zero on estimate off-chain input program missing`() {
+        val intentFeeInfo =
+            IntentFeeInfo(
+                null,
+                null,
+                null,
+                null,
+            )
+        val feeEstimator = DefaultFeeEstimator(intentFeeInfo)
+
+        val fee =
+            feeEstimator.estimateOffChainInputFee(
+                OffChainInput(
+                    Coin.fromSatoshi(1000),
+                    5.days,
+                    Clock.System
+                        .now()
+                        .epochSeconds
+                        .toDuration(DurationUnit.SECONDS),
+                    OffChainInput.Companion.Type.VTXO,
+                    0.0,
+                ),
+            )
+
+        assertEquals(Fee.ZERO, fee)
+    }
+
+    @Test
+    fun `should estimate off-chain input fee correctly`() {
+        val onChainInputProgramData = validTestData.jsonObject["evalOffchainInput"]?.jsonArray!!
+        println("Off-chain Input Fee Estimation")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        for (programData in onChainInputProgramData) {
+            val name = programData.jsonObject["name"]!!.toString()
+            val program = programData.jsonObject["program"]!!.toString().removeSurrounding("\"")
+            val cases = programData.jsonObject["cases"]!!.jsonArray
+            val intentInfo =
+                IntentFeeInfo(
+                    null,
+                    null,
+                    program,
+                    null,
+                )
+            val feeEstimator = DefaultFeeEstimator(intentInfo)
+
+            println()
+
+            for (case in cases) {
+                val caseName = case.jsonObject["name"]!!.toString().removeSurrounding("\"")
+                val inputAmount =
+                    case.jsonObject["input"]
+                        ?.jsonObject["amount"]
+                        ?.jsonPrimitive
+                        ?.long
+                val birth =
+                    case.jsonObject["input"]
+                        ?.jsonObject["birthOffsetSeconds"]
+                        ?.jsonPrimitive
+                        ?.long
+                val expiry =
+                    case.jsonObject["input"]
+                        ?.jsonObject["expiryOffsetSeconds"]
+                        ?.jsonPrimitive
+                        ?.long
+                val type =
+                    case.jsonObject["input"]
+                        ?.jsonObject["type"]
+                        ?.jsonPrimitive
+                        ?.toString()
+                        ?.removeSurrounding("\"")
+                val weight =
+                    case.jsonObject["input"]
+                        ?.jsonObject["weight"]
+                        ?.jsonPrimitive
+                        ?.double
+                val offChainInput =
+                    OffChainInput(
+                        Coin.fromSatoshi(inputAmount ?: 0),
+                        expiry?.toDuration(DurationUnit.SECONDS) ?: Duration.ZERO,
+                        birth?.toDuration(DurationUnit.SECONDS) ?: Duration.ZERO,
+                        OffChainInput.Companion.Type.fromString(type ?: "vtxo"),
+                        weight ?: 0.0,
+                    )
+                val expectedFeeAmount = case.jsonObject["expected"]!!.jsonPrimitive.double
+                runCatching {
+                    val fee = feeEstimator.estimateOffChainInputFee(offChainInput)
+                    assertEquals(expectedFeeAmount.toBigDecimal(), fee.coin.amount)
+                }.onFailure {
+                    println("   ❌ FAILED: $caseName")
+                    throw it
+                }
+                println("   ✓ PASSED: $caseName")
+            }
+
+            println("✓ PASSED: $name")
+        }
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+    }
+
+    @Test
+    fun `should return zero on estimate on-chain output program missing`() {
+        val intentFeeInfo =
+            IntentFeeInfo(
+                null,
+                null,
+                null,
+                null,
+            )
+        val feeEstimator = DefaultFeeEstimator(intentFeeInfo)
+
+        val fee =
+            feeEstimator.estimateOnChainOutputFee(
+                FeeOutput(
+                    Coin.fromSatoshi(1000),
+                    "",
+                ),
+            )
+
+        assertEquals(Fee.ZERO, fee)
+    }
+
+    @Test
+    fun `should estimate on-chain output fee correctly`() {
+        val onChainInputProgramData = validTestData.jsonObject["evalOnchainOutput"]?.jsonArray!!
+        println("On-chain Output Fee Estimation")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        for (programData in onChainInputProgramData) {
+            val name = programData.jsonObject["name"]!!.toString()
+            val program = programData.jsonObject["program"]!!.toString().removeSurrounding("\"")
+            val cases = programData.jsonObject["cases"]!!.jsonArray
+            val intentInfo =
+                IntentFeeInfo(
+                    null,
+                    program,
+                    null,
+                    null,
+                )
+            val feeEstimator = DefaultFeeEstimator(intentInfo)
+
+            println()
+
+            for (case in cases) {
+                val caseName = case.jsonObject["name"]!!.toString().removeSurrounding("\"")
+                val inputAmount =
+                    case.jsonObject["output"]
+                        ?.jsonObject["amount"]
+                        ?.jsonPrimitive
+                        ?.long
+                val script =
+                    case.jsonObject["output"]
+                        ?.jsonObject["script"]
+                        ?.jsonPrimitive
+                        ?.toString()
+                        ?.removeSurrounding("\"")
+                val onChainOutput =
+                    FeeOutput(
+                        Coin.fromSatoshi(inputAmount ?: 0),
+                        script ?: "",
+                    )
+                val expectedFeeAmount = case.jsonObject["expected"]!!.jsonPrimitive.double
+                runCatching {
+                    val fee = feeEstimator.estimateOnChainOutputFee(onChainOutput)
+                    assertEquals(expectedFeeAmount.toBigDecimal(), fee.coin.amount)
+                }.onFailure {
+                    println("   ❌ FAILED: $caseName")
+                    throw it
+                }
+                println("   ✓ PASSED: $caseName")
+            }
+
+            println("✓ PASSED: $name")
+        }
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+    }
+
+    @Test
+    fun `should return zero on estimate off-chain output program missing`() {
+        val intentFeeInfo =
+            IntentFeeInfo(
+                null,
+                null,
+                null,
+                null,
+            )
+        val feeEstimator = DefaultFeeEstimator(intentFeeInfo)
+
+        val fee =
+            feeEstimator.estimateOffChainOutputFee(
+                FeeOutput(
+                    Coin.fromSatoshi(1000),
+                    "",
+                ),
+            )
+
+        assertEquals(Fee.ZERO, fee)
+    }
+
+    @Test
+    fun `should estimate off-chain output fee correctly`() {
+        val onChainInputProgramData = validTestData.jsonObject["evalOffchainOutput"]?.jsonArray!!
+        println("Off-chain Output Fee Estimation")
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        for (programData in onChainInputProgramData) {
+            val name = programData.jsonObject["name"]!!.toString()
+            val program = programData.jsonObject["program"]!!.toString().removeSurrounding("\"")
+            val cases = programData.jsonObject["cases"]!!.jsonArray
+            val intentInfo =
+                IntentFeeInfo(
+                    null,
+                    null,
+                    null,
+                    program,
+                )
+            val feeEstimator = DefaultFeeEstimator(intentInfo)
+
+            println()
+
+            for (case in cases) {
+                val caseName = case.jsonObject["name"]!!.toString().removeSurrounding("\"")
+                val inputAmount =
+                    case.jsonObject["output"]
+                        ?.jsonObject["amount"]
+                        ?.jsonPrimitive
+                        ?.long
+                val script =
+                    case.jsonObject["output"]
+                        ?.jsonObject["script"]
+                        ?.jsonPrimitive
+                        ?.toString()
+                        ?.removeSurrounding("\"")
+                val onChainOutput =
+                    FeeOutput(
+                        Coin.fromSatoshi(inputAmount ?: 0),
+                        script ?: "",
+                    )
+                val expectedFeeAmount = case.jsonObject["expected"]!!.jsonPrimitive.double
+                runCatching {
+                    val fee = feeEstimator.estimateOffChainOutputFee(onChainOutput)
+                    assertEquals(expectedFeeAmount.toBigDecimal(), fee.coin.amount)
+                }.onFailure {
+                    println("   ❌ FAILED: $caseName")
+                    throw it
+                }
+                println("   ✓ PASSED: $caseName")
+            }
+
+            println("✓ PASSED: $name")
+        }
+        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
     }
 }

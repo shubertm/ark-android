@@ -21,7 +21,7 @@ fun getCelEnvironment(program: Program): Cel {
     val nowFunction: CelFunctionBinding =
         CelFunctionBinding.from(
             "nowTimestamp",
-            listOf(Unit::class.java),
+            emptyList(),
         ) { _ ->
             Clock.System
                 .now()
@@ -29,33 +29,26 @@ fun getCelEnvironment(program: Program): Cel {
                 .toDouble()
         }
 
-    val intentOnChainInputCelEnvironment =
+    val celEnvironmentBuilder =
         CelFactory
             .standardCelBuilder()
             .addVar("amount", SimpleType.DOUBLE)
             .addFunctionDeclarations(nowSignature)
             .addFunctionBindings(nowFunction)
-            .build()
+
+    val intentOnChainInputCelEnvironment = celEnvironmentBuilder.build()
 
     val intentOffChainInputCelEnvironment =
-        CelFactory
-            .standardCelBuilder()
-            .addVar("amount", SimpleType.DOUBLE)
+        celEnvironmentBuilder
             .addVar("expiry", SimpleType.DOUBLE)
             .addVar("birth", SimpleType.DOUBLE)
-            .addVar("type", SimpleType.STRING)
+            .addVar("inputType", SimpleType.STRING)
             .addVar("weight", SimpleType.DOUBLE)
-            .addFunctionDeclarations(nowSignature)
-            .addFunctionBindings(nowFunction)
             .build()
 
     val intentOutputCelEnvironment =
-        CelFactory
-            .standardCelBuilder()
-            .addVar("amount", SimpleType.DOUBLE)
+        celEnvironmentBuilder
             .addVar("script", SimpleType.STRING)
-            .addFunctionDeclarations(nowSignature)
-            .addFunctionBindings(nowFunction)
             .build()
 
     return when (program) {

@@ -8,7 +8,7 @@ data class FeeOutput(
 ) {
     fun toCelArgs(): Map<String, Any> =
         mapOf(
-            "amount" to coin.amount,
+            "amount" to coin.amount.doubleValue(),
             "script" to script,
         )
 }

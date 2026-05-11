@@ -21,7 +21,7 @@ fun getCelEnvironment(program: Program): Cel {
     val nowFunction: CelFunctionBinding =
         CelFunctionBinding.from(
             "nowTimestamp",
-            listOf(Unit::class.java),
+            emptyList(),
         ) { _ ->
             Clock.System
                 .now()
@@ -43,7 +43,7 @@ fun getCelEnvironment(program: Program): Cel {
             .addVar("amount", SimpleType.DOUBLE)
             .addVar("expiry", SimpleType.DOUBLE)
             .addVar("birth", SimpleType.DOUBLE)
-            .addVar("type", SimpleType.STRING)
+            .addVar("inputType", SimpleType.STRING)
             .addVar("weight", SimpleType.DOUBLE)
             .addFunctionDeclarations(nowSignature)
             .addFunctionBindings(nowFunction)

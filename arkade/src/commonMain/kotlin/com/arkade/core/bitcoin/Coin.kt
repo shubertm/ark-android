@@ -60,6 +60,12 @@ data class Coin(
         fun fromSatoshi(satoshi: Long): Coin = Coin(Unit.SATOSHI, satoshi.toBigDecimal())
 
         /**
+         * @param satoshi is the amount of money in [Unit.SATOSHI]
+         * @return [Coin] in [Unit.SATOSHI]
+         */
+        fun fromSatoshi(satoshi: Double): Coin = Coin(Unit.SATOSHI, satoshi.toBigDecimal())
+
+        /**
          * @param btc is the amount of money in [Unit.BTC]
          * @return [Coin] in [Unit.BTC]
          */

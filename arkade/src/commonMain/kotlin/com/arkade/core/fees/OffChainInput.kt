@@ -8,14 +8,14 @@ data class OffChainInput(
     val expiry: Duration,
     val birth: Duration,
     val type: Type,
-    val weight: Int,
+    val weight: Double,
 ) {
     fun toCelArgs(): Map<String, Any> =
         mapOf(
-            "amount" to coin.amount,
-            "expiry" to expiry.inWholeSeconds,
-            "birth" to birth.inWholeSeconds,
-            "type" to type.name.lowercase(),
+            "amount" to coin.amount.doubleValue(),
+            "expiry" to expiry.inWholeSeconds.toDouble(),
+            "birth" to birth.inWholeSeconds.toDouble(),
+            "inputType" to type.name.lowercase(),
             "weight" to weight,
         )
 
@@ -24,6 +24,17 @@ data class OffChainInput(
             RECOVERABLE,
             NOTE,
             VTXO,
+            ;
+
+            companion object {
+                fun fromString(name: String): Type =
+                    when (name.lowercase()) {
+                        "recoverable" -> RECOVERABLE
+                        "note" -> NOTE
+                        "vtxo" -> VTXO
+                        else -> throw IllegalArgumentException("Unknown type: $name")
+                    }
+            }
         }
     }
 }
