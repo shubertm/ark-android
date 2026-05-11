@@ -1,6 +1,7 @@
 package com.arkade.cel
 
 import dev.cel.bundle.Cel
+import dev.cel.bundle.CelBuilder
 import dev.cel.bundle.CelFactory
 import dev.cel.common.CelFunctionDecl
 import dev.cel.common.CelOverloadDecl
@@ -8,7 +9,7 @@ import dev.cel.common.types.SimpleType
 import dev.cel.runtime.CelFunctionBinding
 import kotlin.time.Clock
 
-fun getCelEnvironment(program: Program): Cel {
+fun celEnvironmentBuilder(): CelBuilder {
     val nowSignature: CelFunctionDecl =
         CelFunctionDecl.newFunctionDeclaration(
             "now",
@@ -29,17 +30,18 @@ fun getCelEnvironment(program: Program): Cel {
                 .toDouble()
         }
 
-    val celEnvironmentBuilder =
-        CelFactory
-            .standardCelBuilder()
-            .addVar("amount", SimpleType.DOUBLE)
-            .addFunctionDeclarations(nowSignature)
-            .addFunctionBindings(nowFunction)
+    return CelFactory
+        .standardCelBuilder()
+        .addVar("amount", SimpleType.DOUBLE)
+        .addFunctionDeclarations(nowSignature)
+        .addFunctionBindings(nowFunction)
+}
 
-    val intentOnChainInputCelEnvironment = celEnvironmentBuilder.build()
+fun getCelEnvironment(program: Program): Cel {
+    val intentOnChainInputCelEnvironment = celEnvironmentBuilder().build()
 
     val intentOffChainInputCelEnvironment =
-        celEnvironmentBuilder
+        celEnvironmentBuilder()
             .addVar("expiry", SimpleType.DOUBLE)
             .addVar("birth", SimpleType.DOUBLE)
             .addVar("inputType", SimpleType.STRING)
@@ -47,7 +49,7 @@ fun getCelEnvironment(program: Program): Cel {
             .build()
 
     val intentOutputCelEnvironment =
-        celEnvironmentBuilder
+        celEnvironmentBuilder()
             .addVar("script", SimpleType.STRING)
             .build()
 
