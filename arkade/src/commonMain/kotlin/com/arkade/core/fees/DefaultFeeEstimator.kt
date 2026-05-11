@@ -46,10 +46,10 @@ class DefaultFeeEstimator(
         offChainOutputs: List<FeeOutput>,
     ): Fee {
         if (onChainInputs.isEmpty() && offChainInputs.isEmpty() && onChainOutputs.isEmpty() && offChainOutputs.isEmpty()) {
-            return Fee(Coin.fromSatoshi(0))
+            return Fee.ZERO
         }
 
-        var fee = Fee(Coin.fromSatoshi(0))
+        var fee = Fee.ZERO
 
         onChainInputs.forEach {
             fee = fee.add(estimateOnChainInputFee(it))
@@ -71,7 +71,7 @@ class DefaultFeeEstimator(
         args: Map<String, Any>,
     ): Fee {
         val fee = parseAndInvoke(program, args)
-        if (fee !is Double) throw Error("Expected return type to be double, got ${fee::class.simpleName}")
+        require(fee is Double) { "Expected return type to be double, got ${fee::class.simpleName}" }
         require(fee >= 0) { "Fee cannot be negative: $fee" }
         return Fee(Coin.fromSatoshi(fee.toLong()))
     }

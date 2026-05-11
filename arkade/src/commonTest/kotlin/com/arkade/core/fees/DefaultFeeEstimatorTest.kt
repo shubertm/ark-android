@@ -136,7 +136,7 @@ class DefaultFeeEstimatorTest {
                 val expectedFeeAmount = case.jsonObject["expected"]!!.jsonPrimitive.double
                 runCatching {
                     val fee = feeEstimator.estimateOnChainInputFee(OnChainInput(Coin.fromSatoshi(inputAmount.toLong())))
-                    assertEquals(expectedFeeAmount, fee.coin.amount.doubleValue())
+                    assertEquals(expectedFeeAmount.toBigDecimal(), fee.coin.amount)
                 }.onFailure {
                     println("   ❌ FAILED: $caseName")
                     throw it
@@ -234,8 +234,8 @@ class DefaultFeeEstimatorTest {
                 val offChainInput =
                     OffChainInput(
                         Coin.fromSatoshi(inputAmount ?: 0),
-                        expiry?.toDuration(DurationUnit.SECONDS) ?: Duration.ZERO,
-                        birth?.toDuration(DurationUnit.SECONDS) ?: Duration.ZERO,
+                        expiry.toDuration(DurationUnit.SECONDS),
+                        birth.toDuration(DurationUnit.SECONDS),
                         OffChainInput.Companion.Type.fromString(type ?: "vtxo"),
                         weight ?: 0.0,
                     )
