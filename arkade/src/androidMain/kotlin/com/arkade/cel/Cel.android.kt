@@ -66,8 +66,8 @@ actual fun parseAndInvoke(
     args: Map<String, Any>,
 ): Any {
     val cel = getCelEnvironment(program)
-    val program = cel.createProgram(cel.compile(program.expression).ast)
-    return program.eval(args)
+    val celProgram = cel.createProgram(cel.compile(program.expression).ast)
+    return celProgram.eval(args)
 }
 
 actual fun validate(program: Program) {

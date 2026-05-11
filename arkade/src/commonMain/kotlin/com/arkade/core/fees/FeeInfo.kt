@@ -7,9 +7,8 @@ data class FeeInfo(
     companion object {
         fun fromProtBuf(feeInfo: ark.v1.FeeInfo?): FeeInfo? {
             if (feeInfo == null) return null
-            if (feeInfo.intent_fee == null) return null
             return FeeInfo(
-                IntentFeeInfo.fromProtoBuf(feeInfo.intent_fee),
+                feeInfo.intent_fee?.let(IntentFeeInfo::fromProtoBuf),
                 feeInfo.tx_fee_rate.toFloat(),
             )
         }
