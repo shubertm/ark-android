@@ -205,15 +205,21 @@ class DefaultFeeEstimatorTest {
                         ?.jsonPrimitive
                         ?.long
                 val birth =
-                    case.jsonObject["input"]
-                        ?.jsonObject["birthOffsetSeconds"]
-                        ?.jsonPrimitive
-                        ?.long
+                    Clock.System.now().epochSeconds +
+                        (
+                            case.jsonObject["input"]
+                                ?.jsonObject["birthOffsetSeconds"]
+                                ?.jsonPrimitive
+                                ?.long ?: 0
+                        )
                 val expiry =
-                    case.jsonObject["input"]
-                        ?.jsonObject["expiryOffsetSeconds"]
-                        ?.jsonPrimitive
-                        ?.long
+                    Clock.System.now().epochSeconds +
+                        (
+                            case.jsonObject["input"]
+                                ?.jsonObject["expiryOffsetSeconds"]
+                                ?.jsonPrimitive
+                                ?.long ?: 0
+                        )
                 val type =
                     case.jsonObject["input"]
                         ?.jsonObject["type"]
