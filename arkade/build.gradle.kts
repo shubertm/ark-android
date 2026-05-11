@@ -65,6 +65,13 @@ kotlin {
         }
     }
 
+    configurations.all {
+        // cel-java introduced some conflicts with the following modules
+        // That is why they are excluded
+        exclude(group = "com.google.code.findbugs", module = "annotations")
+        exclude(group = "com.google.protobuf", module = "protobuf-javalite")
+    }
+
     sourceSets {
         commonMain {
             dependencies {
@@ -81,10 +88,17 @@ kotlin {
             }
         }
 
+        jvmMain {
+            dependencies {
+                implementation(libs.dev.cel)
+            }
+        }
+
         androidMain {
             dependencies {
                 implementation(libs.androidx.room.sqlite.wrapper)
                 implementation(libs.koin.android)
+                implementation(libs.dev.cel)
             }
         }
 
@@ -94,6 +108,7 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.test)
                 implementation(libs.koin.test)
                 implementation(libs.androidx.sqlite.bundled)
+                implementation(libs.kotlinx.serialization.json.okio)
             }
         }
 

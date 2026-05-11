@@ -1,10 +1,10 @@
 package com.arkade.core
 
 import ark.v1.DeprecatedSigner
-import ark.v1.FeeInfo
 import ark.v1.ScheduledSession
 import com.arkade.core.bitcoin.Address
 import com.arkade.core.bitcoin.Network
+import com.arkade.core.fees.FeeInfo
 import fr.acinq.bitcoin.XonlyPublicKey
 import kotlin.time.Duration
 

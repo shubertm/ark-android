@@ -4,6 +4,8 @@ import com.arkade.core.bitcoin.Coin
 import com.arkade.core.bitcoin.Network
 import com.arkade.network.ArkadeClient
 import com.arkade.network.Config
+import com.arkade.utils.Log
+import com.arkade.utils.info
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,6 +21,9 @@ class ArkadeClientTest : com.arkade.Test() {
             val mainnetForfeitAddress = "bc1qzzdzp5c443vsetzatf2ra6hku322y7e5aq50rs"
 
             val serverInfo = arkadeClient.getInfo()
+
+            Log.info("Server info", "${serverInfo.fees?.intent}")
+
             assertEquals(Network.MAINNET, serverInfo.network)
             assertEquals(
                 mainnetServerPubKey,
