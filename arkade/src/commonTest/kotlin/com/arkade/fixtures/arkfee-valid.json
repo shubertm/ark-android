@@ -60,7 +60,7 @@
                         "amount": 10000,
                         "weight": 0.563
                     },
-                    "expected": 56.3
+                    "expected": 56
                 },
                 {
                     "name": "with 100% weight",
@@ -137,14 +137,14 @@
         },
         {
             "name": "based on script size",
-            "program": "double(size(script)) * 0.01",
+            "program": "double(size(script)) * 0.1",
             "cases": [
                 {
                     "name": "collab exit",
                     "output": {
                         "script": "0020deadbeefeeeeeeffff"
                     },
-                    "expected": 0.22
+                    "expected": 2
                 }
             ]
         },
@@ -176,14 +176,14 @@
         },
         {
             "name": "based on script size",
-            "program": "double(size(script)) * 0.01",
+            "program": "double(size(script)) * 0.1",
             "cases": [
                 {
                     "name": "collab exit",
                     "output": {
                         "script": "0020deadbeefeeeeeeffff"
                     },
-                    "expected": 0.22
+                    "expected": 2
                 }
             ]
         },
