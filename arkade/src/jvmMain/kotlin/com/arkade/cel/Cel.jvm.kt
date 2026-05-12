@@ -8,6 +8,23 @@ import dev.cel.common.types.SimpleType
 import dev.cel.runtime.CelFunctionBinding
 import kotlin.time.Clock
 
+/**
+ * Returns the appropriate [Cel] environment for the given [program] type on JVM.
+ *
+ * Each program type gets a CEL environment with the variables it is allowed to reference.
+ * All environments include the `now()` built-in function, which is a global overload (named
+ * `nowTimestamp`) that returns the current epoch time in seconds as a [Double].
+ *
+ * | Program type                    | Available variables                                      |
+ * |---------------------------------|----------------------------------------------------------|
+ * | [Program.OnChainInputProgram]   | `amount`                                                 |
+ * | [Program.OffChainInputProgram]  | `amount`, `expiry`, `birth`, `inputType`, `weight`       |
+ * | [Program.OnChainOutputProgram]  | `amount`, `script`                                       |
+ * | [Program.OffChainOutputProgram] | `amount`, `script`                                       |
+ *
+ * @param program The [Program] for which to select a CEL environment.
+ * @return A fully built [Cel] environment matching the program's variable scope.
+ */
 fun getCelEnvironment(program: Program): Cel {
     val nowSignature: CelFunctionDecl =
         CelFunctionDecl.newFunctionDeclaration(
@@ -66,6 +83,17 @@ fun getCelEnvironment(program: Program): Cel {
     }
 }
 
+/**
+ * JVM `actual` implementation of [parseAndInvoke].
+ *
+ * Selects the appropriate CEL environment for [program], compiles [program]'s expression,
+ * creates an executable CEL program from the resulting AST, and evaluates it with [args].
+ *
+ * @param program The [Program] whose expression will be compiled and evaluated.
+ * @param args A map of variable names to their runtime values.
+ * @return The result of evaluating the CEL expression.
+ * @throws Exception if compilation or evaluation fails.
+ */
 actual fun parseAndInvoke(
     program: Program,
     args: Map<String, Any>,
@@ -75,6 +103,15 @@ actual fun parseAndInvoke(
     return celProgram.eval(args)
 }
 
+/**
+ * JVM `actual` implementation of [validate].
+ *
+ * Selects the appropriate CEL environment for [program] and compiles [program]'s expression
+ * without evaluating it, to verify that the expression is syntactically and semantically valid.
+ *
+ * @param program The [Program] whose expression will be validated.
+ * @throws Exception if the expression fails to compile.
+ */
 actual fun validate(program: Program) {
     val cel = getCelEnvironment(program)
     cel.compile(program.expression).ast
