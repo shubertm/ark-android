@@ -9,16 +9,16 @@ package com.arkade.core.fees
  *
  * Empty protobuf strings are automatically mapped to `null` by [fromProtoBuf].
  *
- * @property onChainInput CEL expression for estimating fees on on-chain inputs (UTXOs), or `null`.
- * @property onChainOutput CEL expression for estimating fees on on-chain outputs, or `null`.
- * @property offChainInput CEL expression for estimating fees on off-chain inputs (VTXOs/Notes), or `null`.
- * @property offChainOutput CEL expression for estimating fees on off-chain outputs, or `null`.
+ * @property onChainInputExpression CEL expression for estimating fees on on-chain inputs (UTXOs), or `null`.
+ * @property onChainOutputExpression CEL expression for estimating fees on on-chain outputs, or `null`.
+ * @property offChainInputExpression CEL expression for estimating fees on off-chain inputs (VTXOs/Notes), or `null`.
+ * @property offChainOutputExpression CEL expression for estimating fees on off-chain outputs, or `null`.
  */
 data class IntentFeeInfo(
-    val onChainInput: String?,
-    val onChainOutput: String?,
-    val offChainInput: String?,
-    val offChainOutput: String?,
+    val onChainInputExpression: String?,
+    val onChainOutputExpression: String?,
+    val offChainInputExpression: String?,
+    val offChainOutputExpression: String?,
 ) {
     companion object {
         /**

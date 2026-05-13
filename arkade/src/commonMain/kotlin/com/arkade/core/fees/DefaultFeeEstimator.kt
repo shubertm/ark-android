@@ -28,10 +28,10 @@ class DefaultFeeEstimator(
     private val intentFeeInfo: IntentFeeInfo,
 ) {
     init {
-        if (intentFeeInfo.onChainInput != null) validate(Program.OnChainInputProgram(intentFeeInfo.onChainInput))
-        if (intentFeeInfo.onChainOutput != null) validate(Program.OnChainOutputProgram(intentFeeInfo.onChainOutput))
-        if (intentFeeInfo.offChainInput != null) validate(Program.OffChainInputProgram(intentFeeInfo.offChainInput))
-        if (intentFeeInfo.offChainOutput != null) validate(Program.OffChainOutputProgram(intentFeeInfo.offChainOutput))
+        if (intentFeeInfo.onChainInputExpression != null) validate(Program.OnChainInputProgram(intentFeeInfo.onChainInputExpression))
+        if (intentFeeInfo.onChainOutputExpression != null) validate(Program.OnChainOutputProgram(intentFeeInfo.onChainOutputExpression))
+        if (intentFeeInfo.offChainInputExpression != null) validate(Program.OffChainInputProgram(intentFeeInfo.offChainInputExpression))
+        if (intentFeeInfo.offChainOutputExpression != null) validate(Program.OffChainOutputProgram(intentFeeInfo.offChainOutputExpression))
     }
 
     /**
@@ -44,9 +44,9 @@ class DefaultFeeEstimator(
      * @throws IllegalArgumentException if the CEL result is not a [Double] or is negative.
      */
     fun estimateOnChainInputFee(input: OnChainInput): Fee {
-        if (intentFeeInfo.onChainInput == null) return Fee.ZERO
+        if (intentFeeInfo.onChainInputExpression == null) return Fee.ZERO
         val args = input.toCelArgs()
-        return parseAndInvokeIntentFeeProgram(Program.OnChainInputProgram(intentFeeInfo.onChainInput), args)
+        return parseAndInvokeIntentFeeProgram(Program.OnChainInputProgram(intentFeeInfo.onChainInputExpression), args)
     }
 
     /**
@@ -59,9 +59,9 @@ class DefaultFeeEstimator(
      * @throws IllegalArgumentException if the CEL result is not a [Double] or is negative.
      */
     fun estimateOffChainInputFee(input: OffChainInput): Fee {
-        if (intentFeeInfo.offChainInput == null) return Fee.ZERO
+        if (intentFeeInfo.offChainInputExpression == null) return Fee.ZERO
         val args = input.toCelArgs()
-        return parseAndInvokeIntentFeeProgram(Program.OffChainInputProgram(intentFeeInfo.offChainInput), args)
+        return parseAndInvokeIntentFeeProgram(Program.OffChainInputProgram(intentFeeInfo.offChainInputExpression), args)
     }
 
     /**
@@ -74,9 +74,9 @@ class DefaultFeeEstimator(
      * @throws IllegalArgumentException if the CEL result is not a [Double] or is negative.
      */
     fun estimateOnChainOutputFee(output: FeeOutput): Fee {
-        if (intentFeeInfo.onChainOutput == null) return Fee.ZERO
+        if (intentFeeInfo.onChainOutputExpression == null) return Fee.ZERO
         val args = output.toCelArgs()
-        return parseAndInvokeIntentFeeProgram(Program.OnChainOutputProgram(intentFeeInfo.onChainOutput), args)
+        return parseAndInvokeIntentFeeProgram(Program.OnChainOutputProgram(intentFeeInfo.onChainOutputExpression), args)
     }
 
     /**
@@ -89,9 +89,9 @@ class DefaultFeeEstimator(
      * @throws IllegalArgumentException if the CEL result is not a [Double] or is negative.
      */
     fun estimateOffChainOutputFee(output: FeeOutput): Fee {
-        if (intentFeeInfo.offChainOutput == null) return Fee.ZERO
+        if (intentFeeInfo.offChainOutputExpression == null) return Fee.ZERO
         val args = output.toCelArgs()
-        return parseAndInvokeIntentFeeProgram(Program.OffChainOutputProgram(intentFeeInfo.offChainOutput), args)
+        return parseAndInvokeIntentFeeProgram(Program.OffChainOutputProgram(intentFeeInfo.offChainOutputExpression), args)
     }
 
     /**
@@ -114,11 +114,11 @@ class DefaultFeeEstimator(
         onChainOutputs: List<FeeOutput>,
         offChainOutputs: List<FeeOutput>,
     ): Fee {
-        if (onChainInputs.isEmpty() && offChainInputs.isEmpty() && onChainOutputs.isEmpty() && offChainOutputs.isEmpty()) {
-            return Fee.ZERO
-        }
-
         var fee = Fee.ZERO
+
+        if (onChainInputs.isEmpty() && offChainInputs.isEmpty() && onChainOutputs.isEmpty() && offChainOutputs.isEmpty()) {
+            return fee
+        }
 
         onChainInputs.forEach {
             fee = fee.add(estimateOnChainInputFee(it))

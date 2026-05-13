@@ -10,7 +10,7 @@ import com.arkade.core.bitcoin.Coin
  * CEL fee program.
  *
  * @property coin The coin value of the output.
- * @property script The output script (e.g., a hex-encoded locking script).
+ * @property script The output script (e.g; a hex-encoded locking script).
  */
 data class FeeOutput(
     val coin: Coin,

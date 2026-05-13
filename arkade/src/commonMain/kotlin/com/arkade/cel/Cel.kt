@@ -19,7 +19,7 @@ sealed class Program(
      * Available variables:
      * - `amount: Double` — the coin amount in satoshis
      *
-     * @param expression The CEL expression string.
+     * @param expression The CEL expression string to be compiled and evaluated for fee estimation.
      */
     class OnChainInputProgram(
         expression: String,
@@ -32,7 +32,7 @@ sealed class Program(
      * - `amount: Double` — the coin amount in satoshis
      * - `script: String` — the output script
      *
-     * @param expression The CEL expression string.
+     * @param expression The CEL expression string to be compiled and evaluated for fee estimation.
      */
     class OnChainOutputProgram(
         expression: String,
@@ -45,10 +45,10 @@ sealed class Program(
      * - `amount: Double` — the coin amount in satoshis
      * - `expiry: Double` — the expiry time in whole seconds
      * - `birth: Double` — the birth time in whole seconds
-     * - `inputType: String` — the input type as a lowercase string (e.g., "vtxo", "note", "recoverable")
+     * - `inputType: String` — the input type as a lowercase string (e.g; `vtxo`, `note`, `recoverable`)
      * - `weight: Double` — the weight factor for the input
      *
-     * @param expression The CEL expression string.
+     * @param expression The CEL expression string to be compiled and evaluated for fee estimation.
      */
     class OffChainInputProgram(
         expression: String,
@@ -61,7 +61,7 @@ sealed class Program(
      * - `amount: Double` — the coin amount in satoshis
      * - `script: String` — the output script
      *
-     * @param expression The CEL expression string.
+     * @param expression The CEL expression string to be compiled and evaluated for fee estimation.
      */
     class OffChainOutputProgram(
         expression: String,
@@ -77,8 +77,8 @@ sealed class Program(
  * @param program The [Program] whose expression will be compiled and evaluated.
  * @param args A map of variable names to their runtime values, matching the variables declared
  *   for the program type.
- * @return The result of evaluating the CEL expression. For fee estimation, this is expected to be
- *   a [Double] representing the fee in satoshis.
+ * @return The result of evaluating the CEL expression.
+ *
  * @throws Exception if the expression fails to compile or evaluate.
  */
 expect fun parseAndInvoke(

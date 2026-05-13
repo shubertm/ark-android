@@ -29,7 +29,7 @@ data class OffChainInput(
      * - `"amount"` → [Double] — the coin amount from [coin]
      * - `"expiry"` → [Double] — [expiry] expressed as whole seconds
      * - `"birth"` → [Double] — [birth] expressed as whole seconds
-     * - `"inputType"` → [String] — the lowercase name of [type] (e.g., `"vtxo"`, `"note"`, `"recoverable"`)
+     * - `"inputType"` → [String] — the lowercase name of [type] (e.g; `"vtxo"`, `"note"`, `"recoverable"`)
      * - `"weight"` → [Double] — the [weight] factor
      *
      * @return A [Map] of variable names to values for CEL evaluation.
