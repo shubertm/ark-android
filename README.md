@@ -1,13 +1,7 @@
 <h1 align="center">Arkade Kotlin Multiplatform SDK</h1>
 <p align="center">
-<a href="https://github.com/shubertm/arkade-kotlin/actions/workflows/build.yml">
-<img src="https://github.com/shubertm/arkade-kotlin/actions/workflows/build.yml/badge.svg" alt="build status">
-</a>
-<a href="https://github.com/shubertm/arkade-kotlin/actions/workflows/unit.yml">
-<img src="https://github.com/shubertm/arkade-kotlin/actions/workflows/unit.yml/badge.svg" alt="unit tests status">
-</a>
-<a href="https://github.com/shubertm/arkade-kotlin/actions/workflows/e2e.yml">
-<img src="https://github.com/shubertm/arkade-kotlin/actions/workflows/e2e.yml/badge.svg" alt="e2e tests status">
+<a href="https://github.com/shubertm/arkade-kotlin/actions/workflows/ci.yml">
+<img src="https://github.com/shubertm/arkade-kotlin/actions/workflows/ci.yml/badge.svg" alt="CI status">
 </a>
 </p>
 
@@ -72,12 +66,33 @@ Run the sample app:
 ## Usage Example
 Here’s a simple example of how to initialize the SDK in Kotlin:
 
+**Single Key**
 ```kotlin
-import arkade.core.Wallet
+import com.arkade.core.wallet.Wallet
+import com.arkade.network.ArkadeClient
+import com.arkade.network.ArkadeClientImpl
+import com.arkade.network.Config
 
-fun main() {
-    val wallet = Wallet.create("mySeedPhrase")
-    println("Wallet address: ${wallet.address}")
+
+fun main() = runBlocking {
+    val nsec = "<nsec1...>"
+    val client: ArkadeClient = ArkadeClientImpl(Config.MUTINYNET)
+    val serverInfo = client.getInfo()
+    val wallet = Wallet.create(nsec, null, serverInfo)
+}
+```
+**HD**
+```kotlin
+import com.arkade.core.wallet.Wallet
+import com.arkade.network.ArkadeClient
+import com.arkade.network.ArkadeClientImpl
+import com.arkade.network.Config
+
+fun main() = runBlocking {
+    val secret = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+    val client: ArkadeClient = ArkadeClientImpl(Config.MUTINYNET)
+    val serverInfo = client.getInfo()
+    val wallet = Wallet.create(secret, null, serverInfo)
 }
 ```
 
@@ -93,13 +108,20 @@ Please note that this project is **experimental**, so expect frequent changes.
 
 ---
 
-## Testing
+### Development Environment
 
-### Unit
+#### Setup Pre-commit Hook
+```shell
+cp scripts/pre-commit .git/hooks/
+```
+
+### Testing
+
+#### Unit
 ```shell
 ./gradlew testUnit
 ```
-### Integration
+#### Integration
 - Install Nigiri
     ```shell
     curl https://getnigiri.vulpem.com | bash
@@ -116,6 +138,7 @@ Please note that this project is **experimental**, so expect frequent changes.
     ```shell
     nigiri stop --delete
     ```
+---
 
 ## License
 This project is licensed under the **MIT License**. See the [License](./LICENSE) file for details.

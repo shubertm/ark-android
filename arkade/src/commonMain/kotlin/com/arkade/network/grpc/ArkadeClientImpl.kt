@@ -24,6 +24,7 @@ import com.arkade.core.assets.Asset
 import com.arkade.core.batches.BatchEvent
 import com.arkade.core.bitcoin.Address
 import com.arkade.core.bitcoin.Network
+import com.arkade.core.fees.FeeInfo
 import com.arkade.core.intents.ArkIntent
 import com.arkade.core.txs.ArkTransaction
 import com.arkade.core.txs.Notification
@@ -72,7 +73,7 @@ class ArkadeClientImpl(
             infoResponse.vtxo_min_amount,
             infoResponse.vtxo_max_amount,
             infoResponse.dust,
-            infoResponse.fees,
+            FeeInfo.fromProtBuf(infoResponse.fees),
             infoResponse.scheduled_session,
             infoResponse.deprecated_signers,
             infoResponse.service_status,

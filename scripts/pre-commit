@@ -18,12 +18,12 @@ if [ "$STASH_COUNT_AFTER" -gt "$STASH_COUNT_BEFORE" ]; then
   trap "git stash pop --quiet" EXIT
 fi
 
-./gradlew allTests
+./gradlew testUnit
 
 status=$?
 if [ "$status" = 0 ]; then
-  printf "\nCode style is good\nAll unit tests passed\n"
+  printf "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n✓ Code style is good\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
 else
-  echo "Some release unit tests are failing!"
+  printf "❌ Some unit tests are failing!\n"
   exit 1
 fi
