@@ -8,12 +8,13 @@ import com.arkade.core.bitcoin.Hrp
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.bitcoin.WitnessVersion
 import com.arkade.core.toXOnlyPubKey
+import com.arkade.core.wallet.HDWalletTest.Companion.LOG_TAG
 import com.arkade.core.wallet.Wallet.Companion.masterKeyFromSecret
 import com.arkade.di.ArkadeDI
 import com.arkade.repositories.WalletRepo
 import com.arkade.storage.db.Database
 import com.arkade.utils.Log
-import com.arkade.utils.info
+import com.arkade.utils.success
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.TxId
@@ -45,6 +46,9 @@ expect abstract class WalletTest() : com.arkade.Test {
 
     @Test
     abstract fun should_load_more_wallets_successfully()
+
+    @Test
+    abstract fun should_store_and_retrieve_valid_vtxo_data_successfully()
 }
 
 fun getArkServerInfo(): ArkServerInfo =
@@ -79,6 +83,14 @@ fun getArkServerInfo(): ArkServerInfo =
 
 class SingleKeyWalletTest : WalletTest() {
     private val serverInfo = getArkServerInfo()
+
+    val testVtxoDataPath = "./src/commonTest/kotlin/com/arkade/fixtures/vtxo-data.json".toPath()
+    val testVtxoData =
+        FileSystem.SYSTEM.read(testVtxoDataPath) {
+            Json.parseToJsonElement(readUtf8())
+        }
+    val validTestVtxosJsonArray = testVtxoData.jsonObject["valid"]?.jsonObject["vtxos"]?.jsonArray
+    val invalidTestVtxosJsonArray = testVtxoData.jsonObject["invalid"]?.jsonObject["vtxos"]?.jsonArray
 
     @Test
     override fun should_create_wallet_successfully() {
@@ -139,6 +151,52 @@ class SingleKeyWalletTest : WalletTest() {
             }
         }
     }
+
+    @Test
+    override fun should_store_and_retrieve_valid_vtxo_data_successfully() {
+        runTest {
+            val nsec = "nsec1wr49duqpjavggh78ewu9zlcuvw5huh6x5kqweqwnmjgw78kqqt6qsk0w9k"
+            val wallet =
+                Wallet.create(
+                    nsec,
+                    serverInfo = serverInfo,
+                    testDb = testDb,
+                )
+
+            val vtxosJson = assertNotNull(validTestVtxosJsonArray, "Missing valid test VTXOs")
+
+            vtxosJson.forEachIndexed { index, vtxoJson ->
+                val (vtxo, comment) = vtxoFromJson(vtxoJson)
+                wallet.saveVtxo(vtxo)
+                val vtxos = wallet.getVtxos()
+                assertEquals(index + 1, vtxos.size)
+                assertEquals(vtxo, vtxos[index])
+                Log.success(LOG_TAG, comment)
+            }
+        }
+    }
+
+    @Test
+    fun should_fail_constructing_invalid_vtxo_data() {
+        runTest {
+            val vtxosJson = assertNotNull(invalidTestVtxosJsonArray, "Missing invalid test VTXOs")
+            vtxosJson.forEach { vtxoJson ->
+                val comment =
+                    vtxoJson.jsonObject["comment"]
+                        ?.jsonPrimitive
+                        .toString()
+                        .removeSurrounding("\"")
+                assertFailsWith<IllegalArgumentException> {
+                    val (_, _) = vtxoFromJson(vtxoJson)
+                }
+                Log.success(LOG_TAG, comment)
+            }
+        }
+    }
+
+    companion object {
+        private const val LOG_TAG = "SingleKeyWalletTest"
+    }
 }
 
 class HDWalletTest : WalletTest() {
@@ -150,7 +208,6 @@ class HDWalletTest : WalletTest() {
             Json.parseToJsonElement(readUtf8())
         }
     val validTestVtxosJsonArray = testVtxoData.jsonObject["valid"]?.jsonObject["vtxos"]?.jsonArray
-    val invalidTestVtxosJsonArray = testVtxoData.jsonObject["invalid"]?.jsonObject["vtxos"]?.jsonArray
 
     @Test
     override fun should_create_wallet_successfully() {
@@ -232,15 +289,7 @@ class HDWalletTest : WalletTest() {
     }
 
     @Test
-    fun should_load_null_wallet_for_nonexistent_fingerprint() {
-        runTest {
-            val wallet = Wallet.loadByFingerprint("00000000", testDb)
-            assertEquals(null, wallet)
-        }
-    }
-
-    @Test
-    fun should_store_and_retrieve_valid_vtxo_data_successfully() {
+    override fun should_store_and_retrieve_valid_vtxo_data_successfully() {
         runTest {
             val secret =
                 "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
@@ -259,102 +308,83 @@ class HDWalletTest : WalletTest() {
                 val vtxos = wallet.getVtxos()
                 assertEquals(index + 1, vtxos.size)
                 assertEquals(vtxo, vtxos[index])
-                Log.info(LOG_TAG, "✓ PASSED: $comment\n")
+                Log.success(LOG_TAG, comment)
             }
         }
     }
 
     @Test
-    fun should_not_store_invalid_vtxo_data() {
+    fun should_load_null_wallet_for_nonexistent_fingerprint() {
         runTest {
-            val secret =
-                "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
-            val wallet =
-                Wallet.create(
-                    secret,
-                    serverInfo = serverInfo,
-                    testDb = testDb,
-                )
-
-            val vtxosJson = assertNotNull(invalidTestVtxosJsonArray, "Missing invalid test VTXOs")
-            vtxosJson.forEach { vtxoJson ->
-                val comment =
-                    vtxoJson.jsonObject["comment"]
-                        ?.jsonPrimitive
-                        .toString()
-                        .removeSurrounding("\"")
-                assertFailsWith<IllegalArgumentException> {
-                    val (_, _) = vtxoFromJson(vtxoJson)
-                }
-                Log.info(LOG_TAG, "✓ PASSED: $comment\n")
-            }
+            val wallet = Wallet.loadByFingerprint("00000000", testDb)
+            assertEquals(null, wallet)
         }
     }
 
-    private fun vtxoFromJson(json: JsonElement): Pair<Vtxo.Data, String> {
-        val comment =
-            json.jsonObject["comment"]
-                ?.jsonPrimitive
-                .toString()
-                .removeSurrounding("\"")
-        val (txId, index) =
-            json.jsonObject["outpoint"]
-                ?.jsonPrimitive
-                .toString()
-                .removeSurrounding("\"")
-                .split(":")
-        val outpoint = OutPoint(TxId(txId), index.toLong())
-        val script = json.jsonObject["script"]?.jsonPrimitive?.content!!
-        val amount = json.jsonObject["amount"]?.jsonPrimitive?.long!!
-        val createdAt = json.jsonObject["created_at"]?.jsonPrimitive?.long!!
-        val expiresAt = json.jsonObject["expires_at"]?.jsonPrimitive?.long!!
-        val isPreConfirmed =
-            json.jsonObject["is_preconfirmed"]?.jsonPrimitive?.boolean!!
-        val isSwept = json.jsonObject["is_swept"]?.jsonPrimitive?.boolean!!
-        val isUnrolled = json.jsonObject["is_unrolled"]?.jsonPrimitive?.boolean!!
-        val isSpent = json.jsonObject["is_spent"]?.jsonPrimitive?.boolean!!
-        val spentBy =
-            json.jsonObject["spent_by"]
-                ?.jsonPrimitive
-                ?.content
-                ?.ifEmpty { null }
-        val settledBy =
-            json.jsonObject["settled_by"]
-                ?.jsonPrimitive
-                ?.content
-                ?.ifEmpty { null }
-        val arkTxId =
-            json.jsonObject["ark_txid"]
-                ?.jsonPrimitive
-                ?.content
-                ?.ifEmpty { null }
-        val commitmentTxIds =
-            json.jsonObject["commitment_txids"]?.jsonArray?.map { it.jsonPrimitive.content }
-                ?: emptyList()
-        val assets =
-            json.jsonObject["assets"]?.jsonArray?.map { assetJson ->
-                Json.decodeFromJsonElement<Asset>(assetJson)
-            } ?: emptyList()
-
-        return Vtxo.Data.normalized(
-            outpoint,
-            amount.toBigDecimal(),
-            script,
-            createdAt,
-            expiresAt,
-            isPreConfirmed,
-            isSwept,
-            isUnrolled,
-            isSpent,
-            spentBy,
-            settledBy,
-            arkTxId,
-            commitmentTxIds,
-            assets,
-        ) to comment
-    }
-
     companion object {
-        private const val LOG_TAG = "HD Wallet Test"
+        private const val LOG_TAG = "HDWalletTest"
     }
+}
+
+private fun vtxoFromJson(json: JsonElement): Pair<Vtxo.Data, String> {
+    val comment =
+        json.jsonObject["comment"]
+            ?.jsonPrimitive
+            .toString()
+            .removeSurrounding("\"")
+    val (txId, index) =
+        json.jsonObject["outpoint"]
+            ?.jsonPrimitive
+            .toString()
+            .removeSurrounding("\"")
+            .split(":")
+    val outpoint = OutPoint(TxId(txId), index.toLong())
+    val script = json.jsonObject["script"]?.jsonPrimitive?.content!!
+    val amount = json.jsonObject["amount"]?.jsonPrimitive?.long!!
+    val createdAt = json.jsonObject["created_at"]?.jsonPrimitive?.long!!
+    val expiresAt = json.jsonObject["expires_at"]?.jsonPrimitive?.long!!
+    val isPreConfirmed =
+        json.jsonObject["is_preconfirmed"]?.jsonPrimitive?.boolean!!
+    val isSwept = json.jsonObject["is_swept"]?.jsonPrimitive?.boolean!!
+    val isUnrolled = json.jsonObject["is_unrolled"]?.jsonPrimitive?.boolean!!
+    val isSpent = json.jsonObject["is_spent"]?.jsonPrimitive?.boolean!!
+    val spentBy =
+        json.jsonObject["spent_by"]
+            ?.jsonPrimitive
+            ?.content
+            ?.ifEmpty { null }
+    val settledBy =
+        json.jsonObject["settled_by"]
+            ?.jsonPrimitive
+            ?.content
+            ?.ifEmpty { null }
+    val arkTxId =
+        json.jsonObject["ark_txid"]
+            ?.jsonPrimitive
+            ?.content
+            ?.ifEmpty { null }
+    val commitmentTxIds =
+        json.jsonObject["commitment_txids"]?.jsonArray?.map { it.jsonPrimitive.content }
+            ?: emptyList()
+    val assets =
+        json.jsonObject["assets"]?.jsonArray?.map { assetJson ->
+            Json.decodeFromJsonElement<Asset>(assetJson)
+        } ?: emptyList()
+
+    return Vtxo.Data.normalized(
+        outpoint,
+        amount.toBigDecimal(),
+        script,
+        createdAt,
+        expiresAt,
+        isPreConfirmed,
+        isSwept,
+        isUnrolled,
+        isSpent,
+        spentBy,
+        settledBy,
+        arkTxId,
+        commitmentTxIds,
+        assets,
+    ) to comment
 }

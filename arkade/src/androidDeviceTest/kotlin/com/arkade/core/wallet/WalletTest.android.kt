@@ -18,4 +18,7 @@ actual abstract class WalletTest actual constructor() : com.arkade.Test() {
      */
     @Test
     actual abstract fun should_load_more_wallets_successfully()
+
+    @Test
+    actual abstract fun should_store_and_retrieve_valid_vtxo_data_successfully()
 }

@@ -156,6 +156,12 @@ data class Vtxo(
         init {
             OutPoint.validate(outpoint)
             require(amount > BigDecimal.ZERO) { "Amount must be positive" }
+            require(script == script.lowercase()) { "Script must be lowercase" }
+            require(spentBy == spentBy?.lowercase()) { "TxId must be lowercase" }
+            require(settledBy == settledBy?.lowercase()) { "TxId must be lowercase" }
+            require(arkTxId == arkTxId?.lowercase()) { "TxId must be lowercase" }
+            commitmentTxIds.forEach { require(it == it.lowercase()) { "TxId must be lowercase" } }
+            assets.forEach { require(it.id == it.id.lowercase()) { "Asset id must be lowercase" } }
             if (isSpent && spentBy == null) {
                 throw IllegalArgumentException("Spent VTXO must have a spending txId")
             }
@@ -179,9 +185,9 @@ data class Vtxo(
                 assets: List<Asset> = emptyList(),
             ): Data {
                 val script = script.lowercase()
-                val spentBy = spentBy?.lowercase()
-                val settledBy = settledBy?.lowercase()
-                val arkTxId = arkTxId?.lowercase()
+                val spentBy = spentBy?.takeIf { it.isNotBlank() }?.lowercase()
+                val settledBy = settledBy?.takeIf { it.isNotBlank() }?.lowercase()
+                val arkTxId = arkTxId?.takeIf { it.isNotBlank() }?.lowercase()
                 val commitmentTxIds = commitmentTxIds.map { it.lowercase() }
                 val assets = assets.map { Asset(it.id.lowercase(), it.amount) }
                 return Data(
