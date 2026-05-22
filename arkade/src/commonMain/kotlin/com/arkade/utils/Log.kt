@@ -26,3 +26,12 @@ expect fun Log.verbose(
     tag: String,
     message: String,
 )
+
+fun Log.drawLine() {
+    println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+    skipLine()
+}
+
+fun Log.skipLine() {
+    println()
+}
