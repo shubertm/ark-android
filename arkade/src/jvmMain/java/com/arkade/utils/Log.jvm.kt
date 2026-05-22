@@ -31,4 +31,4 @@ actual fun Log.error(
 actual fun Log.verbose(
     tag: String,
     message: String,
-) = println("$BLUE/$tag: $message$RESET")
+) = println("$BLUE V/$tag: $message$RESET")

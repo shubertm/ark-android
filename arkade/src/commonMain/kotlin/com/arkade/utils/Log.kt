@@ -35,3 +35,15 @@ fun Log.drawLine() {
 fun Log.skipLine() {
     println()
 }
+
+fun Log.success(
+    tag: String,
+    message: String,
+    indent: Int = 0,
+) {
+    var indentString = ""
+    for (i in 0..indent) {
+        indentString = indentString.plus("  ")
+    }
+    info(tag, "\u001B[32m$indentString✓ PASSED: $message")
+}

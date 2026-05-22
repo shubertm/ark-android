@@ -5,6 +5,7 @@ import com.arkade.utils.Log
 import com.arkade.utils.drawLine
 import com.arkade.utils.error
 import com.arkade.utils.info
+import com.arkade.utils.success
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.double
@@ -129,8 +130,6 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
                 )
             val feeEstimator = DefaultFeeEstimator(intentInfo)
 
-            println()
-
             for (case in cases) {
                 val caseName = case.jsonObject["name"]!!.toString().removeSurrounding("\"")
                 val inputAmount =
@@ -145,10 +144,10 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
                     Log.error(LOG_TAG, "   ❌ FAILED: $caseName")
                     throw it
                 }
-                Log.info(LOG_TAG, "   ✓ PASSED: $caseName")
+                Log.success(LOG_TAG, caseName, 1)
             }
 
-            Log.info(LOG_TAG, "✓ PASSED: $name")
+            Log.success(LOG_TAG, name)
         }
         Log.drawLine()
     }
@@ -249,10 +248,10 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
                     Log.error(LOG_TAG, "   ❌ FAILED: $caseName")
                     throw it
                 }
-                Log.info(LOG_TAG, "   ✓ PASSED: $caseName")
+                Log.success(LOG_TAG, caseName, 1)
             }
 
-            Log.info(LOG_TAG, "✓ PASSED: $name")
+            Log.success(LOG_TAG, name)
         }
         Log.drawLine()
     }
@@ -320,13 +319,13 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
                     val fee = feeEstimator.estimateOnChainOutputFee(onChainOutput)
                     assertEquals(expectedFeeAmount.toBigDecimal(), fee.coin.amount)
                 }.onFailure {
-                    Log.info(LOG_TAG, "   ❌ FAILED: $caseName")
+                    Log.error(LOG_TAG, "   ❌ FAILED: $caseName")
                     throw it
                 }
-                Log.info(LOG_TAG, "   ✓ PASSED: $caseName")
+                Log.success(LOG_TAG, caseName, 1)
             }
 
-            Log.info(LOG_TAG, "✓ PASSED: $name")
+            Log.success(LOG_TAG, name)
         }
         Log.drawLine()
     }
@@ -397,10 +396,10 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
                     Log.error(LOG_TAG, "   ❌ FAILED: $caseName")
                     throw it
                 }
-                Log.info(LOG_TAG, "   ✓ PASSED: $caseName")
+                Log.success(LOG_TAG, caseName, 1)
             }
 
-            Log.info(LOG_TAG, "✓ PASSED: $name")
+            Log.success(LOG_TAG, name)
         }
         Log.drawLine()
     }
@@ -488,10 +487,10 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
                     Log.error(LOG_TAG, "   ❌ FAILED: $caseName")
                     throw it
                 }
-                Log.info(LOG_TAG, "   ✓ PASSED: $caseName")
+                Log.success(LOG_TAG, caseName, 1)
             }
 
-            Log.info(LOG_TAG, "✓ PASSED: $name")
+            Log.success(LOG_TAG, name)
         }
         Log.drawLine()
     }
