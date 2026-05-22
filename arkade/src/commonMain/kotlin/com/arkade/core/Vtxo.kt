@@ -12,6 +12,7 @@ import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.Script
 import fr.acinq.bitcoin.ScriptTree
 import fr.acinq.bitcoin.XonlyPublicKey
+import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -137,6 +138,7 @@ data class Vtxo(
      */
     data class Data(
         val outpoint: OutPoint,
+        @Serializable(Json.BigDecimalSerializer::class)
         val amount: BigDecimal,
         val script: String,
         val createdAt: Long,
@@ -145,12 +147,30 @@ data class Vtxo(
         val isSwept: Boolean = false,
         val isUnrolled: Boolean = false,
         val isSpent: Boolean = false,
-        val spentBy: String = "",
-        val settledBy: String = "",
-        val arkTxId: String = "",
+        val spentBy: String? = null,
+        val settledBy: String? = null,
+        val arkTxId: String? = null,
         val commitmentTxIds: List<String> = emptyList(),
         val assets: List<Asset> = emptyList(),
-    )
+    ) {
+        init {
+            OutPoint.validate(outpoint)
+            require(amount > BigDecimal.ZERO) { "Amount must be positive" }
+            if (isSpent && spentBy == null) {
+                throw IllegalArgumentException("Spent VTXO must have a spending txId")
+            }
+            normalizeIds()
+        }
+
+        private fun normalizeIds() {
+            script.lowercase()
+            spentBy?.lowercase()
+            settledBy?.lowercase()
+            arkTxId?.lowercase()
+            commitmentTxIds.forEach { it.lowercase() }
+            assets.forEach { it.id.lowercase() }
+        }
+    }
 
     companion object {
         /**

@@ -1,0 +1,149 @@
+{
+  "valid": {
+    "vtxos": [
+      {
+        "comment": "Minimal valid data with empty/null-like defaults and minimal hex inputs",
+        "outpoint": "0000000000000000000000000000000000000000000000000000000000000000:0",
+        "amount": "70000",
+        "script": "",
+        "created_at": "0",
+        "expires_at": "0",
+        "is_preconfirmed": false,
+        "is_swept": false,
+        "is_unrolled": false,
+        "is_spent": false,
+        "spent_by": "",
+        "settled_by": "",
+        "ark_txid": "",
+        "commitment_txids": [],
+        "assets": []
+      },
+      {
+        "comment": "Multiple assets and large arrays to verify collection/loop performance",
+        "outpoint": "3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b4a5e1e4baab89f:12",
+        "amount": "50000",
+        "script": "6a24aa21a9ed",
+        "created_at": "1716380000",
+        "expires_at": "1718972000",
+        "is_preconfirmed": false,
+        "is_swept": false,
+        "is_unrolled": false,
+        "is_spent": false,
+        "spent_by": "",
+        "settled_by": "",
+        "ark_txid": "2cc77ab2127b7afdeda33b4a5e1e4baab89f33a32518a88c31bc87f618f76673e",
+        "commitment_txids": [
+          "1111111111111111111111111111111111111111111111111111111111111111",
+          "2222222222222222222222222222222222222222222222222222222222222222",
+          "3333333333333333333333333333333333333333333333333333333333333333"
+        ],
+        "assets": [
+          {
+            "asset_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+            "amount": "10000"
+          },
+          {
+            "asset_id": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+            "amount": "40000"
+          }
+        ]
+      },
+      {
+        "comment": "Large massive payloads (10KB massive script evaluation)",
+        "outpoint": "8b0d48126f0226e65b1d497c88b723f5454602f31b2e67df1460596377bd83fb:0",
+        "amount": "2100000000000000",
+        "script": "",
+        "created_at": "1716380000",
+        "expires_at": "1716380000",
+        "is_preconfirmed": false,
+        "is_swept": false,
+        "is_unrolled": false,
+        "is_spent": false,
+        "spent_by": "",
+        "settled_by": "",
+        "ark_txid": "",
+        "commitment_txids": [],
+        "assets": []
+      },
+      {
+        "comment": "Mixed Casing validation (Upper/Lower hex values to ensure parser normalizes string inputs)",
+        "outpoint": "4A5E1E4BAAB89F3A32518A88C31BC87F618F76673E2CC77AB2127B7AFDEDA33B:00001",
+        "amount": "0000001000",
+        "script": "AABBCCDD",
+        "created_at": "1716380000",
+        "expires_at": "1716380000",
+        "is_preconfirmed": true,
+        "is_swept": false,
+        "is_unrolled": false,
+        "is_spent": false,
+        "spent_by": "",
+        "settled_by": "",
+        "ark_txid": "F4184FC596403B9D638783CF57ADFE4C75C605F6356FBC91338530E9831E9E16",
+        "commitment_txids": [],
+        "assets": []
+      }
+    ]
+  },
+  "invalid": {
+    "vtxos": [
+      {
+        "comment": "Zero amount VTXO",
+        "outpoint": "0000000000000000000000000000000000000000000000000000000000000000:0",
+        "amount": "0",
+        "script": "",
+        "created_at": "0",
+        "expires_at": "0",
+        "is_preconfirmed": false,
+        "is_swept": false,
+        "is_unrolled": false,
+        "is_spent": false,
+        "spent_by": "",
+        "settled_by": "",
+        "ark_txid": "",
+        "commitment_txids": [],
+        "assets": []
+      },
+      {
+        "comment": "Malformed fields for validation failures (Negative numbers passed as strings)",
+        "outpoint": "invalid_hex_string_short_length:-1",
+        "amount": "-500",
+        "script": "NON-HEX-CHARS-GHIJKLMNO",
+        "created_at": "-1716380000",
+        "expires_at": "-1",
+        "is_preconfirmed": false,
+        "is_swept": false,
+        "is_unrolled": false,
+        "is_spent": false,
+        "spent_by": "malformed",
+        "settled_by": "malformed",
+        "ark_txid": "malformed",
+        "commitment_txids": [
+          "not-a-txid"
+        ],
+        "assets": [
+          {
+            "asset_id": "bad-id",
+            "amount": "-1"
+          }
+        ]
+      },
+      {
+        "comment": "Conflicting State flags (Spent and Unrolled flags are true, but resolving TXIDs are missing or empty)",
+        "outpoint": "9e16f4184fc596403b9d638783cf57adfe4c75c605f6356fbc91338530e9831e:5",
+        "amount": "70000",
+        "script": "00",
+        "created_at": "1716380000",
+        "expires_at": "1716380000",
+        "is_preconfirmed": false,
+        "is_swept": true,
+        "is_unrolled": true,
+        "is_spent": true,
+        "spent_by": "",
+        "settled_by": "",
+        "ark_txid": "",
+        "commitment_txids": [],
+        "assets": []
+      }
+    ]
+  }
+}

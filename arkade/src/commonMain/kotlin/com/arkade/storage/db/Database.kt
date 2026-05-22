@@ -4,11 +4,13 @@ import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
+import com.arkade.storage.db.dao.VtxoDao
 import com.arkade.storage.db.dao.WalletDao
+import com.arkade.storage.db.entities.VtxoEntity
 import com.arkade.storage.db.entities.WalletEntity
 
 @Database(
-    entities = [WalletEntity::class],
+    entities = [WalletEntity::class, VtxoEntity::class],
     version = 1,
     exportSchema = true,
 )
@@ -20,6 +22,8 @@ abstract class Database : RoomDatabase() {
      * @return The [WalletDao] used to read and modify wallet entities in this database.
      */
     abstract fun walletDao(): WalletDao
+
+    abstract fun vtxoDao(): VtxoDao
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")

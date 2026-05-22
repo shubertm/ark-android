@@ -1,5 +1,6 @@
 package com.arkade.core.wallet
 
+import com.arkade.core.Vtxo
 import com.arkade.repositories.WalletRepo
 
 class WalletImpl(
@@ -42,4 +43,8 @@ class WalletImpl(
         lastUsedIndex = index
         runCatching { update() }.onFailure { lastUsedIndex = oldLastUsedIndex }
     }
+
+    override suspend fun saveVtxo(vtxo: Vtxo.Data) = repo.saveVtxo(vtxo)
+
+    override suspend fun getVtxos(): List<Vtxo.Data> = repo.getVtxos()
 }

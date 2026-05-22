@@ -2,16 +2,22 @@ package com.arkade.di
 
 import com.arkade.core.wallet.Storage
 import com.arkade.core.wallet.StorageImpl
+import com.arkade.repositories.VtxoRepo
+import com.arkade.repositories.VtxoRepoImpl
 import com.arkade.repositories.WalletRepo
 import com.arkade.repositories.WalletRepoImpl
+import com.arkade.storage.VtxoStorage
+import com.arkade.storage.VtxoStorageImpl
 import org.koin.dsl.module
 
 val storageModule =
     module {
         factory<Storage> { params -> StorageImpl(params.get()) }
+        factory<VtxoStorage> { params -> VtxoStorageImpl(params.get()) }
     }
 
 val repoModule =
     module {
         factory<WalletRepo> { params -> WalletRepoImpl(params.get()) }
+        factory<VtxoRepo> { params -> VtxoRepoImpl(params.get()) }
     }
