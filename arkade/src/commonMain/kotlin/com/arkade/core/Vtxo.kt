@@ -159,16 +159,48 @@ data class Vtxo(
             if (isSpent && spentBy == null) {
                 throw IllegalArgumentException("Spent VTXO must have a spending txId")
             }
-            normalizeIds()
         }
 
-        private fun normalizeIds() {
-            script.lowercase()
-            spentBy?.lowercase()
-            settledBy?.lowercase()
-            arkTxId?.lowercase()
-            commitmentTxIds.forEach { it.lowercase() }
-            assets.forEach { it.id.lowercase() }
+        companion object {
+            fun normalized(
+                outpoint: OutPoint,
+                amount: BigDecimal,
+                script: String,
+                createdAt: Long,
+                expiresAt: Long,
+                isPreConfirmed: Boolean = false,
+                isSwept: Boolean = false,
+                isUnrolled: Boolean = false,
+                isSpent: Boolean = false,
+                spentBy: String? = null,
+                settledBy: String? = null,
+                arkTxId: String? = null,
+                commitmentTxIds: List<String> = emptyList(),
+                assets: List<Asset> = emptyList(),
+            ): Data {
+                val script = script.lowercase()
+                val spentBy = spentBy?.lowercase()
+                val settledBy = settledBy?.lowercase()
+                val arkTxId = arkTxId?.lowercase()
+                val commitmentTxIds = commitmentTxIds.map { it.lowercase() }
+                val assets = assets.map { Asset(it.id.lowercase(), it.amount) }
+                return Data(
+                    outpoint = outpoint,
+                    amount = amount,
+                    script = script,
+                    createdAt = createdAt,
+                    expiresAt = expiresAt,
+                    isPreConfirmed = isPreConfirmed,
+                    isSwept = isSwept,
+                    isUnrolled = isUnrolled,
+                    isSpent = isSpent,
+                    spentBy = spentBy,
+                    settledBy = settledBy,
+                    arkTxId = arkTxId,
+                    commitmentTxIds = commitmentTxIds,
+                    assets = assets,
+                )
+            }
         }
     }
 

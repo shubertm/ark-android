@@ -36,21 +36,21 @@ data class VtxoEntity(
         val outpoint = OutPoint(TxId(txId), index.toLong())
         val commitmentTxIds = commitmentTxIdsJson?.let { Json.decodeFromString<List<String>>(it) } ?: emptyList()
         val assets = assetsJson?.let { Json.decodeFromString<List<Asset>>(it) } ?: emptyList()
-        return Vtxo.Data(
-            outpoint,
-            amount.toBigDecimal(),
-            script,
-            createdAt,
-            expiresAt,
-            isPreConfirmed,
-            isSwept,
-            isUnrolled,
-            isSpent,
-            spentByTxId,
-            settledByTxId,
-            arkTxId,
-            commitmentTxIds,
-            assets,
+        return Vtxo.Data.normalized(
+            outpoint = outpoint,
+            amount = amount.toBigDecimal(),
+            script = script,
+            createdAt = createdAt,
+            expiresAt = expiresAt,
+            isPreConfirmed = isPreConfirmed,
+            isSwept = isSwept,
+            isUnrolled = isUnrolled,
+            isSpent = isSpent,
+            spentBy = spentByTxId,
+            settledBy = settledByTxId,
+            arkTxId = arkTxId,
+            commitmentTxIds = commitmentTxIds,
+            assets = assets,
         )
     }
 
@@ -60,21 +60,21 @@ data class VtxoEntity(
             val commitmentTxIds = Json.encodeToString(vtxo.commitmentTxIds)
             val assets = Json.encodeToString(vtxo.assets)
             return VtxoEntity(
-                outpoint,
-                vtxo.script,
-                vtxo.spentBy,
-                vtxo.settledBy,
-                vtxo.amount.longValue(),
-                vtxo.createdAt,
-                vtxo.expiresAt,
-                vtxo.expiresAt.toBlockHeight(),
-                vtxo.isPreConfirmed,
-                vtxo.isUnrolled,
-                vtxo.isSwept,
-                vtxo.isSpent,
-                commitmentTxIds,
-                vtxo.arkTxId,
-                assets,
+                outpoint = outpoint,
+                script = vtxo.script,
+                spentByTxId = vtxo.spentBy,
+                settledByTxId = vtxo.settledBy,
+                amount = vtxo.amount.longValue(),
+                createdAt = vtxo.createdAt,
+                expiresAt = vtxo.expiresAt,
+                expiresAtHeight = vtxo.expiresAt.toBlockHeight(),
+                isPreConfirmed = vtxo.isPreConfirmed,
+                isUnrolled = vtxo.isUnrolled,
+                isSwept = vtxo.isSwept,
+                isSpent = vtxo.isSpent,
+                commitmentTxIdsJson = commitmentTxIds,
+                arkTxId = vtxo.arkTxId,
+                assetsJson = assets,
             )
         }
     }

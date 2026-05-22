@@ -251,8 +251,9 @@ class HDWalletTest : WalletTest() {
                     testDb = testDb,
                 )
 
-            val vtxosJson = validTestVtxosJsonArray
-            vtxosJson?.forEachIndexed { index, vtxoJson ->
+            val vtxosJson = assertNotNull(validTestVtxosJsonArray, "Missing valid test VTXOs")
+
+            vtxosJson.forEachIndexed { index, vtxoJson ->
                 val (vtxo, comment) = vtxoFromJson(vtxoJson)
                 wallet.saveVtxo(vtxo)
                 val vtxos = wallet.getVtxos()
@@ -275,16 +276,15 @@ class HDWalletTest : WalletTest() {
                     testDb = testDb,
                 )
 
-            val vtxosJson = invalidTestVtxosJsonArray
-            vtxosJson?.forEach { vtxoJson ->
+            val vtxosJson = assertNotNull(invalidTestVtxosJsonArray, "Missing invalid test VTXOs")
+            vtxosJson.forEach { vtxoJson ->
                 val comment =
                     vtxoJson.jsonObject["comment"]
                         ?.jsonPrimitive
                         .toString()
                         .removeSurrounding("\"")
                 assertFailsWith<IllegalArgumentException> {
-                    val (vtxo, _) = vtxoFromJson(vtxoJson)
-                    wallet.saveVtxo(vtxo)
+                    val (_, _) = vtxoFromJson(vtxoJson)
                 }
                 Log.info(LOG_TAG, "✓ PASSED: $comment\n")
             }
@@ -304,7 +304,7 @@ class HDWalletTest : WalletTest() {
                 .removeSurrounding("\"")
                 .split(":")
         val outpoint = OutPoint(TxId(txId), index.toLong())
-        val script = json.jsonObject["script"]?.jsonPrimitive?.toString()!!
+        val script = json.jsonObject["script"]?.jsonPrimitive?.content!!
         val amount = json.jsonObject["amount"]?.jsonPrimitive?.long!!
         val createdAt = json.jsonObject["created_at"]?.jsonPrimitive?.long!!
         val expiresAt = json.jsonObject["expires_at"]?.jsonPrimitive?.long!!
@@ -316,30 +316,27 @@ class HDWalletTest : WalletTest() {
         val spentBy =
             json.jsonObject["spent_by"]
                 ?.jsonPrimitive
-                .toString()
-                .removeSurrounding("\"")
-                .ifEmpty { null }
+                ?.content
+                ?.ifEmpty { null }
         val settledBy =
             json.jsonObject["settled_by"]
                 ?.jsonPrimitive
-                .toString()
-                .removeSurrounding("\"")
-                .ifEmpty { null }
+                ?.content
+                ?.ifEmpty { null }
         val arkTxId =
             json.jsonObject["ark_txid"]
                 ?.jsonPrimitive
-                .toString()
-                .removeSurrounding("\"")
-                .ifEmpty { null }
+                ?.content
+                ?.ifEmpty { null }
         val commitmentTxIds =
-            json.jsonObject["commitment_txids"]?.jsonArray?.map { it.jsonPrimitive.toString().removeSurrounding("\"") }
+            json.jsonObject["commitment_txids"]?.jsonArray?.map { it.jsonPrimitive.content }
                 ?: emptyList()
         val assets =
             json.jsonObject["assets"]?.jsonArray?.map { assetJson ->
                 Json.decodeFromJsonElement<Asset>(assetJson)
             } ?: emptyList()
 
-        return Vtxo.Data(
+        return Vtxo.Data.normalized(
             outpoint,
             amount.toBigDecimal(),
             script,
