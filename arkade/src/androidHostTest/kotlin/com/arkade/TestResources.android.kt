@@ -1,9 +1,11 @@
 package com.arkade
 
 actual fun readJsonFile(name: String) =
-    Thread
-        .currentThread()
-        .contextClassLoader!!
-        .getResourceAsStream(name)!!
-        .bufferedReader()
-        .readText()
+    requireNotNull(
+        Thread
+            .currentThread()
+            .contextClassLoader
+            ?.getResourceAsStream(name),
+    ) {
+        "File $name not found in resources"
+    }.bufferedReader().readText()
