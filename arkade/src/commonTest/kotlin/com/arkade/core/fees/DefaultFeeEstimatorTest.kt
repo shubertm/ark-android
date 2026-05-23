@@ -1,6 +1,7 @@
 package com.arkade.core.fees
 
 import com.arkade.core.bitcoin.Coin
+import com.arkade.readJsonFile
 import com.arkade.utils.Log
 import com.arkade.utils.drawLine
 import com.arkade.utils.error
@@ -13,9 +14,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
-import okio.FileSystem
-import okio.Path.Companion.toPath
-import okio.SYSTEM
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -26,16 +24,8 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 class DefaultFeeEstimatorTest : com.arkade.Test() {
-    val validTestDataPath = "./src/commonTest/kotlin/com/arkade/fixtures/arkfee-valid.json".toPath()
-    val invalidTestDataPath = "./src/commonTest/kotlin/com/arkade/fixtures/arkfee-invalid.json".toPath()
-    val validTestData =
-        FileSystem.SYSTEM.read(validTestDataPath) {
-            Json.parseToJsonElement(this.readUtf8())
-        }
-    val invalidTestData =
-        FileSystem.SYSTEM.read(invalidTestDataPath) {
-            Json.parseToJsonElement(this.readUtf8())
-        }
+    val validTestData = Json.parseToJsonElement(readJsonFile("fixtures/arkfee-valid.json"))
+    val invalidTestData = Json.parseToJsonElement(readJsonFile("fixtures/arkfee-invalid.json"))
 
     @Test
     fun `fail on invalid fee info`() {
