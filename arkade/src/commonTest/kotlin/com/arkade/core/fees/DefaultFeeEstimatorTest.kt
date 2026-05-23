@@ -1,6 +1,7 @@
 package com.arkade.core.fees
 
 import com.arkade.core.bitcoin.Coin
+import com.arkade.readJsonFile
 import com.arkade.utils.Log
 import com.arkade.utils.drawLine
 import com.arkade.utils.error
@@ -13,9 +14,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
-import okio.FileSystem
-import okio.Path.Companion.toPath
-import okio.SYSTEM
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -26,19 +24,11 @@ import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
 class DefaultFeeEstimatorTest : com.arkade.Test() {
-    val validTestDataPath = "./src/commonTest/kotlin/com/arkade/fixtures/arkfee-valid.json".toPath()
-    val invalidTestDataPath = "./src/commonTest/kotlin/com/arkade/fixtures/arkfee-invalid.json".toPath()
-    val validTestData =
-        FileSystem.SYSTEM.read(validTestDataPath) {
-            Json.parseToJsonElement(this.readUtf8())
-        }
-    val invalidTestData =
-        FileSystem.SYSTEM.read(invalidTestDataPath) {
-            Json.parseToJsonElement(this.readUtf8())
-        }
+    val validTestData = Json.parseToJsonElement(readJsonFile("fixtures/arkfee-valid.json"))
+    val invalidTestData = Json.parseToJsonElement(readJsonFile("fixtures/arkfee-invalid.json"))
 
     @Test
-    fun `fail on invalid fee info`() {
+    fun fail_on_invalid_fee_info() {
         val configs = invalidTestData.jsonObject["invalidConfigs"]?.jsonArray!!
 
         for (config in configs) {
@@ -97,7 +87,7 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
     }
 
     @Test
-    fun `should return zero on estimate on-chain input program missing`() {
+    fun should_return_zero_on_estimate_on_chain_input_program_missing() {
         val intentFeeInfo =
             IntentFeeInfo(
                 null,
@@ -113,7 +103,7 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
     }
 
     @Test
-    fun `should estimate on-chain input fee correctly`() {
+    fun should_estimate_on_chain_input_fee_correctly() {
         val onChainInputProgramData = validTestData.jsonObject["evalOnchainInput"]?.jsonArray!!
         Log.info(LOG_TAG, "On-chain Input Fee Estimation")
         Log.drawLine()
@@ -153,7 +143,7 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
     }
 
     @Test
-    fun `should return zero on estimate off-chain input program missing`() {
+    fun should_return_zero_on_estimate_off_chain_input_program_missing() {
         val intentFeeInfo =
             IntentFeeInfo(
                 null,
@@ -181,7 +171,7 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
     }
 
     @Test
-    fun `should estimate off-chain input fee correctly`() {
+    fun should_estimate_off_chain_input_fee_correctly() {
         val onChainInputProgramData = validTestData.jsonObject["evalOffchainInput"]?.jsonArray!!
         Log.info(LOG_TAG, "Off-chain Input Fee Estimation")
         Log.drawLine()
@@ -257,7 +247,7 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
     }
 
     @Test
-    fun `should return zero on estimate on-chain output program missing`() {
+    fun should_return_zero_on_estimate_on_chain_output_program_missing() {
         val intentFeeInfo =
             IntentFeeInfo(
                 null,
@@ -279,7 +269,7 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
     }
 
     @Test
-    fun `should estimate on-chain output fee correctly`() {
+    fun should_estimate_on_chain_output_fee_correctly() {
         val onChainInputProgramData = validTestData.jsonObject["evalOnchainOutput"]?.jsonArray!!
         Log.info(LOG_TAG, "On-chain Output Fee Estimation")
         Log.drawLine()
@@ -331,7 +321,7 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
     }
 
     @Test
-    fun `should return zero on estimate off-chain output program missing`() {
+    fun should_return_zero_on_estimate_off_chain_output_program_missing() {
         val intentFeeInfo =
             IntentFeeInfo(
                 null,
@@ -353,7 +343,7 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
     }
 
     @Test
-    fun `should estimate off-chain output fee correctly`() {
+    fun should_estimate_off_chain_output_fee_correctly() {
         val onChainInputProgramData = validTestData.jsonObject["evalOffchainOutput"]?.jsonArray!!
         Log.info(LOG_TAG, "Off-chain Output Fee Estimation")
         Log.drawLine()
@@ -405,7 +395,7 @@ class DefaultFeeEstimatorTest : com.arkade.Test() {
     }
 
     @Test
-    fun `should estimate fees correctly`() {
+    fun should_estimate_fees_correctly() {
         val onChainInputProgramData = validTestData.jsonObject["eval"]?.jsonArray!!
         Log.info(LOG_TAG, "Fee Estimation")
         Log.drawLine()
