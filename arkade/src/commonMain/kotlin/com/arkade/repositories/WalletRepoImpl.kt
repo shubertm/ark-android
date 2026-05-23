@@ -1,5 +1,6 @@
 package com.arkade.repositories
 
+import com.arkade.core.Vtxo
 import com.arkade.core.wallet.Storage
 import com.arkade.core.wallet.Wallet
 import com.arkade.di.ArkadeDI
@@ -10,6 +11,7 @@ internal class WalletRepoImpl(
     private val testDb: Database? = null,
 ) : WalletRepo {
     private val storage: Storage = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
+    override val vtxoRepo: VtxoRepo = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
 
     /**
      * Persists the given wallet into the repository's storage.
@@ -67,4 +69,8 @@ internal class WalletRepoImpl(
     override suspend fun updateWallet(wallet: Wallet) {
         storage.updateWallet(wallet.toRoomEntity())
     }
+
+    override suspend fun saveVtxo(vtxo: Vtxo.Data) = vtxoRepo.save(vtxo)
+
+    override suspend fun getVtxos(): List<Vtxo.Data> = vtxoRepo.getAll()
 }

@@ -2,6 +2,7 @@ package com.arkade.core.wallet
 
 import com.arkade.core.ArkAddress
 import com.arkade.core.ArkServerInfo
+import com.arkade.core.Vtxo
 import com.arkade.core.bitcoin.Network
 import com.arkade.di.ArkadeDI
 import com.arkade.repositories.WalletRepo
@@ -93,6 +94,10 @@ interface Wallet {
             null
         }
     }
+
+    suspend fun saveVtxo(vtxo: Vtxo.Data)
+
+    suspend fun getVtxos(): List<Vtxo.Data>
 
     enum class Type {
         HD,

@@ -1,0 +1,19 @@
+package com.arkade.storage.db.dao
+
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import com.arkade.storage.db.entities.VtxoEntity
+
+@Dao
+interface VtxoDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun save(vtxo: VtxoEntity)
+
+    @Query("SELECT * FROM vtxos")
+    suspend fun getAll(): List<VtxoEntity>
+
+    @Query("SELECT * FROM vtxos WHERE outpoint = :outpoint")
+    suspend fun getByOutPoint(outpoint: String): List<VtxoEntity>
+}

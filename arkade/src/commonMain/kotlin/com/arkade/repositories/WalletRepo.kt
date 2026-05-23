@@ -1,8 +1,11 @@
 package com.arkade.repositories
 
+import com.arkade.core.Vtxo
 import com.arkade.core.wallet.Wallet
 
 interface WalletRepo {
+    val vtxoRepo: VtxoRepo
+
     /**
      * Persists the given wallet in the repository.
      *
@@ -48,4 +51,8 @@ interface WalletRepo {
      * existing record to modify.
      */
     suspend fun updateWallet(wallet: Wallet)
+
+    suspend fun saveVtxo(vtxo: Vtxo.Data)
+
+    suspend fun getVtxos(): List<Vtxo.Data>
 }

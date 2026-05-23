@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "3fb7ec817d38636bae8deb93ee092f63",
+    "identityHash": "0492606769d89b61afec7f3fa7400d9e",
     "entities": [
       {
         "tableName": "wallets",
@@ -66,11 +66,108 @@
             "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_wallets_fingerprint` ON `${TABLE_NAME}` (`fingerprint`)"
           }
         ]
+      },
+      {
+        "tableName": "vtxos",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`outpoint` TEXT NOT NULL, `script` TEXT NOT NULL, `spentByTxId` TEXT, `settledByTxId` TEXT, `amount` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `expiresAt` INTEGER NOT NULL, `expiresAtHeight` INTEGER NOT NULL, `isPreConfirmed` INTEGER NOT NULL, `isUnrolled` INTEGER NOT NULL, `isSwept` INTEGER NOT NULL, `isSpent` INTEGER NOT NULL, `commitmentTxIdsJson` TEXT, `arkTxId` TEXT, `assetsJson` TEXT, PRIMARY KEY(`outpoint`))",
+        "fields": [
+          {
+            "fieldPath": "outpoint",
+            "columnName": "outpoint",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "script",
+            "columnName": "script",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "spentByTxId",
+            "columnName": "spentByTxId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "settledByTxId",
+            "columnName": "settledByTxId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "amount",
+            "columnName": "amount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiresAt",
+            "columnName": "expiresAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expiresAtHeight",
+            "columnName": "expiresAtHeight",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isPreConfirmed",
+            "columnName": "isPreConfirmed",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isUnrolled",
+            "columnName": "isUnrolled",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSwept",
+            "columnName": "isSwept",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isSpent",
+            "columnName": "isSpent",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "commitmentTxIdsJson",
+            "columnName": "commitmentTxIdsJson",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "arkTxId",
+            "columnName": "arkTxId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "assetsJson",
+            "columnName": "assetsJson",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "outpoint"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3fb7ec817d38636bae8deb93ee092f63')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '0492606769d89b61afec7f3fa7400d9e')"
     ]
   }
 }

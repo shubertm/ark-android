@@ -344,7 +344,7 @@ internal fun ark.v1.Vtxo.getVtxoData(): Vtxo.Data {
         assets.filter { asset -> asset.asset_id.isNotBlank() }.map { asset ->
             Asset(asset.asset_id, BigDecimal.fromLong(asset.amount))
         }
-    return Vtxo.Data(
+    return Vtxo.Data.normalized(
         outpoint,
         BigDecimal.fromLong(amount),
         script,

@@ -80,6 +80,7 @@ kotlin {
                 implementation(libs.secp256k1.kmp)
                 implementation(libs.bignum)
                 implementation(libs.kotlinx.serialization.protobuf)
+                implementation(libs.kotlinx.serialization.json)
                 implementation(libs.square.wire.runtime)
                 implementation(libs.square.wire.grpc.client)
                 implementation(libs.androidx.room.runtime)

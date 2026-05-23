@@ -5,6 +5,15 @@ import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import fr.acinq.bitcoin.ByteVector32
 import fr.acinq.bitcoin.PublicKey
 import fr.acinq.bitcoin.XonlyPublicKey
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonUnquotedLiteral
 
 /**
  * The unspendable x-only public key, nobody knows the private key. Any funds locked to this public key cannot be spent,
@@ -44,4 +53,34 @@ fun String.toXOnlyPubKey(): XonlyPublicKey {
         return PublicKey.parse(bytes).xOnly()
     }
     throw IllegalArgumentException("Invalid public key: $this")
+}
+
+fun Long.toBlockHeight(): Long = this / 600
+
+object Json {
+    class BigDecimalSerializer : KSerializer<BigDecimal> {
+        override val descriptor: SerialDescriptor =
+            PrimitiveSerialDescriptor("BigDecimal", PrimitiveKind.STRING)
+
+        override fun deserialize(decoder: Decoder): BigDecimal {
+            val value =
+                if (decoder is JsonDecoder) {
+                    decoder.decodeJsonElement()
+                } else {
+                    decoder.decodeString()
+                }
+            return value.toString().removeSurrounding("\"").toBigDecimal()
+        }
+
+        override fun serialize(
+            encoder: Encoder,
+            value: BigDecimal,
+        ) {
+            if (encoder is JsonEncoder) {
+                encoder.encodeJsonElement(JsonUnquotedLiteral(value.toPlainString()))
+            } else {
+                encoder.encodeString(value.toPlainString())
+            }
+        }
+    }
 }
