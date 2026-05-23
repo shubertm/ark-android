@@ -8,9 +8,9 @@ import com.arkade.core.bitcoin.Hrp
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.bitcoin.WitnessVersion
 import com.arkade.core.toXOnlyPubKey
-import com.arkade.core.wallet.HDWalletTest.Companion.LOG_TAG
 import com.arkade.core.wallet.Wallet.Companion.masterKeyFromSecret
 import com.arkade.di.ArkadeDI
+import com.arkade.readJsonFile
 import com.arkade.repositories.WalletRepo
 import com.arkade.storage.db.Database
 import com.arkade.utils.Log
@@ -27,9 +27,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
-import okio.FileSystem
-import okio.Path.Companion.toPath
-import okio.SYSTEM
 import org.koin.core.parameter.parametersOf
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -84,11 +81,7 @@ fun getArkServerInfo(): ArkServerInfo =
 class SingleKeyWalletTest : WalletTest() {
     private val serverInfo = getArkServerInfo()
 
-    val testVtxoDataPath = "./src/commonTest/kotlin/com/arkade/fixtures/vtxo-data.json".toPath()
-    val testVtxoData =
-        FileSystem.SYSTEM.read(testVtxoDataPath) {
-            Json.parseToJsonElement(readUtf8())
-        }
+    val testVtxoData = Json.parseToJsonElement(readJsonFile("fixtures/vtxo-data.json"))
     val validTestVtxosJsonArray = testVtxoData.jsonObject["valid"]?.jsonObject["vtxos"]?.jsonArray
     val invalidTestVtxosJsonArray = testVtxoData.jsonObject["invalid"]?.jsonObject["vtxos"]?.jsonArray
 
@@ -202,11 +195,7 @@ class SingleKeyWalletTest : WalletTest() {
 class HDWalletTest : WalletTest() {
     private val serverInfo = getArkServerInfo()
 
-    val testVtxoDataPath = "./src/commonTest/kotlin/com/arkade/fixtures/vtxo-data.json".toPath()
-    val testVtxoData =
-        FileSystem.SYSTEM.read(testVtxoDataPath) {
-            Json.parseToJsonElement(readUtf8())
-        }
+    val testVtxoData = Json.parseToJsonElement(readJsonFile("fixtures/vtxo-data.json"))
     val validTestVtxosJsonArray = testVtxoData.jsonObject["valid"]?.jsonObject["vtxos"]?.jsonArray
 
     @Test
