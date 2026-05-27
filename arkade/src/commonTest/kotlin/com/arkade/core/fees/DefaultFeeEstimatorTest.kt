@@ -1,6 +1,12 @@
 package com.arkade.core.fees
 
 import com.arkade.core.bitcoin.Coin
+import com.arkade.readJsonFile
+import com.arkade.utils.Log
+import com.arkade.utils.drawLine
+import com.arkade.utils.error
+import com.arkade.utils.info
+import com.arkade.utils.success
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.double
@@ -8,9 +14,6 @@ import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
-import okio.FileSystem
-import okio.Path.Companion.toPath
-import okio.SYSTEM
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -20,20 +23,12 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.DurationUnit
 import kotlin.time.toDuration
 
-class DefaultFeeEstimatorTest {
-    val validTestDataPath = "./src/commonTest/kotlin/com/arkade/fixtures/arkfee-valid.json".toPath()
-    val invalidTestDataPath = "./src/commonTest/kotlin/com/arkade/fixtures/arkfee-invalid.json".toPath()
-    val validTestData =
-        FileSystem.SYSTEM.read(validTestDataPath) {
-            Json.parseToJsonElement(this.readUtf8())
-        }
-    val invalidTestData =
-        FileSystem.SYSTEM.read(invalidTestDataPath) {
-            Json.parseToJsonElement(this.readUtf8())
-        }
+class DefaultFeeEstimatorTest : com.arkade.Test() {
+    val validTestData = Json.parseToJsonElement(readJsonFile("fixtures/arkfee-valid.json"))
+    val invalidTestData = Json.parseToJsonElement(readJsonFile("fixtures/arkfee-invalid.json"))
 
     @Test
-    fun `fail on invalid fee info`() {
+    fun fail_on_invalid_fee_info() {
         val configs = invalidTestData.jsonObject["invalidConfigs"]?.jsonArray!!
 
         for (config in configs) {
@@ -92,7 +87,7 @@ class DefaultFeeEstimatorTest {
     }
 
     @Test
-    fun `should return zero on estimate on-chain input program missing`() {
+    fun should_return_zero_on_estimate_on_chain_input_program_missing() {
         val intentFeeInfo =
             IntentFeeInfo(
                 null,
@@ -108,10 +103,10 @@ class DefaultFeeEstimatorTest {
     }
 
     @Test
-    fun `should estimate on-chain input fee correctly`() {
+    fun should_estimate_on_chain_input_fee_correctly() {
         val onChainInputProgramData = validTestData.jsonObject["evalOnchainInput"]?.jsonArray!!
-        println("On-chain Input Fee Estimation")
-        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        Log.info(LOG_TAG, "On-chain Input Fee Estimation")
+        Log.drawLine()
         for (programData in onChainInputProgramData) {
             val name = programData.jsonObject["name"]!!.toString()
             val program = programData.jsonObject["program"]!!.toString().removeSurrounding("\"")
@@ -125,8 +120,6 @@ class DefaultFeeEstimatorTest {
                 )
             val feeEstimator = DefaultFeeEstimator(intentInfo)
 
-            println()
-
             for (case in cases) {
                 val caseName = case.jsonObject["name"]!!.toString().removeSurrounding("\"")
                 val inputAmount =
@@ -138,19 +131,19 @@ class DefaultFeeEstimatorTest {
                     val fee = feeEstimator.estimateOnChainInputFee(OnChainInput(Coin.fromSatoshi(inputAmount.toLong())))
                     assertEquals(expectedFeeAmount.toBigDecimal(), fee.coin.amount)
                 }.onFailure {
-                    println("   ❌ FAILED: $caseName")
+                    Log.error(LOG_TAG, "   ❌ FAILED: $caseName")
                     throw it
                 }
-                println("   ✓ PASSED: $caseName")
+                Log.success(LOG_TAG, caseName, 1)
             }
 
-            println("✓ PASSED: $name")
+            Log.success(LOG_TAG, name)
         }
-        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+        Log.drawLine()
     }
 
     @Test
-    fun `should return zero on estimate off-chain input program missing`() {
+    fun should_return_zero_on_estimate_off_chain_input_program_missing() {
         val intentFeeInfo =
             IntentFeeInfo(
                 null,
@@ -178,10 +171,10 @@ class DefaultFeeEstimatorTest {
     }
 
     @Test
-    fun `should estimate off-chain input fee correctly`() {
+    fun should_estimate_off_chain_input_fee_correctly() {
         val onChainInputProgramData = validTestData.jsonObject["evalOffchainInput"]?.jsonArray!!
-        println("Off-chain Input Fee Estimation")
-        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        Log.info(LOG_TAG, "Off-chain Input Fee Estimation")
+        Log.drawLine()
         for (programData in onChainInputProgramData) {
             val name = programData.jsonObject["name"]!!.toString()
             val program = programData.jsonObject["program"]!!.toString().removeSurrounding("\"")
@@ -194,8 +187,6 @@ class DefaultFeeEstimatorTest {
                     null,
                 )
             val feeEstimator = DefaultFeeEstimator(intentInfo)
-
-            println()
 
             for (case in cases) {
                 val caseName = case.jsonObject["name"]!!.toString().removeSurrounding("\"")
@@ -244,19 +235,19 @@ class DefaultFeeEstimatorTest {
                     val fee = feeEstimator.estimateOffChainInputFee(offChainInput)
                     assertEquals(expectedFeeAmount.toBigDecimal(), fee.coin.amount)
                 }.onFailure {
-                    println("   ❌ FAILED: $caseName")
+                    Log.error(LOG_TAG, "   ❌ FAILED: $caseName")
                     throw it
                 }
-                println("   ✓ PASSED: $caseName")
+                Log.success(LOG_TAG, caseName, 1)
             }
 
-            println("✓ PASSED: $name")
+            Log.success(LOG_TAG, name)
         }
-        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+        Log.drawLine()
     }
 
     @Test
-    fun `should return zero on estimate on-chain output program missing`() {
+    fun should_return_zero_on_estimate_on_chain_output_program_missing() {
         val intentFeeInfo =
             IntentFeeInfo(
                 null,
@@ -278,10 +269,10 @@ class DefaultFeeEstimatorTest {
     }
 
     @Test
-    fun `should estimate on-chain output fee correctly`() {
+    fun should_estimate_on_chain_output_fee_correctly() {
         val onChainInputProgramData = validTestData.jsonObject["evalOnchainOutput"]?.jsonArray!!
-        println("On-chain Output Fee Estimation")
-        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        Log.info(LOG_TAG, "On-chain Output Fee Estimation")
+        Log.drawLine()
         for (programData in onChainInputProgramData) {
             val name = programData.jsonObject["name"]!!.toString()
             val program = programData.jsonObject["program"]!!.toString().removeSurrounding("\"")
@@ -294,8 +285,6 @@ class DefaultFeeEstimatorTest {
                     null,
                 )
             val feeEstimator = DefaultFeeEstimator(intentInfo)
-
-            println()
 
             for (case in cases) {
                 val caseName = case.jsonObject["name"]!!.toString().removeSurrounding("\"")
@@ -320,19 +309,19 @@ class DefaultFeeEstimatorTest {
                     val fee = feeEstimator.estimateOnChainOutputFee(onChainOutput)
                     assertEquals(expectedFeeAmount.toBigDecimal(), fee.coin.amount)
                 }.onFailure {
-                    println("   ❌ FAILED: $caseName")
+                    Log.error(LOG_TAG, "   ❌ FAILED: $caseName")
                     throw it
                 }
-                println("   ✓ PASSED: $caseName")
+                Log.success(LOG_TAG, caseName, 1)
             }
 
-            println("✓ PASSED: $name")
+            Log.success(LOG_TAG, name)
         }
-        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+        Log.drawLine()
     }
 
     @Test
-    fun `should return zero on estimate off-chain output program missing`() {
+    fun should_return_zero_on_estimate_off_chain_output_program_missing() {
         val intentFeeInfo =
             IntentFeeInfo(
                 null,
@@ -354,10 +343,10 @@ class DefaultFeeEstimatorTest {
     }
 
     @Test
-    fun `should estimate off-chain output fee correctly`() {
+    fun should_estimate_off_chain_output_fee_correctly() {
         val onChainInputProgramData = validTestData.jsonObject["evalOffchainOutput"]?.jsonArray!!
-        println("Off-chain Output Fee Estimation")
-        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        Log.info(LOG_TAG, "Off-chain Output Fee Estimation")
+        Log.drawLine()
         for (programData in onChainInputProgramData) {
             val name = programData.jsonObject["name"]!!.toString()
             val program = programData.jsonObject["program"]!!.toString().removeSurrounding("\"")
@@ -370,8 +359,6 @@ class DefaultFeeEstimatorTest {
                     program,
                 )
             val feeEstimator = DefaultFeeEstimator(intentInfo)
-
-            println()
 
             for (case in cases) {
                 val caseName = case.jsonObject["name"]!!.toString().removeSurrounding("\"")
@@ -396,24 +383,24 @@ class DefaultFeeEstimatorTest {
                     val fee = feeEstimator.estimateOffChainOutputFee(onChainOutput)
                     assertEquals(expectedFeeAmount.toBigDecimal(), fee.coin.amount)
                 }.onFailure {
-                    println("   ❌ FAILED: $caseName")
+                    Log.error(LOG_TAG, "   ❌ FAILED: $caseName")
                     throw it
                 }
-                println("   ✓ PASSED: $caseName")
+                Log.success(LOG_TAG, caseName, 1)
             }
 
-            println("✓ PASSED: $name")
+            Log.success(LOG_TAG, name)
         }
-        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+        Log.drawLine()
     }
 
     @Test
-    fun `should estimate fees correctly`() {
+    fun should_estimate_fees_correctly() {
         val onChainInputProgramData = validTestData.jsonObject["eval"]?.jsonArray!!
-        println("Fee Estimation")
-        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+        Log.info(LOG_TAG, "Fee Estimation")
+        Log.drawLine()
         for (programData in onChainInputProgramData) {
-            val name = programData.jsonObject["name"]!!.toString()
+            val name = programData.jsonObject["name"]!!.toString().removeSurrounding("\"")
             val onChainInputProgram = programData.jsonObject["onchainInputProgram"]?.toString()?.removeSurrounding("\"")
             val offChainInputProgram = programData.jsonObject["offchainInputProgram"]?.toString()?.removeSurrounding("\"")
             val onChainOutputProgram = programData.jsonObject["onchainOutputProgram"]?.toString()?.removeSurrounding("\"")
@@ -427,8 +414,6 @@ class DefaultFeeEstimatorTest {
                     offChainOutputProgram,
                 )
             val feeEstimator = DefaultFeeEstimator(intentInfo)
-
-            println()
 
             for (case in cases) {
                 val caseName = case.jsonObject["name"]!!.toString().removeSurrounding("\"")
@@ -489,14 +474,18 @@ class DefaultFeeEstimatorTest {
                         )
                     assertEquals(expectedFeeAmount.toBigDecimal(), fee.coin.amount)
                 }.onFailure {
-                    println("   ❌ FAILED: $caseName")
+                    Log.error(LOG_TAG, "   ❌ FAILED: $caseName")
                     throw it
                 }
-                println("   ✓ PASSED: $caseName")
+                Log.success(LOG_TAG, caseName, 1)
             }
 
-            println("✓ PASSED: $name")
+            Log.success(LOG_TAG, name)
         }
-        println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n")
+        Log.drawLine()
+    }
+
+    companion object {
+        private const val LOG_TAG = "FeeEstimatorTest"
     }
 }

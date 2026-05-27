@@ -12,6 +12,7 @@ import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.Script
 import fr.acinq.bitcoin.ScriptTree
 import fr.acinq.bitcoin.XonlyPublicKey
+import kotlinx.serialization.Serializable
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -137,6 +138,7 @@ data class Vtxo(
      */
     data class Data(
         val outpoint: OutPoint,
+        @Serializable(Json.BigDecimalSerializer::class)
         val amount: BigDecimal,
         val script: String,
         val createdAt: Long,
@@ -145,12 +147,68 @@ data class Vtxo(
         val isSwept: Boolean = false,
         val isUnrolled: Boolean = false,
         val isSpent: Boolean = false,
-        val spentBy: String = "",
-        val settledBy: String = "",
-        val arkTxId: String = "",
+        val spentBy: String? = null,
+        val settledBy: String? = null,
+        val arkTxId: String? = null,
         val commitmentTxIds: List<String> = emptyList(),
         val assets: List<Asset> = emptyList(),
-    )
+    ) {
+        init {
+            OutPoint.validate(outpoint)
+            require(amount > BigDecimal.ZERO) { "Amount must be positive" }
+            require(script == script.lowercase()) { "Script must be lowercase" }
+            require(spentBy == spentBy?.lowercase()) { "TxId must be lowercase" }
+            require(settledBy == settledBy?.lowercase()) { "TxId must be lowercase" }
+            require(arkTxId == arkTxId?.lowercase()) { "TxId must be lowercase" }
+            commitmentTxIds.forEach { require(it == it.lowercase()) { "TxId must be lowercase" } }
+            assets.forEach { require(it.id == it.id.lowercase()) { "Asset id must be lowercase" } }
+            if (isSpent && spentBy == null) {
+                throw IllegalArgumentException("Spent VTXO must have a spending txId")
+            }
+        }
+
+        companion object {
+            fun normalized(
+                outpoint: OutPoint,
+                amount: BigDecimal,
+                script: String,
+                createdAt: Long,
+                expiresAt: Long,
+                isPreConfirmed: Boolean = false,
+                isSwept: Boolean = false,
+                isUnrolled: Boolean = false,
+                isSpent: Boolean = false,
+                spentBy: String? = null,
+                settledBy: String? = null,
+                arkTxId: String? = null,
+                commitmentTxIds: List<String> = emptyList(),
+                assets: List<Asset> = emptyList(),
+            ): Data {
+                val script = script.lowercase()
+                val spentBy = spentBy?.takeIf { it.isNotBlank() }?.lowercase()
+                val settledBy = settledBy?.takeIf { it.isNotBlank() }?.lowercase()
+                val arkTxId = arkTxId?.takeIf { it.isNotBlank() }?.lowercase()
+                val commitmentTxIds = commitmentTxIds.map { it.lowercase() }
+                val assets = assets.map { Asset(it.id.lowercase(), it.amount) }
+                return Data(
+                    outpoint = outpoint,
+                    amount = amount,
+                    script = script,
+                    createdAt = createdAt,
+                    expiresAt = expiresAt,
+                    isPreConfirmed = isPreConfirmed,
+                    isSwept = isSwept,
+                    isUnrolled = isUnrolled,
+                    isSpent = isSpent,
+                    spentBy = spentBy,
+                    settledBy = settledBy,
+                    arkTxId = arkTxId,
+                    commitmentTxIds = commitmentTxIds,
+                    assets = assets,
+                )
+            }
+        }
+    }
 
     companion object {
         /**

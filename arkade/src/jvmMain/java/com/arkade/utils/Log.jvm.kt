@@ -1,39 +1,34 @@
 package com.arkade.utils
 
-import java.util.logging.Level
-import java.util.logging.Logger
+private const val RESET = "\u001B[0m"
+private const val BLUE = "\u001B[34m"
+private const val GREEN = "\u001B[32m"
+private const val YELLOW = "\u001B[33m"
+private const val RED = "\u001B[31m"
 
 actual fun Log.debug(
     tag: String,
     message: String,
-) {
-    Logger.getLogger(tag).log(Level.FINE, message)
-}
+) = println("$GREEN D/$tag: $message$RESET")
 
 actual fun Log.info(
     tag: String,
     message: String,
-) {
-    Logger.getLogger(tag).info(message)
-}
+) = println("I/$tag: $message")
 
 actual fun Log.warning(
     tag: String,
     message: String,
-) {
-    Logger.getLogger(tag).warning(message)
-}
-
-actual fun Log.verbose(
-    tag: String,
-    message: String,
-) {
-    Logger.getLogger(tag).log(Level.FINEST, message)
-}
+) = println("$YELLOW W/$tag: $message$RESET")
 
 actual fun Log.error(
     tag: String,
     message: String,
 ) {
-    Logger.getLogger(tag).log(Level.SEVERE, message)
+    System.err.println("$RED E/$tag: $message$RESET")
 }
+
+actual fun Log.verbose(
+    tag: String,
+    message: String,
+) = println("$BLUE V/$tag: $message$RESET")
