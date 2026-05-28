@@ -19,7 +19,6 @@ import com.arkade.core.ArkServerInfo
 import com.arkade.core.Error
 import com.arkade.core.LockedVTXOException
 import com.arkade.core.SpentVTXOException
-import com.arkade.core.Vtxo
 import com.arkade.core.assets.Asset
 import com.arkade.core.batches.BatchEvent
 import com.arkade.core.bitcoin.Address
@@ -30,6 +29,7 @@ import com.arkade.core.txs.ArkTransaction
 import com.arkade.core.txs.Notification
 import com.arkade.core.txs.Transaction
 import com.arkade.core.txs.TxEvent
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.network.ArkadeClient
 import com.arkade.network.Config
 import com.ionspin.kotlin.bignum.decimal.BigDecimal

@@ -1,6 +1,6 @@
-package com.arkade.repositories
+package com.arkade.repositories.vtxos
 
-import com.arkade.core.Vtxo
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.di.ArkadeDI
 import com.arkade.storage.VtxoStorage
 import com.arkade.storage.db.Database

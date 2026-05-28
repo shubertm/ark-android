@@ -1,7 +1,9 @@
-package com.arkade.repositories
+package com.arkade.repositories.wallet
 
-import com.arkade.core.Vtxo
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.core.wallet.Wallet
+import com.arkade.repositories.vtxos.VtxoRepo
+import fr.acinq.bitcoin.OutPoint
 
 interface WalletRepo {
     val vtxoRepo: VtxoRepo
@@ -55,4 +57,18 @@ interface WalletRepo {
     suspend fun saveVtxo(vtxo: Vtxo.Data)
 
     suspend fun getVtxos(): List<Vtxo.Data>
+
+    suspend fun saveVtxos(
+        address: String,
+        vtxos: List<Vtxo>,
+    )
+
+    suspend fun getVtxos(
+        scripts: Array<String> = emptyArray(),
+        outpoints: Array<OutPoint> = emptyArray(),
+        walletIds: Array<String> = emptyArray(),
+        includeSpent: Boolean = false,
+    ): List<Vtxo>
+
+    suspend fun deleteVtxos(address: String)
 }

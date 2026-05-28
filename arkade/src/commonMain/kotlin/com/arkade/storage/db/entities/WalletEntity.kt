@@ -5,7 +5,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import com.arkade.core.wallet.Wallet
 import com.arkade.core.wallet.WalletImpl
-import com.arkade.repositories.WalletRepo
+import com.arkade.repositories.wallet.WalletRepo
 
 @Entity(
     "wallets",

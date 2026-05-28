@@ -1,10 +1,12 @@
-package com.arkade.repositories
+package com.arkade.repositories.wallet
 
-import com.arkade.core.Vtxo
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.core.wallet.Storage
 import com.arkade.core.wallet.Wallet
 import com.arkade.di.ArkadeDI
+import com.arkade.repositories.vtxos.VtxoRepo
 import com.arkade.storage.db.Database
+import fr.acinq.bitcoin.OutPoint
 import org.koin.core.parameter.parametersOf
 
 internal class WalletRepoImpl(
@@ -73,4 +75,24 @@ internal class WalletRepoImpl(
     override suspend fun saveVtxo(vtxo: Vtxo.Data) = vtxoRepo.save(vtxo)
 
     override suspend fun getVtxos(): List<Vtxo.Data> = vtxoRepo.getAll()
+
+    override suspend fun saveVtxos(
+        address: String,
+        vtxos: List<Vtxo>,
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getVtxos(
+        scripts: Array<String>,
+        outpoints: Array<OutPoint>,
+        walletIds: Array<String>,
+        includeSpent: Boolean,
+    ): List<Vtxo> {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun deleteVtxos(address: String) {
+        TODO("Not yet implemented")
+    }
 }

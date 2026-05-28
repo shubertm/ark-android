@@ -1,11 +1,19 @@
-package com.arkade.core
+package com.arkade.core.vtxos
 
+import com.arkade.core.ArkAddress
+import com.arkade.core.Json
+import com.arkade.core.UNSPENDABLE_PUBKEY
 import com.arkade.core.assets.Asset
 import com.arkade.core.bitcoin.Address
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.bitcoin.Utxo
+import com.arkade.core.csvSigScript
+import com.arkade.core.multiplyExact
+import com.arkade.core.multisigScript
+import com.arkade.core.sumOf
 import com.arkade.core.taproot.Parity
 import com.arkade.core.taproot.TaprootSpendingInfo
+import com.arkade.core.toXOnlyPubKey
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import fr.acinq.bitcoin.ByteVector
 import fr.acinq.bitcoin.OutPoint
@@ -13,6 +21,7 @@ import fr.acinq.bitcoin.Script
 import fr.acinq.bitcoin.ScriptTree
 import fr.acinq.bitcoin.XonlyPublicKey
 import kotlinx.serialization.Serializable
+import kotlin.collections.iterator
 import kotlin.time.Clock
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.seconds
@@ -39,7 +48,7 @@ import kotlin.time.toDuration
  *
  * [exitDelaySeconds] is the [exitDelay] in seconds
  *
- * [network] is the [com.arkade.core.bitcoin.Network] where this `VTXO` exists and is valid
+ * [network] is the [Network] where this `VTXO` exists and is valid
  */
 data class Vtxo(
     val serverPubKey: XonlyPublicKey,
@@ -51,6 +60,8 @@ data class Vtxo(
     val exitDelaySeconds: Long,
     val network: Network,
 ) {
+    var data: Data? = null
+
     init {
         require(tapScripts.size == 2) { "Expects exactly 2 tap scripts: forfeit and exit" }
     }

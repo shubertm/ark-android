@@ -2,10 +2,10 @@ package com.arkade.core.wallet
 
 import com.arkade.core.ArkAddress
 import com.arkade.core.ArkServerInfo
-import com.arkade.core.Vtxo
 import com.arkade.core.bitcoin.Network
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.di.ArkadeDI
-import com.arkade.repositories.WalletRepo
+import com.arkade.repositories.wallet.WalletRepo
 import com.arkade.storage.db.Database
 import com.arkade.storage.db.entities.WalletEntity
 import fr.acinq.bitcoin.Bech32

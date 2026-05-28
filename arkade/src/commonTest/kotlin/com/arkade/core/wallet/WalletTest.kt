@@ -1,17 +1,17 @@
 package com.arkade.core.wallet
 
 import com.arkade.core.ArkServerInfo
-import com.arkade.core.Vtxo
 import com.arkade.core.assets.Asset
 import com.arkade.core.bitcoin.Address
 import com.arkade.core.bitcoin.Hrp
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.bitcoin.WitnessVersion
 import com.arkade.core.toXOnlyPubKey
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.core.wallet.Wallet.Companion.masterKeyFromSecret
 import com.arkade.di.ArkadeDI
 import com.arkade.readJsonFile
-import com.arkade.repositories.WalletRepo
+import com.arkade.repositories.wallet.WalletRepo
 import com.arkade.storage.db.Database
 import com.arkade.utils.Log
 import com.arkade.utils.success

@@ -1,7 +1,7 @@
 package com.arkade.core.wallet
 
-import com.arkade.core.Vtxo
-import com.arkade.repositories.WalletRepo
+import com.arkade.core.vtxos.Vtxo
+import com.arkade.repositories.wallet.WalletRepo
 
 class WalletImpl(
     override val repo: WalletRepo,

@@ -3,6 +3,7 @@ package com.arkade.core
 import com.arkade.core.bitcoin.Address
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.taproot.Parity
+import com.arkade.core.vtxos.Vtxo
 import fr.acinq.bitcoin.ByteVector
 import fr.acinq.bitcoin.Crypto
 import fr.acinq.bitcoin.Script
