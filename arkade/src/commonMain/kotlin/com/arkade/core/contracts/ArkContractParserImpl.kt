@@ -25,16 +25,20 @@ class ArkContractParserImpl {
         contract: String,
         network: Network,
     ): ArkContract {
-        require(contract.startsWith("arkcontract")) {
-            "Invalid contract format: $contract. Must start with 'arkcontract'"
+        require(contract.startsWith(ARK_CONTRACT)) {
+            "Invalid contract format: $contract. Must start with '$ARK_CONTRACT'"
         }
         val data = getAdditionalData(contract)
-        val type = data["arkcontract"]
+        val type = data[ARK_CONTRACT]
         requireNotNull(type) { "Contract type not found in additional data" }
         return parse(data, type, network)
     }
 
     fun registerParser(parser: ArkContractParser) {
         parsers.add(parser)
+    }
+
+    companion object {
+        private const val ARK_CONTRACT = "arkcontract"
     }
 }

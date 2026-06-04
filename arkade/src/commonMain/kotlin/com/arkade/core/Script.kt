@@ -80,8 +80,8 @@ fun buildScriptTree(leaves: List<ByteArray>): ScriptTree {
             return branches.single()
         }
 
-        val right = branches.removeFirst()
-        val left = branches.removeFirst()
+        val right = branches.removeAt(0)
+        val left = branches.removeAt(0)
         val branch = ScriptTree.Branch(left, right)
         branches.add(branch)
     }
