@@ -16,4 +16,7 @@ interface VtxoDao {
 
     @Query("SELECT * FROM vtxos WHERE outpoint = :outpoint")
     suspend fun getByOutPoint(outpoint: String): List<VtxoEntity>
+
+    @Query("DELETE FROM vtxos")
+    suspend fun deleteAll()
 }

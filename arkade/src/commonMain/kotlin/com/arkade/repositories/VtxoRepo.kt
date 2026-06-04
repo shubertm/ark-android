@@ -9,4 +9,6 @@ interface VtxoRepo {
     suspend fun getAll(): List<Vtxo.Data>
 
     suspend fun getByOutPoint(outpoint: OutPoint): List<Vtxo.Data>
+
+    suspend fun deleteAll()
 }

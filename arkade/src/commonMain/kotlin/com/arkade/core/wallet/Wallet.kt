@@ -1,5 +1,6 @@
 package com.arkade.core.wallet
 
+import androidx.room.RoomDatabase
 import com.arkade.core.ArkAddress
 import com.arkade.core.ArkServerInfo
 import com.arkade.core.Vtxo
@@ -99,6 +100,8 @@ interface Wallet {
 
     suspend fun getVtxos(): List<Vtxo.Data>
 
+    suspend fun deleteVtxos()
+
     enum class Type {
         HD,
         SINGLE_KEY,
@@ -118,7 +121,7 @@ interface Wallet {
          * is validated against `serverInfo`.
          * @param serverInfo Server information used to validate the destination and to derive
          * network-specific values for HD wallet creation.
-         * @param testDb Optional in-memory or test database passed to the repository for
+         * @param dbBuilder Database builder passed to the repository for
          * initialization.
          * @return The created [Wallet] instance.
          */
@@ -126,14 +129,14 @@ interface Wallet {
             secret: String,
             destination: String? = null,
             serverInfo: ArkServerInfo,
-            testDb: Database? = null,
+            dbBuilder: RoomDatabase.Builder<Database>,
         ): Wallet =
             withContext(Dispatchers.IO) {
                 if (destination != null) {
                     validateDestination(destination, serverInfo)
                 }
 
-                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
+                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
 
                 if (secret.startsWith(NSEC_HRP)) {
                     createNSecWallet(secret, destination, repo)
@@ -146,16 +149,16 @@ interface Wallet {
          * Load a wallet by its identifier from persistent storage.
          *
          * @param id The wallet identifier to look up.
-         * @param testDb Optional database instance used for repository initialization
+         * @param dbBuilder Database builder instance used for repository initialization
          * (primarily for tests).
          * @return The wallet with the given `id`, or `null` if no matching wallet is found.
          */
         suspend fun loadById(
             id: String,
-            testDb: Database? = null,
+            dbBuilder: RoomDatabase.Builder<Database>,
         ): Wallet? =
             withContext(Dispatchers.IO) {
-                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
+                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
                 repo.loadWalletById(id)
             }
 
@@ -163,16 +166,16 @@ interface Wallet {
          * Load a wallet by its fingerprint from persistent storage.
          *
          * @param fingerprint The wallet fingerprint to look up.
-         * @param testDb Optional database instance used for repository initialization
+         * @param dbBuilder Database builder instance used for repository initialization
          * (primarily for tests).
          * @return The wallet with the given `fingerprint`, or `null` if no matching wallet is found.
          */
         suspend fun loadByFingerprint(
             fingerprint: String,
-            testDb: Database? = null,
+            dbBuilder: RoomDatabase.Builder<Database>,
         ): Wallet? =
             withContext(Dispatchers.IO) {
-                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
+                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
                 repo.loadWalletByFingerprint(fingerprint)
             }
 

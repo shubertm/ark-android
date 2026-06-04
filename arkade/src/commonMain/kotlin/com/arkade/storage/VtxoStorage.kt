@@ -8,4 +8,6 @@ interface VtxoStorage {
     suspend fun getAll(): List<VtxoEntity>
 
     suspend fun getByOutPoint(outPoint: String): List<VtxoEntity>
+
+    suspend fun deleteAll()
 }

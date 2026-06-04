@@ -1,5 +1,7 @@
 package com.arkade.storage.db
 
+import androidx.room.RoomDatabase
+
 /**
  * Obtain a Database instance configured for use in tests.
  *
@@ -7,4 +9,4 @@ package com.arkade.storage.db
  *
  * @return A `Database` configured for testing (isolated/test data setup).
  */
-expect fun initializeTestDb(): Database
+expect fun initializeTestDatabaseBuilder(): RoomDatabase.Builder<Database>

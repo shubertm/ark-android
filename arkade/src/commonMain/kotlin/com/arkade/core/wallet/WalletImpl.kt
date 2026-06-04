@@ -47,4 +47,6 @@ class WalletImpl(
     override suspend fun saveVtxo(vtxo: Vtxo.Data) = repo.saveVtxo(vtxo)
 
     override suspend fun getVtxos(): List<Vtxo.Data> = repo.getVtxos()
+
+    override suspend fun deleteVtxos() = repo.deleteVtxos()
 }

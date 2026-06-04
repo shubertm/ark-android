@@ -1,13 +1,15 @@
 package com.arkade.storage
 
+import androidx.room.RoomDatabase
+import com.arkade.di.ArkadeDI
 import com.arkade.storage.db.Database
-import com.arkade.storage.db.DatabaseConstructor
 import com.arkade.storage.db.entities.VtxoEntity
+import org.koin.core.parameter.parametersOf
 
 class VtxoStorageImpl(
-    testDb: Database? = null,
+    databaseBuilder: RoomDatabase.Builder<Database>,
 ) : VtxoStorage {
-    private val db = testDb ?: DatabaseConstructor.initialize()
+    private val db: Database = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
     private val vtxoDao = db.vtxoDao()
 
     override suspend fun save(vtxo: VtxoEntity) = vtxoDao.save(vtxo)
@@ -15,4 +17,6 @@ class VtxoStorageImpl(
     override suspend fun getAll(): List<VtxoEntity> = vtxoDao.getAll()
 
     override suspend fun getByOutPoint(outpoint: String): List<VtxoEntity> = vtxoDao.getByOutPoint(outpoint)
+
+    override suspend fun deleteAll() = vtxoDao.deleteAll()
 }
