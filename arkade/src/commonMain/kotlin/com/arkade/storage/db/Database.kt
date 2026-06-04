@@ -5,6 +5,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
+import com.arkade.storage.db.dao.ContractDao
 import com.arkade.storage.db.dao.VtxoDao
 import com.arkade.storage.db.dao.WalletDao
 import com.arkade.storage.db.entities.ContractEntity
@@ -28,6 +29,8 @@ abstract class Database : RoomDatabase() {
     abstract fun walletDao(): WalletDao
 
     abstract fun vtxoDao(): VtxoDao
+
+    abstract fun contractDao(): ContractDao
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")

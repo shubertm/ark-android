@@ -14,5 +14,5 @@ class VtxoStorageImpl(
 
     override suspend fun getAll(): List<VtxoEntity> = vtxoDao.getAll()
 
-    override suspend fun getByOutPoint(outpoint: String): List<VtxoEntity> = vtxoDao.getByOutPoint(outpoint)
+    override suspend fun getByOutPoint(outPoint: String): List<VtxoEntity> = vtxoDao.getByOutPoint(outPoint)
 }
