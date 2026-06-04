@@ -1,11 +1,12 @@
 package com.arkade.core.wallet
 
+import androidx.room.RoomDatabase
 import com.arkade.storage.db.Database
-import com.arkade.storage.db.initializeTestDb
+import com.arkade.storage.db.initializeTestDatabaseBuilder
 import kotlin.test.Test
 
 actual abstract class WalletTest actual constructor() : com.arkade.Test() {
-    actual val testDb: Database = initializeTestDb()
+    actual val dbBuilder: RoomDatabase.Builder<Database> = initializeTestDatabaseBuilder()
 
     @Test
     actual abstract fun should_create_wallet_successfully()

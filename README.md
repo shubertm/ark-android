@@ -78,7 +78,9 @@ fun main() = runBlocking {
     val nsec = "<nsec1...>"
     val client: ArkadeClient = ArkadeClientImpl(Config.MUTINYNET)
     val serverInfo = client.getInfo()
-    val wallet = Wallet.create(nsec, null, serverInfo)
+    // Database builder is platform-specific
+    val databaseBuilder = initializeRoomDatabaseBuilder("app-name")
+    val wallet = Wallet.create(nsec, null, serverInfo, databaseBuilder)
 }
 ```
 **HD**
@@ -92,6 +94,8 @@ fun main() = runBlocking {
     val secret = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
     val client: ArkadeClient = ArkadeClientImpl(Config.MUTINYNET)
     val serverInfo = client.getInfo()
+    // Database builder is platform-specific
+    val databaseBuilder = initializeRoomDatabaseBuilder("app-name")
     val wallet = Wallet.create(secret, null, serverInfo)
 }
 ```

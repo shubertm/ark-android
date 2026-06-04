@@ -55,4 +55,6 @@ interface WalletRepo {
     suspend fun saveVtxo(vtxo: Vtxo.Data)
 
     suspend fun getVtxos(): List<Vtxo.Data>
+
+    suspend fun deleteVtxos()
 }

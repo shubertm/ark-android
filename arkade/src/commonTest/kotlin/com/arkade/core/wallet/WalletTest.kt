@@ -1,5 +1,6 @@
 package com.arkade.core.wallet
 
+import androidx.room.RoomDatabase
 import com.arkade.core.ArkServerInfo
 import com.arkade.core.Vtxo
 import com.arkade.core.assets.Asset
@@ -28,6 +29,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.long
 import org.koin.core.parameter.parametersOf
+import kotlin.collections.emptyList
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -36,7 +38,7 @@ import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
 expect abstract class WalletTest() : com.arkade.Test {
-    val testDb: Database
+    val dbBuilder: RoomDatabase.Builder<Database>
 
     @Test
     abstract fun should_create_wallet_successfully()
@@ -71,8 +73,8 @@ fun getArkServerInfo(): ArkServerInfo =
         dust = 330,
         fees = null,
         scheduledSession = null,
-        deprecatedSigners = listOf(),
-        serviceStatus = mapOf(),
+        deprecatedSigners = emptyList(),
+        serviceStatus = emptyMap(),
         digest = "50da3e81cba4844be3559638cf7104a64e30c616bd5862e86b3903222ece0994",
         maxTxWeight = 40000,
         maxOpReturnOutputs = 3,
@@ -93,14 +95,14 @@ class SingleKeyWalletTest : WalletTest() {
                 Wallet.create(
                     nsec,
                     serverInfo = serverInfo,
-                    testDb = testDb,
+                    dbBuilder = dbBuilder,
                 )
             assertEquals(nsec, wallet.secret)
             assertEquals(Wallet.Type.SINGLE_KEY, wallet.type)
 
             wallet.save()
 
-            val loadedWallet = assertNotNull(Wallet.loadById(wallet.id, testDb))
+            val loadedWallet = assertNotNull(Wallet.loadById(wallet.id, dbBuilder))
 
             assertEquals(wallet.id, loadedWallet.id)
             assertEquals(wallet.secret, loadedWallet.secret)
@@ -110,7 +112,7 @@ class SingleKeyWalletTest : WalletTest() {
 
             loadedWallet.delete()
 
-            assertEquals(null, Wallet.loadById(wallet.id, testDb))
+            assertEquals(null, Wallet.loadById(wallet.id, dbBuilder))
         }
     }
 
@@ -127,12 +129,12 @@ class SingleKeyWalletTest : WalletTest() {
                 )
             val wallets = mutableListOf<Wallet>()
             for (nsec in nsecs) {
-                val wallet = Wallet.create(nsec, serverInfo = serverInfo, testDb = testDb)
+                val wallet = Wallet.create(nsec, serverInfo = serverInfo, dbBuilder = dbBuilder)
                 wallets.add(wallet)
                 wallet.save()
             }
 
-            val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
+            val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
 
             val loadedWallets = repo.loadWallets().filter { w -> w.type == Wallet.Type.SINGLE_KEY }
 
@@ -153,11 +155,14 @@ class SingleKeyWalletTest : WalletTest() {
                 Wallet.create(
                     nsec,
                     serverInfo = serverInfo,
-                    testDb = testDb,
+                    dbBuilder = dbBuilder,
                 )
 
             val vtxosJson = assertNotNull(validTestVtxosJsonArray, "Missing valid test VTXOs")
 
+            wallet.deleteVtxos()
+            val vtxos = wallet.getVtxos()
+            println("VTXOs size: ${vtxos.size}")
             vtxosJson.forEachIndexed { index, vtxoJson ->
                 val (vtxo, comment) = vtxoFromJson(vtxoJson)
                 wallet.saveVtxo(vtxo)
@@ -206,7 +211,7 @@ class HDWalletTest : WalletTest() {
                 Wallet.create(
                     secret,
                     serverInfo = serverInfo,
-                    testDb = testDb,
+                    dbBuilder = dbBuilder,
                 )
             assertEquals(secret, wallet.secret)
             assertEquals(Wallet.Type.HD, wallet.type)
@@ -214,7 +219,7 @@ class HDWalletTest : WalletTest() {
 
             wallet.save()
 
-            val loadedWallet = assertNotNull(Wallet.loadById(wallet.id, testDb))
+            val loadedWallet = assertNotNull(Wallet.loadById(wallet.id, dbBuilder))
 
             assertEquals(wallet.id, loadedWallet.id)
             assertEquals(wallet.secret, loadedWallet.secret)
@@ -225,7 +230,7 @@ class HDWalletTest : WalletTest() {
 
             val (_, fingerprint) = masterKeyFromSecret(secret)
 
-            val loadedWallet2 = assertNotNull(Wallet.loadByFingerprint(fingerprint, testDb))
+            val loadedWallet2 = assertNotNull(Wallet.loadByFingerprint(fingerprint, dbBuilder))
             assertEquals(fingerprint, loadedWallet2.fingerprint())
             assertEquals(wallet.id, loadedWallet2.id)
             assertEquals(wallet.secret, loadedWallet2.secret)
@@ -236,13 +241,13 @@ class HDWalletTest : WalletTest() {
 
             loadedWallet.updateLastUsedIndex(1)
 
-            val loadedWallet3 = assertNotNull(Wallet.loadById(loadedWallet.id, testDb))
+            val loadedWallet3 = assertNotNull(Wallet.loadById(loadedWallet.id, dbBuilder))
 
             assertEquals(1, loadedWallet3.lastUsedIndex)
 
             loadedWallet.delete()
 
-            assertEquals(null, Wallet.loadById(wallet.id, testDb))
+            assertEquals(null, Wallet.loadById(wallet.id, dbBuilder))
         }
     }
 
@@ -259,12 +264,12 @@ class HDWalletTest : WalletTest() {
                 )
             val wallets = mutableListOf<Wallet>()
             for (secret in secrets) {
-                val wallet = Wallet.create(secret, serverInfo = serverInfo, testDb = testDb)
+                val wallet = Wallet.create(secret, serverInfo = serverInfo, dbBuilder = dbBuilder)
                 wallets.add(wallet)
                 wallet.save()
             }
 
-            val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
+            val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
 
             val loadedWallets = repo.loadWallets().filter { w -> w.type == Wallet.Type.HD }
 
@@ -286,10 +291,12 @@ class HDWalletTest : WalletTest() {
                 Wallet.create(
                     secret,
                     serverInfo = serverInfo,
-                    testDb = testDb,
+                    dbBuilder = dbBuilder,
                 )
 
             val vtxosJson = assertNotNull(validTestVtxosJsonArray, "Missing valid test VTXOs")
+
+            wallet.deleteVtxos()
 
             vtxosJson.forEachIndexed { index, vtxoJson ->
                 val (vtxo, comment) = vtxoFromJson(vtxoJson)
@@ -305,7 +312,7 @@ class HDWalletTest : WalletTest() {
     @Test
     fun should_load_null_wallet_for_nonexistent_fingerprint() {
         runTest {
-            val wallet = Wallet.loadByFingerprint("00000000", testDb)
+            val wallet = Wallet.loadByFingerprint("00000000", dbBuilder)
             assertEquals(null, wallet)
         }
     }
