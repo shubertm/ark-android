@@ -52,7 +52,7 @@ fun csvSigScript(
 }
 
 fun buildScriptTree(leaves: List<ByteArray>): ScriptTree {
-    require(leaves.isNotEmpty()) { "Leaves have 0 length" }
+    require(leaves.isNotEmpty()) { "At least one leaf is required" }
     if (leaves.size == 1) {
         return ScriptTree.Leaf(ByteVector(leaves.single()), 0)
     }
