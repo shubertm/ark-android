@@ -4,6 +4,7 @@ import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.room.TypeConverters
 import com.arkade.storage.db.dao.ContractDao
 import com.arkade.storage.db.dao.VtxoDao
@@ -12,6 +13,8 @@ import com.arkade.storage.db.entities.ContractEntity
 import com.arkade.storage.db.entities.VtxoEntity
 import com.arkade.storage.db.entities.WalletEntity
 import com.arkade.utils.StringMapTypeConverter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 
 @Database(
     entities = [WalletEntity::class, VtxoEntity::class, ContractEntity::class],
@@ -42,3 +45,8 @@ expect object DatabaseConstructor : RoomDatabaseConstructor<com.arkade.storage.d
      */
     override fun initialize(): com.arkade.storage.db.Database
 }
+
+fun RoomDatabase.Builder<com.arkade.storage.db.Database>.getDatabase(): com.arkade.storage.db.Database =
+    setDriver(BundledSQLiteDriver())
+        .setQueryCoroutineContext(Dispatchers.IO)
+        .build()

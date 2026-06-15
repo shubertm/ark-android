@@ -1,5 +1,7 @@
 package com.arkade.storage.db
 
+import androidx.room.RoomDatabase
+
 /**
  * Initializes and returns a test `Database` configured for native targets.
  *
@@ -8,6 +10,6 @@ package com.arkade.storage.db
  *
  * @return A `Database` instance prepared for testing on native platforms.
  */
-actual fun initializeTestDb(): Database {
+actual fun initializeTestDatabaseBuilder(): RoomDatabase.Builder<Database> {
     TODO("Not yet implemented")
 }

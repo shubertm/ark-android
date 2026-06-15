@@ -1,5 +1,6 @@
 package com.arkade.repositories
 
+import androidx.room.RoomDatabase
 import com.arkade.core.Vtxo
 import com.arkade.core.wallet.Storage
 import com.arkade.core.wallet.Wallet
@@ -8,10 +9,10 @@ import com.arkade.storage.db.Database
 import org.koin.core.parameter.parametersOf
 
 internal class WalletRepoImpl(
-    private val testDb: Database? = null,
+    private val databaseBuilder: RoomDatabase.Builder<Database>,
 ) : WalletRepo {
-    private val storage: Storage = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
-    override val vtxoRepo: VtxoRepo = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
+    private val storage: Storage = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
+    override val vtxoRepo: VtxoRepo = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
 
     /**
      * Persists the given wallet into the repository's storage.
@@ -73,4 +74,6 @@ internal class WalletRepoImpl(
     override suspend fun saveVtxo(vtxo: Vtxo.Data) = vtxoRepo.save(vtxo)
 
     override suspend fun getVtxos(): List<Vtxo.Data> = vtxoRepo.getAll()
+
+    override suspend fun deleteVtxos() = vtxoRepo.deleteAll()
 }
