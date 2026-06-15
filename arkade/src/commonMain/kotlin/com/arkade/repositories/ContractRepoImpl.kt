@@ -1,5 +1,6 @@
 package com.arkade.repositories
 
+import androidx.room.RoomDatabase
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.di.ArkadeDI
@@ -9,9 +10,9 @@ import com.arkade.storage.db.entities.ContractEntity
 import org.koin.core.parameter.parametersOf
 
 class ContractRepoImpl(
-    db: Database,
+    databaseBuilder: RoomDatabase.Builder<Database>,
 ) : ContractRepo {
-    private val storage: ContractStorage = ArkadeDI.arkadeKoin.get { parametersOf(db) }
+    private val storage: ContractStorage = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
 
     override suspend fun save(
         contract: ArkContract,
@@ -22,11 +23,11 @@ class ContractRepoImpl(
         storage.save(contractEntity)
     }
 
-    override suspend fun get(scriptPubKey: String): ArkContract {
+    /*override suspend fun get(scriptPubKey: String): ArkContract {
         TODO("Not yet implemented")
-    }
+    }*/
 
-    override suspend fun getAll(): List<ArkContract> {
+    /*override suspend fun getAll(): List<ArkContract> {
         TODO("Not yet implemented")
-    }
+    }*/
 }
