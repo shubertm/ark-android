@@ -15,8 +15,9 @@ interface ArkContractParser {
             val parts = contract.split("&")
             val data =
                 parts.associate {
-                    val (key, value) = it.split("=")
-                    key to value
+                    val entry = it.split("=")
+                    require(entry.size == 2) { "Invalid additional data format" }
+                    entry[0] to entry[1]
                 }
             return data
         }

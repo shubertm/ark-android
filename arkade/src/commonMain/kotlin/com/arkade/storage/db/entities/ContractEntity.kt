@@ -11,7 +11,6 @@ import kotlin.time.Clock
 @Entity(tableName = "contracts")
 data class ContractEntity(
     @PrimaryKey
-    val id: String,
     val scriptPubKey: String,
     val type: String,
     val state: ContractState,
@@ -30,7 +29,6 @@ data class ContractEntity(
             walletId: String,
         ): ContractEntity =
             ContractEntity(
-                "",
                 contract.getScriptPubKey(),
                 contract.type,
                 state,

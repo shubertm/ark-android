@@ -7,11 +7,13 @@ import com.arkade.core.buildScriptTree
 import com.arkade.core.taproot.Parity
 import com.arkade.core.taproot.TaprootSpendingInfo
 import com.arkade.core.toXOnlyPubKey
+import com.arkade.storage.db.entities.ContractEntity
 
 abstract class ArkContract(
     private val serverInfo: ArkServerInfo,
 ) {
     abstract val type: String
+
 
     val serverPubKey = serverInfo.signerPubKey.value.toByteArray()
 
@@ -22,7 +24,8 @@ abstract class ArkContract(
             data.entries.joinToString("&") {
                 "${it.key}=${it.value}"
             }
-        return "arkcontract=$type&$dataString"
+        val arkContract = "arkcontract=$type"
+        return if (dataString.isEmpty()) arkContract else "$arkContract&$dataString"
     }
 
     fun getArkAddress(): ArkAddress {

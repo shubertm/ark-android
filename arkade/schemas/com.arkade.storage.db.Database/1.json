@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "241365bb077c842c2a25bde72582624e",
+    "identityHash": "c6657a47a97430229065b7c8d40092be",
     "entities": [
       {
         "tableName": "wallets",
@@ -166,14 +166,8 @@
       },
       {
         "tableName": "contracts",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `scriptPubKey` TEXT NOT NULL, `type` TEXT NOT NULL, `state` TEXT NOT NULL, `additionalData` TEXT NOT NULL, `walletId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `metadata` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`scriptPubKey` TEXT NOT NULL, `type` TEXT NOT NULL, `state` TEXT NOT NULL, `additionalData` TEXT NOT NULL, `walletId` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, `metadata` TEXT NOT NULL, PRIMARY KEY(`scriptPubKey`))",
         "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
           {
             "fieldPath": "scriptPubKey",
             "columnName": "scriptPubKey",
@@ -220,14 +214,14 @@
         "primaryKey": {
           "autoGenerate": false,
           "columnNames": [
-            "id"
+            "scriptPubKey"
           ]
         }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '241365bb077c842c2a25bde72582624e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c6657a47a97430229065b7c8d40092be')"
     ]
   }
 }

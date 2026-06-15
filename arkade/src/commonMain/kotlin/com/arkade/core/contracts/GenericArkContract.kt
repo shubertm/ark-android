@@ -3,7 +3,7 @@ package com.arkade.core.contracts
 import com.arkade.core.ArkServerInfo
 
 class GenericArkContract(
-    private val serverInfo: ArkServerInfo,
+    serverInfo: ArkServerInfo,
     private val tapLeafScripts: List<ByteArray>,
     private val additionalData: Map<String, String>? = null,
 ) : ArkContract(serverInfo) {

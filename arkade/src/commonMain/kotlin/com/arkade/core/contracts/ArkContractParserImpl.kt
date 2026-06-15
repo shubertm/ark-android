@@ -4,7 +4,7 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContractParser.Companion.getAdditionalData
 
 class ArkContractParserImpl {
-    val parsers = mutableListOf<ArkContractParser>()
+    private val parsers = mutableListOf<ArkContractParser>()
 
     init {
         // Register custom contract parsers here
@@ -39,6 +39,6 @@ class ArkContractParserImpl {
     }
 
     companion object {
-        private const val ARK_CONTRACT = "arkcontract"
+        private const val ARK_CONTRACT = "arkcontract="
     }
 }

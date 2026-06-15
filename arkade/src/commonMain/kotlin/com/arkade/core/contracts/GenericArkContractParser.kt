@@ -4,10 +4,10 @@ import com.arkade.core.bitcoin.Network
 
 class GenericArkContractParser(
     override val type: String,
-    parse: (Map<String, String>, Network) -> ArkContract,
+    private val parseImpl: (Map<String, String>, Network) -> ArkContract,
 ) : ArkContractParser {
     override fun parse(
         data: Map<String, String>,
         network: Network,
-    ): ArkContract = parse(data, network)
+    ): ArkContract = parseImpl(data, network)
 }

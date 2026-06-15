@@ -10,7 +10,7 @@ class ContractStorageImpl(
 
     override suspend fun save(contract: ContractEntity) = contractDao.save(contract)
 
-    override suspend fun get(id: String): ContractEntity? = contractDao.get(id)
+    override suspend fun get(scriptPubKey: String): ContractEntity? = contractDao.get(scriptPubKey)
 
     override suspend fun getAll(): List<ContractEntity> = contractDao.getAll()
 }

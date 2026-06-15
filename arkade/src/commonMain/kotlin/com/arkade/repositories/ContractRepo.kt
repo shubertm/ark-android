@@ -10,7 +10,7 @@ interface ContractRepo {
         walletId: String,
     )
 
-    suspend fun get(id: String): ArkContract
+    suspend fun get(scriptPubKey: String): ArkContract
 
     suspend fun getAll(): List<ArkContract>
 }

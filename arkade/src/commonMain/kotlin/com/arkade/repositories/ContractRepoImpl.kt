@@ -22,7 +22,7 @@ class ContractRepoImpl(
         storage.save(contractEntity)
     }
 
-    override suspend fun get(id: String): ArkContract {
+    override suspend fun get(scriptPubKey: String): ArkContract {
         TODO("Not yet implemented")
     }
 
