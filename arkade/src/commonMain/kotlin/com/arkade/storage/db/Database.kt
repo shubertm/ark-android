@@ -4,8 +4,8 @@ import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.room.TypeConverters
+import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.arkade.storage.db.dao.ContractDao
 import com.arkade.storage.db.dao.VtxoDao
 import com.arkade.storage.db.dao.WalletDao

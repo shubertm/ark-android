@@ -25,9 +25,9 @@ class ContractRepoImpl(
 
     /*override suspend fun get(scriptPubKey: String): ArkContract {
         TODO("Not yet implemented")
-    }*/
+    }
 
-    /*override suspend fun getAll(): List<ArkContract> {
+    override suspend fun getAll(): List<ArkContract> {
         TODO("Not yet implemented")
     }*/
 }

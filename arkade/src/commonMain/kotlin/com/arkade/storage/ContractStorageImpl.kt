@@ -4,13 +4,11 @@ import androidx.room.RoomDatabase
 import com.arkade.di.ArkadeDI
 import com.arkade.storage.db.Database
 import com.arkade.storage.db.entities.ContractEntity
-import com.arkade.storage.db.getDatabase
 import org.koin.core.parameter.parametersOf
 
 class ContractStorageImpl(
     databaseBuilder: RoomDatabase.Builder<Database>,
 ) : ContractStorage {
-
     private val db = ArkadeDI.arkadeKoin.get<Database> { parametersOf(databaseBuilder) }
     private val contractDao = db.contractDao()
 

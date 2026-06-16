@@ -13,7 +13,6 @@ abstract class ArkContract(
 ) {
     abstract val type: String
 
-
     val serverPubKey = serverInfo.signerPubKey.value.toByteArray()
 
     override fun toString(): String {
