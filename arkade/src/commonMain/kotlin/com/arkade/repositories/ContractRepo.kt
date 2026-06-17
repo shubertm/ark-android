@@ -47,7 +47,7 @@ interface ContractRepo {
      * @return a list of all stored contracts, or throws if no contracts are found.
      * @throws IllegalArgumentException if the database contains no contracts.
      */
-    suspend fun getAll(): List<ArkContract>
+    suspend fun getAll(walletId: String): List<ArkContract>
 
-    suspend fun deleteAll()
+    suspend fun deleteAll(walletId: String)
 }

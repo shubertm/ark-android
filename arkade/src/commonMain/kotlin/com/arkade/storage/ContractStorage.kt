@@ -33,7 +33,7 @@ interface ContractStorage {
      *
      * @return a list of all persisted contract entities, or an empty list if none exist.
      */
-    suspend fun getAll(): List<ContractEntity>
+    suspend fun getAll(walletId: String): List<ContractEntity>
 
-    suspend fun deleteAll()
+    suspend fun deleteAll(walletId: String)
 }

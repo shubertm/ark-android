@@ -64,13 +64,13 @@ class ContractRepoImpl(
      * @return a non-empty list of all persisted contracts.
      * @throws IllegalArgumentException if no contracts are stored.
      */
-    override suspend fun getAll(): List<ArkContract> {
-        val contractEntities = storage.getAll()
+    override suspend fun getAll(walletId: String): List<ArkContract> {
+        val contractEntities = storage.getAll(walletId)
         require(contractEntities.isNotEmpty()) { "No contracts found" }
         return contractEntities.map {
             contractParser.parse(it.additionalData, it.type)
         }
     }
 
-    override suspend fun deleteAll() = storage.deleteAll()
+    override suspend fun deleteAll(walletId: String) = storage.deleteAll(walletId)
 }

@@ -90,7 +90,7 @@ internal class WalletRepoImpl(
 
     override suspend fun getContract(scriptPubKey: String): ArkContract = contractRepo.get(scriptPubKey)
 
-    override suspend fun getContracts(): List<ArkContract> = contractRepo.getAll()
+    override suspend fun getContracts(walletId: String): List<ArkContract> = contractRepo.getAll(walletId)
 
-    override suspend fun deleteContracts() = contractRepo.deleteAll()
+    override suspend fun deleteContracts(walletId: String) = contractRepo.deleteAll(walletId)
 }

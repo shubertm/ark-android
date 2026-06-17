@@ -38,9 +38,9 @@ interface ContractDao {
      *
      * @return a list of all stored [ContractEntity] instances, or an empty list.
      */
-    @Query("SELECT * FROM contracts")
-    suspend fun getAll(): List<ContractEntity>
+    @Query("SELECT * FROM contracts WHERE walletId = :walletId")
+    suspend fun getAll(walletId: String): List<ContractEntity>
 
-    @Query("DELETE FROM contracts")
-    suspend fun deleteAll()
+    @Query("DELETE FROM contracts WHERE walletId = :walletId")
+    suspend fun deleteAll(walletId: String)
 }

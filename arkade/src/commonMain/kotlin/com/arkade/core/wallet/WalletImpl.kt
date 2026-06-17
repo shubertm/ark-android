@@ -61,7 +61,7 @@ class WalletImpl(
         repo.saveContract(contract, state, id, network)
     }
 
-    override suspend fun getContracts() = repo.getContracts()
+    override suspend fun getContracts() = repo.getContracts(id)
 
-    override suspend fun deleteContracts() = repo.deleteContracts()
+    override suspend fun deleteContracts() = repo.deleteContracts(id)
 }

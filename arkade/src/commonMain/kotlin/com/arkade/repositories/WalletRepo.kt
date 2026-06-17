@@ -72,7 +72,7 @@ interface WalletRepo {
 
     suspend fun getContract(scriptPubKey: String): ArkContract
 
-    suspend fun getContracts(): List<ArkContract>
+    suspend fun getContracts(walletId: String): List<ArkContract>
 
-    suspend fun deleteContracts()
+    suspend fun deleteContracts(walletId: String)
 }
