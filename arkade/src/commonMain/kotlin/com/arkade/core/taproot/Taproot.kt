@@ -21,13 +21,16 @@ fun getTaprootScriptPubKey(outputKey: ByteArray): ByteArray {
 }
 
 /**
- * Creates a Taproot descriptor string from a compressed or x-only public key hex string.
+ * Parses or normalizes a Taproot descriptor string.
  *
- * Converts the input [string] to its x-only representation and wraps it in the `tr(…)` descriptor
- * format, e.g. `tr(a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c)`.
+ * Accepts either a raw hex-encoded compressed (33-byte) or x-only (32-byte) public key, or an
+ * existing `tr(<pubKeyHex>)` descriptor. In both cases the inner key is converted to its x-only
+ * representation and the result is returned as a canonical `tr(<xOnlyPubKeyHex>)` descriptor,
+ * e.g. `tr(a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c)`.
  *
- * @param string a hex-encoded compressed (33-byte) or x-only (32-byte) public key.
- * @return a Taproot descriptor string `tr(<xOnlyPubKeyHex>)`.
+ * @param string a hex-encoded compressed (33-byte) or x-only (32-byte) public key, or an
+ * existing Taproot descriptor in the form `tr(<pubKeyHex>)`.
+ * @return a normalized Taproot descriptor string `tr(<xOnlyPubKeyHex>)`.
  */
 fun parseTaprootDescriptor(string: String): String {
     if (string.startsWith("tr(") && string.endsWith(")")) {

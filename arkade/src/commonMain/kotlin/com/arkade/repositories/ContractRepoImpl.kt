@@ -59,10 +59,11 @@ class ContractRepoImpl(
     }
 
     /**
-     * Fetches all stored [ContractEntity] rows and parses each back to an [ArkContract].
+     * Fetches all [ContractEntity] rows for the given wallet and parses each back to an [ArkContract].
      *
-     * @return a non-empty list of all persisted contracts.
-     * @throws IllegalArgumentException if no contracts are stored.
+     * @param walletId the identifier of the wallet whose contracts should be retrieved.
+     * @return a non-empty list of contracts for the given wallet.
+     * @throws IllegalArgumentException if no contracts are stored for [walletId].
      */
     override suspend fun getAll(walletId: String): List<ArkContract> {
         val contractEntities = storage.getAll(walletId)
@@ -72,5 +73,10 @@ class ContractRepoImpl(
         }
     }
 
+    /**
+     * Deletes all [ContractEntity] rows for the given wallet from storage.
+     *
+     * @param walletId the identifier of the wallet whose contracts should be deleted.
+     */
     override suspend fun deleteAll(walletId: String) = storage.deleteAll(walletId)
 }
