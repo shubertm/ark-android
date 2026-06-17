@@ -1,4 +1,4 @@
-package com.arkade.core.wallet
+package com.arkade.storage
 
 import androidx.room.RoomDatabase
 import com.arkade.di.ArkadeDI
@@ -6,9 +6,9 @@ import com.arkade.storage.db.Database
 import com.arkade.storage.db.entities.WalletEntity
 import org.koin.core.parameter.parametersOf
 
-internal class StorageImpl(
+internal class WalletStorageImpl(
     databaseBuilder: RoomDatabase.Builder<Database>,
-) : Storage {
+) : WalletStorage {
     private val db: Database = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
     private val walletDao = db.walletDao()
 

@@ -1,8 +1,6 @@
 package com.arkade.di
 
 import androidx.room.RoomDatabase
-import com.arkade.core.wallet.Storage
-import com.arkade.core.wallet.StorageImpl
 import com.arkade.repositories.ContractRepo
 import com.arkade.repositories.ContractRepoImpl
 import com.arkade.repositories.VtxoRepo
@@ -13,13 +11,15 @@ import com.arkade.storage.ContractStorage
 import com.arkade.storage.ContractStorageImpl
 import com.arkade.storage.VtxoStorage
 import com.arkade.storage.VtxoStorageImpl
+import com.arkade.storage.WalletStorage
+import com.arkade.storage.WalletStorageImpl
 import com.arkade.storage.db.Database
 import com.arkade.storage.db.getDatabase
 import org.koin.dsl.module
 
 val storageModule =
     module {
-        factory<Storage> { params -> StorageImpl(params.get()) }
+        factory<WalletStorage> { params -> WalletStorageImpl(params.get()) }
         factory<VtxoStorage> { params -> VtxoStorageImpl(params.get()) }
         factory<ContractStorage> { params -> ContractStorageImpl(params.get()) }
     }
