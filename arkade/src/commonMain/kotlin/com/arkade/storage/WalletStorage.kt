@@ -1,8 +1,8 @@
-package com.arkade.core.wallet
+package com.arkade.storage
 
 import com.arkade.storage.db.entities.WalletEntity
 
-interface Storage {
+interface WalletStorage {
     /**
      * Loads the wallet with the given identifier.
      *
