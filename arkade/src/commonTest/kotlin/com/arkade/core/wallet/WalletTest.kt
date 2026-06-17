@@ -368,6 +368,7 @@ class HDWalletTest : WalletTest() {
         }
     }
 
+    @Test
     override fun should_store_and_retrieve_valid_ark_contracts_successfully() {
         runTest {
             val secret =
@@ -477,7 +478,8 @@ private fun contractFromJson(json: JsonElement): Pair<ArkContract, ContractState
         when (json.jsonObject["state"]?.jsonPrimitive?.content!!) {
             "Active" -> ContractState.ACTIVE
             "InActive" -> ContractState.INACTIVE
-            else -> ContractState.AWAITING_FUNDS_BEFORE_DEACTIVATE
+            "AwaitingFundsBeforeDeactivate" -> ContractState.AWAITING_FUNDS_BEFORE_DEACTIVATE
+            else -> throw IllegalArgumentException("Invalid contract state")
         }
     val data =
         json.jsonObject["data"]?.jsonObject!!.entries.associate { entry ->
