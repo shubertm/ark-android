@@ -23,14 +23,40 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import org.koin.core.parameter.parametersOf
 
+/**
+ * Represents an Arkade wallet that owns keys, holds a repository reference, and exposes
+ * operations for persisting wallet state, VTXOs, and Ark contracts.
+ *
+ * Two wallet flavours are supported:
+ * - **HD** — created from a BIP-39 mnemonic phrase; keys are derived via a standard
+ *   Taproot (`m/86'/coinType'/0'`) derivation path.
+ * - **SINGLE_KEY** — created from an `nsec`-encoded private key; a single Taproot
+ *   output descriptor is derived from the key.
+ *
+ * Use [Wallet.create] to instantiate a wallet, and [Wallet.loadById] /
+ * [Wallet.loadByFingerprint] to restore one from persistent storage.
+ */
 interface Wallet {
+    /** Unique identifier for this wallet (the account descriptor for HD wallets, or the
+     * Taproot output descriptor for single-key wallets). */
     val id: String
+
+    /** The wallet's secret: either a BIP-39 mnemonic phrase or an `nsec`-encoded private key. */
     val secret: String
+
+    /** Optional Bech32-encoded Ark address used as the default payment destination. */
     val destination: String?
+
+    /** The wallet flavour: [Type.HD] or [Type.SINGLE_KEY]. */
     val type: Type
+
+    /** The Taproot account descriptor used to derive addresses for this wallet. */
     val accountDescriptor: String
+
+    /** The highest address index that has been used by this wallet. */
     val lastUsedIndex: Int
 
+    /** The repository instance used by this wallet for all persistence operations. */
     val repo: WalletRepo
 
     /**
@@ -99,24 +125,62 @@ interface Wallet {
         }
     }
 
+    /**
+     * Persists a single VTXO for this wallet.
+     *
+     * @param vtxo The [Vtxo.Data] to save.
+     */
     suspend fun saveVtxo(vtxo: Vtxo.Data)
 
+    /**
+     * Retrieves all VTXOs stored for this wallet.
+     *
+     * @return A list of [Vtxo.Data]; empty if none have been saved.
+     */
     suspend fun getVtxos(): List<Vtxo.Data>
 
+    /**
+     * Deletes all VTXOs stored for this wallet.
+     */
     suspend fun deleteVtxos()
 
+    /**
+     * Persists an [ArkContract] for this wallet.
+     *
+     * Associates the contract with the wallet's own [id] and the given [network]
+     * so the correct `scriptPubKey` can be derived on retrieval.
+     * Saving a contract whose `scriptPubKey` already exists replaces the existing entry.
+     *
+     * @param contract The contract to persist.
+     * @param state    The [ContractState] to associate with this contract.
+     * @param network  The Bitcoin network used to derive the contract's `scriptPubKey`.
+     */
     suspend fun saveContract(
         contract: ArkContract,
         state: ContractState,
         network: Network,
     )
 
+    /**
+     * Returns all [ArkContract] instances persisted for this wallet.
+     *
+     * @return A list of contracts owned by this wallet, or an empty list if none exist.
+     */
     suspend fun getContracts(): List<ArkContract>
 
+    /**
+     * Deletes all [ArkContract] instances persisted for this wallet.
+     */
     suspend fun deleteContracts()
 
+    /**
+     * Identifies the flavour of a [Wallet].
+     */
     enum class Type {
+        /** A Hierarchical Deterministic wallet derived from a BIP-39 mnemonic phrase. */
         HD,
+
+        /** A wallet backed by a single `nsec`-encoded private key. */
         SINGLE_KEY,
     }
 
