@@ -9,11 +9,37 @@ import com.arkade.core.taproot.TaprootSpendingInfo
 import com.arkade.core.taproot.pubKeyFromTaprootDescriptor
 import com.arkade.core.toXOnlyPubKey
 
+/**
+ * Abstract base class for all Arkade contracts.
+ *
+ * An [ArkContract] encapsulates the Taproot spending conditions for a contract on the Ark protocol.
+ * Subclasses define the specific script leaves (via [getTapLeafScripts]) and any contract-specific
+ * metadata (via [getAdditionalData]). The contract computes a Taproot output using an unspendable
+ * internal key tweaked by the Merkle root of the script tree, following the standard key-path
+ * disabled Taproot pattern.
+ *
+ * The serialized form of a contract is an `arkcontract=<type>` query string, optionally followed
+ * by `&`-separated `key=value` pairs from [getAdditionalData]. This string can be parsed back into
+ * a contract using [ArkContractParserImpl].
+ *
+ * @param serverDescriptor a Taproot descriptor (e.g. `tr(<xOnlyPubKeyHex>)`) for the Arkade server's public key.
+ */
 abstract class ArkContract(
     protected val serverDescriptor: String,
 ) {
+    /**
+     * The contract type identifier used for serialization and parser dispatch.
+     * Must be unique across all registered contract types.
+     */
     abstract val type: String
 
+    /**
+     * Returns the serialized representation of this contract as an `arkcontract` query string.
+     *
+     * Format: `arkcontract=<type>` or `arkcontract=<type>&key1=value1&key2=value2&...`
+     *
+     * The `arkcontract` key is stripped from [getAdditionalData] to avoid duplication.
+     */
     override fun toString(): String {
         val data = getAdditionalData().toMutableMap()
         data.remove("arkcontract")
@@ -25,6 +51,15 @@ abstract class ArkContract(
         return if (dataString.isEmpty()) arkContract else "$arkContract&$dataString"
     }
 
+    /**
+     * Returns the Ark address associated with this contract on the given [network].
+     *
+     * The address is constructed from the server's public key and the Taproot output key
+     * derived from [getTaprootSpendingInfo].
+     *
+     * @param network the Bitcoin network to derive the address for.
+     * @return the [ArkAddress] for this contract.
+     */
     open fun getArkAddress(network: Network): ArkAddress {
         val taprootSpendingInfo = getTaprootSpendingInfo()
         return ArkAddress.create(
@@ -34,8 +69,25 @@ abstract class ArkContract(
         )
     }
 
+    /**
+     * Returns the P2TR `scriptPubKey` for this contract as a hex string.
+     *
+     * Delegates to [getArkAddress] by default.
+     *
+     * @param network the Bitcoin network.
+     * @return the hex-encoded P2TR scriptPubKey.
+     */
     open fun getScriptPubKey(network: Network): String = getArkAddress(network).toP2TRScriptPubkey().toHexString()
 
+    /**
+     * Computes the [TaprootSpendingInfo] for this contract.
+     *
+     * Builds the Taproot script tree from [getTapLeafScripts], computes the Merkle root,
+     * and derives the output key by tweaking [UNSPENDABLE_PUBKEY] with that root. This disables
+     * key-path spending and enforces that funds can only be spent via one of the script leaves.
+     *
+     * @return the [TaprootSpendingInfo] containing the output key, parity, Merkle root, and script tree.
+     */
     protected fun getTaprootSpendingInfo(): TaprootSpendingInfo {
         val unSpendablePubKey = UNSPENDABLE_PUBKEY.toXOnlyPubKey()
 
@@ -57,7 +109,23 @@ abstract class ArkContract(
         return taprootSpendingInfo
     }
 
+    /**
+     * Returns the list of serialized Tapscript leaf scripts that form this contract's script tree.
+     *
+     * Each element is a raw serialized Bitcoin script. The order determines how the Taproot
+     * Merkle tree is constructed by [buildScriptTree].
+     *
+     * @return a non-empty list of serialized tap leaf scripts.
+     */
     abstract fun getTapLeafScripts(): List<ByteArray>
 
+    /**
+     * Returns the contract's additional data as a key/value map.
+     *
+     * This data is included in the serialized contract string and used for round-trip parsing.
+     * It should contain all parameters necessary to reconstruct the contract from its string form.
+     *
+     * @return a map of contract-specific key/value pairs.
+     */
     abstract fun getAdditionalData(): Map<String, String>
 }

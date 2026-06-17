@@ -6,6 +6,14 @@ import com.arkade.storage.db.Database
 import com.arkade.storage.db.entities.ContractEntity
 import org.koin.core.parameter.parametersOf
 
+/**
+ * Room-backed implementation of [ContractStorage].
+ *
+ * Resolves a [Database] instance from the Koin DI container using the provided [databaseBuilder],
+ * then delegates all storage operations to [ContractDao].
+ *
+ * @param databaseBuilder the Room database builder used to obtain the [Database] singleton.
+ */
 class ContractStorageImpl(
     databaseBuilder: RoomDatabase.Builder<Database>,
 ) : ContractStorage {

@@ -51,6 +51,23 @@ fun csvSigScript(
     return Script.write(asm)
 }
 
+/**
+ * Builds a Taproot [ScriptTree] from a list of serialized tap leaf scripts.
+ *
+ * The resulting tree has the following structure:
+ * - **1 leaf**: returns a single [ScriptTree.Leaf].
+ * - **Even count**: pairs adjacent leaves into [ScriptTree.Branch] nodes, then reduces
+ *   remaining branches pairwise until a single root branch remains.
+ * - **Odd count**: the trailing unpaired leaf is merged into the last branch of the
+ *   first pairing pass before the reduction loop.
+ *
+ * All leaf scripts are wrapped in a [ScriptTree.Leaf] with version `0`.
+ *
+ * @param leaves the non-empty list of raw serialized tap leaf scripts.
+ * @return the root [ScriptTree] node for the given scripts.
+ * @throws IllegalArgumentException if [leaves] is empty.
+ * @throws IllegalStateException if an internal invariant is violated (should not occur).
+ */
 fun buildScriptTree(leaves: List<ByteArray>): ScriptTree {
     require(leaves.isNotEmpty()) { "At least one leaf is required" }
     if (leaves.size == 1) {
