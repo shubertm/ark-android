@@ -6,9 +6,18 @@ import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.wallet.Wallet
 
+/**
+ * Repository interface for all wallet-related persistence operations.
+ *
+ * [WalletRepo] is the single entry point used by [Wallet] implementations to read and write
+ * wallet records, VTXOs, and Ark contracts. It composes [VtxoRepo] and [ContractRepo] so that
+ * callers do not need to resolve sub-repositories directly.
+ */
 interface WalletRepo {
+    /** Provides access to the underlying VTXO repository. */
     val vtxoRepo: VtxoRepo
 
+    /** Provides access to the underlying contract repository. */
     val contractRepo: ContractRepo
 
     /**
@@ -57,12 +66,33 @@ interface WalletRepo {
      */
     suspend fun updateWallet(wallet: Wallet)
 
+    /**
+     * Persists a single VTXO.
+     *
+     * @param vtxo The [Vtxo.Data] to save.
+     */
     suspend fun saveVtxo(vtxo: Vtxo.Data)
 
+    /**
+     * Retrieves all persisted VTXOs.
+     *
+     * @return A list of [Vtxo.Data]; empty if none exist.
+     */
     suspend fun getVtxos(): List<Vtxo.Data>
 
+    /**
+     * Deletes all persisted VTXOs.
+     */
     suspend fun deleteVtxos()
 
+    /**
+     * Persists an [ArkContract] for the wallet identified by [walletId].
+     *
+     * @param contract  The contract to persist.
+     * @param state     The [ContractState] to associate with this contract.
+     * @param walletId  The ID of the owning wallet.
+     * @param network   The Bitcoin network used to derive the `scriptPubKey`.
+     */
     suspend fun saveContract(
         contract: ArkContract,
         state: ContractState,
@@ -70,9 +100,27 @@ interface WalletRepo {
         network: Network,
     )
 
+    /**
+     * Retrieves a single [ArkContract] by its P2TR `scriptPubKey`.
+     *
+     * @param scriptPubKey Hex-encoded `scriptPubKey` identifying the contract.
+     * @return The matching [ArkContract].
+     * @throws IllegalArgumentException if no contract with the given key exists.
+     */
     suspend fun getContract(scriptPubKey: String): ArkContract
 
+    /**
+     * Retrieves all [ArkContract] instances for the wallet identified by [walletId].
+     *
+     * @param walletId The wallet whose contracts are to be fetched.
+     * @return A list of contracts; empty if none are found.
+     */
     suspend fun getContracts(walletId: String): List<ArkContract>
 
+    /**
+     * Deletes all [ArkContract] instances for the wallet identified by [walletId].
+     *
+     * @param walletId The wallet whose contracts are to be deleted.
+     */
     suspend fun deleteContracts(walletId: String)
 }
