@@ -1,11 +1,13 @@
 package com.arkade.core
 
+import fr.acinq.bitcoin.ByteVector
 import fr.acinq.bitcoin.OP_CHECKSEQUENCEVERIFY
 import fr.acinq.bitcoin.OP_CHECKSIG
 import fr.acinq.bitcoin.OP_CHECKSIGVERIFY
 import fr.acinq.bitcoin.OP_DROP
 import fr.acinq.bitcoin.OP_PUSHDATA
 import fr.acinq.bitcoin.Script
+import fr.acinq.bitcoin.ScriptTree
 import fr.acinq.bitcoin.XonlyPublicKey
 
 /**
@@ -47,4 +49,58 @@ fun csvSigScript(
             OP_CHECKSIG,
         )
     return Script.write(asm)
+}
+
+/**
+ * Builds a Taproot [ScriptTree] from a list of serialized tap leaf scripts.
+ *
+ * The resulting tree has the following structure:
+ * - **1 leaf**: returns a single [ScriptTree.Leaf].
+ * - **Even count**: pairs adjacent leaves into [ScriptTree.Branch] nodes, then reduces
+ *   remaining branches pairwise until a single root branch remains.
+ * - **Odd count**: the trailing unpaired leaf is merged into the last branch of the
+ *   first pairing pass before the reduction loop.
+ *
+ * All leaf scripts are wrapped in a [ScriptTree.Leaf] with version `0`.
+ *
+ * @param leaves the non-empty list of raw serialized tap leaf scripts.
+ * @return the root [ScriptTree] node for the given scripts.
+ * @throws IllegalArgumentException if [leaves] is empty.
+ * @throws IllegalStateException if an internal invariant is violated (should not occur).
+ */
+fun buildScriptTree(leaves: List<ByteArray>): ScriptTree {
+    require(leaves.isNotEmpty()) { "At least one leaf is required" }
+    if (leaves.size == 1) {
+        return ScriptTree.Leaf(ByteVector(leaves.single()), 0)
+    }
+
+    val leaves = leaves.map { ScriptTree.Leaf(ByteVector(it), 0) }
+    val branches = mutableListOf<ScriptTree.Branch>()
+
+    for (leafIndex in 0 until leaves.size step 2) {
+        if (leafIndex == leaves.size - 1) {
+            val lastBranch = branches.removeLastOrNull()
+            if (lastBranch != null) {
+                branches.add(ScriptTree.Branch(lastBranch, leaves[leafIndex]))
+                continue
+            } else {
+                throw IllegalStateException("This should not happen")
+            }
+        }
+
+        val branch = ScriptTree.Branch(leaves[leafIndex], leaves[leafIndex + 1])
+        branches.add(branch)
+    }
+
+    while (branches.isNotEmpty()) {
+        if (branches.size == 1) {
+            return branches.single()
+        }
+
+        val right = branches.removeAt(0)
+        val left = branches.removeAt(0)
+        val branch = ScriptTree.Branch(left, right)
+        branches.add(branch)
+    }
+    throw IllegalStateException("This should never happen")
 }

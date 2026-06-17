@@ -1,8 +1,10 @@
 package com.arkade.core
 
+import com.arkade.core.bitcoin.Network
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import fr.acinq.bitcoin.ByteVector32
+import fr.acinq.bitcoin.DeterministicWallet
 import fr.acinq.bitcoin.PublicKey
 import fr.acinq.bitcoin.XonlyPublicKey
 import kotlinx.serialization.KSerializer
@@ -56,6 +58,15 @@ fun String.toXOnlyPubKey(): XonlyPublicKey {
 }
 
 fun Long.toBlockHeight(): Long = this / 600
+
+fun encodePubKeyByNetwork(
+    pubKey: DeterministicWallet.ExtendedPublicKey,
+    network: Network,
+): String =
+    when (network) {
+        Network.MAINNET -> pubKey.encode(false)
+        else -> pubKey.encode(true)
+    }
 
 object Json {
     class BigDecimalSerializer : KSerializer<BigDecimal> {
