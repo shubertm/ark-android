@@ -10,7 +10,7 @@ package com.arkade.core.contracts
  *
  * The [type] is always `"generic"` and cannot be overridden.
  *
- * @param serverDescriptor a Taproot descriptor for the Ark server's public key.
+ * @param serverDescriptor a Taproot descriptor for the Arkade server's public key.
  * @param tapLeafScripts the list of serialized tap leaf scripts for this contract's script tree.
  * @param additionalData optional key/value metadata. Returns an empty map if `null`.
  */

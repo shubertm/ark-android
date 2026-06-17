@@ -10,7 +10,7 @@ import com.arkade.core.taproot.pubKeyFromTaprootDescriptor
 import com.arkade.core.toXOnlyPubKey
 
 /**
- * Abstract base class for all Ark contracts.
+ * Abstract base class for all Arkade contracts.
  *
  * An [ArkContract] encapsulates the Taproot spending conditions for a contract on the Ark protocol.
  * Subclasses define the specific script leaves (via [getTapLeafScripts]) and any contract-specific
@@ -22,7 +22,7 @@ import com.arkade.core.toXOnlyPubKey
  * by `&`-separated `key=value` pairs from [getAdditionalData]. This string can be parsed back into
  * a contract using [ArkContractParserImpl].
  *
- * @param serverDescriptor a Taproot descriptor (e.g. `tr(<xOnlyPubKeyHex>)`) for the Ark server's public key.
+ * @param serverDescriptor a Taproot descriptor (e.g. `tr(<xOnlyPubKeyHex>)`) for the Arkade server's public key.
  */
 abstract class ArkContract(
     protected val serverDescriptor: String,

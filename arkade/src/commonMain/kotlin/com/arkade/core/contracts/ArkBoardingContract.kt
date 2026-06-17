@@ -10,7 +10,7 @@ import com.arkade.core.taproot.pubKeyFromTaprootDescriptor
 import com.arkade.core.toXOnlyPubKey
 
 /**
- * An Ark boarding contract that allows a user to move on-chain Bitcoin funds into the Ark protocol.
+ * An Arkade boarding contract that allows a user to move on-chain Bitcoin funds into the Arkade protocol.
  *
  * The contract produces a Taproot address with two spending paths:
  * - **Collaborative exit**: a 2-of-2 multisig between the server and the user, allowing
