@@ -34,13 +34,19 @@ interface ContractDao {
     suspend fun get(scriptPubKey: String): ContractEntity?
 
     /**
-     * Returns all rows from the `contracts` table.
+     * Returns all rows from the `contracts` table that belong to [walletId].
      *
-     * @return a list of all stored [ContractEntity] instances, or an empty list.
+     * @param walletId the wallet identifier to filter by.
+     * @return a list of matching [ContractEntity] instances; empty if none are found.
      */
     @Query("SELECT * FROM contracts WHERE walletId = :walletId")
     suspend fun getAll(walletId: String): List<ContractEntity>
 
+    /**
+     * Deletes all rows from the `contracts` table that belong to [walletId].
+     *
+     * @param walletId the wallet identifier whose contracts should be removed.
+     */
     @Query("DELETE FROM contracts WHERE walletId = :walletId")
     suspend fun deleteAll(walletId: String)
 }
