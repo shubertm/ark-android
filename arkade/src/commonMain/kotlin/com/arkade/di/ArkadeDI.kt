@@ -5,6 +5,6 @@ import org.koin.dsl.koinApplication
 internal object ArkadeDI {
     internal val arkadeKoin =
         koinApplication {
-            modules(databaseModule, storageModule, repoModule)
+            modules(databaseModule, storageModule, repoModule, parsersModule)
         }.koin
 }

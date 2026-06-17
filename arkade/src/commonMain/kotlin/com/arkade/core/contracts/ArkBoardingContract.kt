@@ -6,6 +6,7 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.csvSigScript
 import com.arkade.core.multisigScript
 import com.arkade.core.taproot.getTaprootScriptPubKey
+import com.arkade.core.taproot.parseTaprootDescriptor
 import com.arkade.core.taproot.pubKeyFromTaprootDescriptor
 import com.arkade.core.toXOnlyPubKey
 
@@ -116,9 +117,14 @@ class ArkBoardingContract(
             val exitDelay = data["exit_delay"]?.toLong()
             requireNotNull(serverPubKeyDescriptor) { "Invalid server public key" }
             requireNotNull(userPubKeyDescriptor) { "Invalid user public key" }
+            if (exitDelay != null) {
+                require(exitDelay >= 0) { "Invalid exit delay" }
+            }
+            require(serverPubKeyDescriptor.isNotBlank()) { "Invalid server public key" }
+            require(userPubKeyDescriptor.isNotBlank()) { "Invalid user public key" }
             return ArkBoardingContract(
-                serverPubKeyDescriptor,
-                userPubKeyDescriptor,
+                parseTaprootDescriptor(serverPubKeyDescriptor),
+                parseTaprootDescriptor(userPubKeyDescriptor),
                 exitDelay ?: 0,
             )
         }

@@ -5,6 +5,8 @@ import com.arkade.core.ArkAddress
 import com.arkade.core.ArkServerInfo
 import com.arkade.core.Vtxo
 import com.arkade.core.bitcoin.Network
+import com.arkade.core.contracts.ArkContract
+import com.arkade.core.contracts.ContractState
 import com.arkade.core.encodePubKeyByNetwork
 import com.arkade.di.ArkadeDI
 import com.arkade.repositories.WalletRepo
@@ -102,6 +104,16 @@ interface Wallet {
     suspend fun getVtxos(): List<Vtxo.Data>
 
     suspend fun deleteVtxos()
+
+    suspend fun saveContract(
+        contract: ArkContract,
+        state: ContractState,
+        network: Network,
+    )
+
+    suspend fun getContracts(): List<ArkContract>
+
+    suspend fun deleteContracts()
 
     enum class Type {
         HD,

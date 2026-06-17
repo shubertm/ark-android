@@ -2,6 +2,9 @@ package com.arkade.repositories
 
 import androidx.room.RoomDatabase
 import com.arkade.core.Vtxo
+import com.arkade.core.bitcoin.Network
+import com.arkade.core.contracts.ArkContract
+import com.arkade.core.contracts.ContractState
 import com.arkade.core.wallet.Storage
 import com.arkade.core.wallet.Wallet
 import com.arkade.di.ArkadeDI
@@ -13,6 +16,7 @@ internal class WalletRepoImpl(
 ) : WalletRepo {
     private val storage: Storage = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
     override val vtxoRepo: VtxoRepo = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
+    override val contractRepo: ContractRepo = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
 
     /**
      * Persists the given wallet into the repository's storage.
@@ -76,4 +80,17 @@ internal class WalletRepoImpl(
     override suspend fun getVtxos(): List<Vtxo.Data> = vtxoRepo.getAll()
 
     override suspend fun deleteVtxos() = vtxoRepo.deleteAll()
+
+    override suspend fun saveContract(
+        contract: ArkContract,
+        state: ContractState,
+        walletId: String,
+        network: Network,
+    ) = contractRepo.save(contract, state, walletId, network)
+
+    override suspend fun getContract(scriptPubKey: String): ArkContract = contractRepo.get(scriptPubKey)
+
+    override suspend fun getContracts(): List<ArkContract> = contractRepo.getAll()
+
+    override suspend fun deleteContracts() = contractRepo.deleteAll()
 }

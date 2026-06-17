@@ -40,4 +40,7 @@ interface ContractDao {
      */
     @Query("SELECT * FROM contracts")
     suspend fun getAll(): List<ContractEntity>
+
+    @Query("DELETE FROM contracts")
+    suspend fun deleteAll()
 }

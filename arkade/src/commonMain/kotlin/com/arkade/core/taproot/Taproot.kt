@@ -23,14 +23,17 @@ fun getTaprootScriptPubKey(outputKey: ByteArray): ByteArray {
 /**
  * Creates a Taproot descriptor string from a compressed or x-only public key hex string.
  *
- * Converts the input [pubKey] to its x-only representation and wraps it in the `tr(…)` descriptor
+ * Converts the input [string] to its x-only representation and wraps it in the `tr(…)` descriptor
  * format, e.g. `tr(a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c)`.
  *
- * @param pubKey a hex-encoded compressed (33-byte) or x-only (32-byte) public key.
+ * @param string a hex-encoded compressed (33-byte) or x-only (32-byte) public key.
  * @return a Taproot descriptor string `tr(<xOnlyPubKeyHex>)`.
  */
-fun taprootDescriptorFromPubKey(pubKey: String): String {
-    val xOnlyPubKey = pubKey.toXOnlyPubKey()
+fun parseTaprootDescriptor(string: String): String {
+    if (string.startsWith("tr(") && string.endsWith(")")) {
+        return "tr(${string.removeSurrounding("tr(", ")").toXOnlyPubKey().value.toHex()})"
+    }
+    val xOnlyPubKey = string.toXOnlyPubKey()
     return "tr(${xOnlyPubKey.value.toHex()})"
 }
 
@@ -43,4 +46,11 @@ fun taprootDescriptorFromPubKey(pubKey: String): String {
  * @param descriptor a Taproot descriptor string (e.g. `tr(<xOnlyPubKeyHex>)`).
  * @return the hex-encoded x-only public key contained in the descriptor.
  */
-fun pubKeyFromTaprootDescriptor(descriptor: String): String = descriptor.substringAfter("(").substringBefore(")")
+fun pubKeyFromTaprootDescriptor(descriptor: String): String {
+    val pubKey =
+        descriptor
+            .substringAfter("(")
+            .substringBefore(")")
+            .toXOnlyPubKey()
+    return pubKey.value.toHex()
+}

@@ -1,6 +1,7 @@
 package com.arkade.di
 
 import androidx.room.RoomDatabase
+import com.arkade.core.contracts.ArkContractParserImpl
 import com.arkade.core.wallet.Storage
 import com.arkade.core.wallet.StorageImpl
 import com.arkade.repositories.ContractRepo
@@ -37,4 +38,9 @@ val databaseModule =
             val dbBuilder: RoomDatabase.Builder<Database> = params.get()
             dbBuilder.getDatabase()
         }
+    }
+
+val parsersModule =
+    module {
+        single { ArkContractParserImpl() }
     }

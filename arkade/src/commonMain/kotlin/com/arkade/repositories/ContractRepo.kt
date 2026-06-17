@@ -48,4 +48,6 @@ interface ContractRepo {
      * @throws IllegalArgumentException if the database contains no contracts.
      */
     suspend fun getAll(): List<ArkContract>
+
+    suspend fun deleteAll()
 }

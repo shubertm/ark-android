@@ -1,10 +1,15 @@
 package com.arkade.repositories
 
 import com.arkade.core.Vtxo
+import com.arkade.core.bitcoin.Network
+import com.arkade.core.contracts.ArkContract
+import com.arkade.core.contracts.ContractState
 import com.arkade.core.wallet.Wallet
 
 interface WalletRepo {
     val vtxoRepo: VtxoRepo
+
+    val contractRepo: ContractRepo
 
     /**
      * Persists the given wallet in the repository.
@@ -57,4 +62,17 @@ interface WalletRepo {
     suspend fun getVtxos(): List<Vtxo.Data>
 
     suspend fun deleteVtxos()
+
+    suspend fun saveContract(
+        contract: ArkContract,
+        state: ContractState,
+        walletId: String,
+        network: Network,
+    )
+
+    suspend fun getContract(scriptPubKey: String): ArkContract
+
+    suspend fun getContracts(): List<ArkContract>
+
+    suspend fun deleteContracts()
 }

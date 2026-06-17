@@ -1,0 +1,86 @@
+{
+  "valid": {
+    "contracts": [
+      {
+        "type": "Boarding",
+        "state": "Active",
+        "data": {
+          "server": "tr(03a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c)",
+          "user": "tr(0315fbe13a8cf7e4d0c81b0caf4040f37666933d97080abb04f908964bb14588a8)",
+          "exit_delay": 144
+        }
+      },
+      {
+        "type": "Boarding",
+        "state": "InActive",
+        "data": {
+          "server": "tr(03a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c)",
+          "user": "tr(0294dae02a7be6d3c0b70a0bde3030d26555822c86070baa03e807853aa03477b7)",
+          "exit_delay": 72
+        }
+      },
+      {
+        "type": "Boarding",
+        "state": "AwaitingFundsBeforeDeactivate",
+        "data": {
+          "server": "tr(03a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c)",
+          "user": "tr(02b28421b888316ecc8b0ba11e310e26b6a467b06d64d5ea08bb2e22eb5a04511b)",
+          "exit_delay": 1008
+        }
+      }
+    ]
+  },
+  "invalid": {
+    "contracts": [
+      {
+        "comment": "Invalid because server key is empty",
+        "type": "Boarding",
+        "state": "Active",
+        "data": {
+          "server": "",
+          "user": "tr(0315fbe13a8cf7e4d0c81b0caf4040f37666933d97080abb04f908964bb14588a8)",
+          "exit_delay": 144
+        }
+      },
+      {
+        "comment": "Invalid because user key is missing entirely",
+        "type": "Boarding",
+        "state": "Active",
+        "data": {
+          "server": "tr(03a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c)",
+          "exit_delay": 144
+        }
+      },
+      {
+        "comment": "Invalid because user key contains non-hex characters",
+        "type": "Boarding",
+        "state": "Active",
+        "data": {
+          "server": "tr(03a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c)",
+          "user": "tr(0315fbe13a8cf7e4d0c81b0caf4040f37666933d97080abb04f908964bb14588ZZ)",
+          "exit_delay": 144
+        }
+      },
+      {
+        "comment": "Invalid because user key is too short",
+        "type": "Boarding",
+        "state": "Active",
+        "data": {
+          "server": "tr(03a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c)",
+          "user": "tr(0315fbe13a8c)",
+          "exit_delay": 144
+        }
+      },
+      {
+        "comment": "Invalid because exit_delay is a negative number",
+        "type": "Boarding",
+        "state": "Active",
+        "data": {
+          "server": "tr(03a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c)",
+          "user": "tr(022cdae02a7be6d3c0b70a0bde3030d26555822c86070baa03e807853aa034aa1a)",
+          "exit_delay": -10
+        }
+      }
+    ]
+  }
+}

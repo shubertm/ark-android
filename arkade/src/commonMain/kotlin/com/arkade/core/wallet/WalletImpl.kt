@@ -1,6 +1,9 @@
 package com.arkade.core.wallet
 
 import com.arkade.core.Vtxo
+import com.arkade.core.bitcoin.Network
+import com.arkade.core.contracts.ArkContract
+import com.arkade.core.contracts.ContractState
 import com.arkade.repositories.WalletRepo
 
 class WalletImpl(
@@ -49,4 +52,16 @@ class WalletImpl(
     override suspend fun getVtxos(): List<Vtxo.Data> = repo.getVtxos()
 
     override suspend fun deleteVtxos() = repo.deleteVtxos()
+
+    override suspend fun saveContract(
+        contract: ArkContract,
+        state: ContractState,
+        network: Network,
+    ) {
+        repo.saveContract(contract, state, id, network)
+    }
+
+    override suspend fun getContracts() = repo.getContracts()
+
+    override suspend fun deleteContracts() = repo.deleteContracts()
 }

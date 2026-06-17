@@ -25,6 +25,7 @@ class ContractRepoImpl(
     databaseBuilder: RoomDatabase.Builder<Database>,
 ) : ContractRepo {
     private val storage: ContractStorage = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
+    private val contractParser: ArkContractParserImpl = ArkadeDI.arkadeKoin.get()
 
     /**
      * Converts [contract] to a [ContractEntity] and upserts it via [ContractStorage].
@@ -54,7 +55,7 @@ class ContractRepoImpl(
     override suspend fun get(scriptPubKey: String): ArkContract {
         val contractEntity = storage.get(scriptPubKey)
         requireNotNull(contractEntity) { "Contract not found" }
-        return ArkContractParserImpl().parse(contractEntity.additionalData, contractEntity.type)
+        return contractParser.parse(contractEntity.additionalData, contractEntity.type)
     }
 
     /**
@@ -67,7 +68,9 @@ class ContractRepoImpl(
         val contractEntities = storage.getAll()
         require(contractEntities.isNotEmpty()) { "No contracts found" }
         return contractEntities.map {
-            ArkContractParserImpl().parse(it.additionalData, it.type)
+            contractParser.parse(it.additionalData, it.type)
         }
     }
+
+    override suspend fun deleteAll() = storage.deleteAll()
 }
