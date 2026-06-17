@@ -1,12 +1,10 @@
 package com.arkade.core.contracts
 
-import com.arkade.core.ArkServerInfo
-
 class GenericArkContract(
-    serverInfo: ArkServerInfo,
+    serverDescriptor: String,
     private val tapLeafScripts: List<ByteArray>,
     private val additionalData: Map<String, String>? = null,
-) : ArkContract(serverInfo) {
+) : ArkContract(serverDescriptor) {
     override val type: String = "generic"
 
     override fun getTapLeafScripts(): List<ByteArray> = tapLeafScripts

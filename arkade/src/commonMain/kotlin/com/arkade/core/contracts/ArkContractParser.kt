@@ -1,14 +1,9 @@
 package com.arkade.core.contracts
 
-import com.arkade.core.bitcoin.Network
-
 interface ArkContractParser {
     val type: String
 
-    fun parse(
-        data: Map<String, String>,
-        network: Network,
-    ): ArkContract
+    fun parse(data: Map<String, String>): ArkContract
 
     companion object {
         fun getAdditionalData(contract: String): Map<String, String> {

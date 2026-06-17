@@ -5,6 +5,7 @@ import com.arkade.core.ArkAddress
 import com.arkade.core.ArkServerInfo
 import com.arkade.core.Vtxo
 import com.arkade.core.bitcoin.Network
+import com.arkade.core.encodePubKeyByNetwork
 import com.arkade.di.ArkadeDI
 import com.arkade.repositories.WalletRepo
 import com.arkade.storage.db.Database
@@ -266,14 +267,6 @@ interface Wallet {
 
             val (masterKey, fingerprint) = masterKeyFromSecret(mnemonics)
 
-            fun encodePubKeyByNetwork(
-                pubKey: DeterministicWallet.ExtendedPublicKey,
-                network: Network,
-            ): String =
-                when (network) {
-                    Network.MAINNET -> pubKey.encode(false)
-                    else -> pubKey.encode(true)
-                }
             val coinType =
                 when (serverInfo.network) {
                     Network.MAINNET -> 0

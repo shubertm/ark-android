@@ -1,19 +1,18 @@
 package com.arkade.core.contracts
 
 import com.arkade.core.ArkAddress
-import com.arkade.core.ArkServerInfo
 import com.arkade.core.UNSPENDABLE_PUBKEY
+import com.arkade.core.bitcoin.Network
 import com.arkade.core.buildScriptTree
 import com.arkade.core.taproot.Parity
 import com.arkade.core.taproot.TaprootSpendingInfo
+import com.arkade.core.taproot.pubKeyFromTaprootDescriptor
 import com.arkade.core.toXOnlyPubKey
 
 abstract class ArkContract(
-    private val serverInfo: ArkServerInfo,
+    protected val serverDescriptor: String,
 ) {
     abstract val type: String
-
-    val serverPubKey = serverInfo.signerPubKey.value.toByteArray()
 
     override fun toString(): String {
         val data = getAdditionalData().toMutableMap()
@@ -26,18 +25,18 @@ abstract class ArkContract(
         return if (dataString.isEmpty()) arkContract else "$arkContract&$dataString"
     }
 
-    fun getArkAddress(): ArkAddress {
+    open fun getArkAddress(network: Network): ArkAddress {
         val taprootSpendingInfo = getTaprootSpendingInfo()
         return ArkAddress.create(
-            serverInfo.network,
-            serverPubKey,
+            network,
+            pubKeyFromTaprootDescriptor(serverDescriptor).hexToByteArray(),
             taprootSpendingInfo.outputKey.value.toByteArray(),
         )
     }
 
-    fun getScriptPubKey(): String = getArkAddress().toP2TRScriptPubkey().toHexString()
+    open fun getScriptPubKey(network: Network): String = getArkAddress(network).toP2TRScriptPubkey().toHexString()
 
-    private fun getTaprootSpendingInfo(): TaprootSpendingInfo {
+    protected fun getTaprootSpendingInfo(): TaprootSpendingInfo {
         val unSpendablePubKey = UNSPENDABLE_PUBKEY.toXOnlyPubKey()
 
         val leafScripts = getTapLeafScripts()

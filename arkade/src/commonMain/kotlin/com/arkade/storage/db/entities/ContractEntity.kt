@@ -3,6 +3,7 @@ package com.arkade.storage.db.entities
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
+import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.utils.StringMapTypeConverter
@@ -27,9 +28,10 @@ data class ContractEntity(
             contract: ArkContract,
             state: ContractState = ContractState.ACTIVE,
             walletId: String,
+            network: Network,
         ): ContractEntity =
             ContractEntity(
-                contract.getScriptPubKey(),
+                contract.getScriptPubKey(network),
                 contract.type,
                 state,
                 contract.getAdditionalData(),
