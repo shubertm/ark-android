@@ -29,11 +29,17 @@ interface ContractStorage {
     suspend fun get(scriptPubKey: String): ContractEntity?
 
     /**
-     * Retrieves all stored [ContractEntity] rows.
+     * Retrieves all stored [ContractEntity] rows belonging to [walletId].
      *
-     * @return a list of all persisted contract entities, or an empty list if none exist.
+     * @param walletId the owning wallet's identifier.
+     * @return a list of contract entities owned by [walletId]; empty if none exist.
      */
     suspend fun getAll(walletId: String): List<ContractEntity>
 
+    /**
+     * Deletes all stored [ContractEntity] rows belonging to [walletId].
+     *
+     * @param walletId the owning wallet's identifier.
+     */
     suspend fun deleteAll(walletId: String)
 }
