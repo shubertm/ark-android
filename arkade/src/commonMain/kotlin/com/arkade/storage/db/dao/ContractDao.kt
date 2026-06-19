@@ -9,8 +9,8 @@ import com.arkade.storage.db.entities.ContractEntity
 /**
  * Room DAO for [ContractEntity] persistence.
  *
- * Provides suspend functions for upserting, querying by primary key, and listing all contracts
- * stored in the `contracts` table.
+ * Provides suspend functions for upserting, querying by primary key, listing contracts by wallet,
+ * and deleting contracts by wallet from the `contracts` table.
  */
 @Dao
 interface ContractDao {
@@ -34,13 +34,19 @@ interface ContractDao {
     suspend fun get(scriptPubKey: String): ContractEntity?
 
     /**
-     * Returns all rows from the `contracts` table.
+     * Returns all [ContractEntity] rows in the `contracts` table belonging to [walletId].
      *
-     * @return a list of all stored [ContractEntity] instances, or an empty list.
+     * @param walletId the wallet identifier to filter by.
+     * @return a list of [ContractEntity] instances for the given wallet, or an empty list.
      */
     @Query("SELECT * FROM contracts WHERE walletId = :walletId")
     suspend fun getAll(walletId: String): List<ContractEntity>
 
+    /**
+     * Deletes all rows from the `contracts` table belonging to [walletId].
+     *
+     * @param walletId the wallet identifier whose contracts should be deleted.
+     */
     @Query("DELETE FROM contracts WHERE walletId = :walletId")
     suspend fun deleteAll(walletId: String)
 }

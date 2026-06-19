@@ -6,6 +6,14 @@ import com.arkade.storage.db.Database
 import com.arkade.storage.db.entities.WalletEntity
 import org.koin.core.parameter.parametersOf
 
+/**
+ * Room-backed implementation of [WalletStorage].
+ *
+ * Resolves a [Database] instance from the Koin DI container using the provided [databaseBuilder],
+ * then delegates all wallet storage operations to [WalletDao].
+ *
+ * @param databaseBuilder the Room database builder used to obtain the [Database] singleton.
+ */
 internal class WalletStorageImpl(
     databaseBuilder: RoomDatabase.Builder<Database>,
 ) : WalletStorage {

@@ -81,6 +81,14 @@ internal class WalletRepoImpl(
 
     override suspend fun deleteVtxos() = vtxoRepo.deleteAll()
 
+    /**
+     * Persists an [ArkContract] by delegating to [contractRepo].
+     *
+     * @param contract the contract to persist.
+     * @param state the lifecycle state to associate with the contract.
+     * @param walletId the identifier of the wallet that owns the contract.
+     * @param network the Bitcoin network used to derive the contract's `scriptPubKey`.
+     */
     override suspend fun saveContract(
         contract: ArkContract,
         state: ContractState,
@@ -88,9 +96,27 @@ internal class WalletRepoImpl(
         network: Network,
     ) = contractRepo.save(contract, state, walletId, network)
 
+    /**
+     * Retrieves a single [ArkContract] by its P2TR `scriptPubKey`.
+     *
+     * @param scriptPubKey the hex-encoded scriptPubKey identifying the contract.
+     * @return the matching [ArkContract].
+     * @throws IllegalArgumentException if no contract with the given [scriptPubKey] exists.
+     */
     override suspend fun getContract(scriptPubKey: String): ArkContract = contractRepo.get(scriptPubKey)
 
+    /**
+     * Retrieves all contracts belonging to the specified wallet.
+     *
+     * @param walletId the identifier of the wallet whose contracts should be retrieved.
+     * @return a list of [ArkContract] instances for the given [walletId].
+     */
     override suspend fun getContracts(walletId: String): List<ArkContract> = contractRepo.getAll(walletId)
 
+    /**
+     * Deletes all contracts belonging to the specified wallet.
+     *
+     * @param walletId the identifier of the wallet whose contracts should be deleted.
+     */
     override suspend fun deleteContracts(walletId: String) = contractRepo.deleteAll(walletId)
 }

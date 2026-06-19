@@ -40,6 +40,11 @@ val databaseModule =
         }
     }
 
+/**
+ * Koin module that registers contract parser singletons.
+ *
+ * Provides a single [ArkContractParserImpl] instance shared across the application.
+ */
 val parsersModule =
     module {
         single { ArkContractParserImpl() }
