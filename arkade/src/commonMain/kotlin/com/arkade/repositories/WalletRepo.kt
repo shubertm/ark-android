@@ -1,10 +1,16 @@
 package com.arkade.repositories
 
 import com.arkade.core.Vtxo
+import com.arkade.core.bitcoin.Network
+import com.arkade.core.contracts.ArkContract
+import com.arkade.core.contracts.ContractState
 import com.arkade.core.wallet.Wallet
 
 interface WalletRepo {
     val vtxoRepo: VtxoRepo
+
+    /** The [ContractRepo] used by this wallet repository for contract persistence operations. */
+    val contractRepo: ContractRepo
 
     /**
      * Persists the given wallet in the repository.
@@ -57,4 +63,43 @@ interface WalletRepo {
     suspend fun getVtxos(): List<Vtxo.Data>
 
     suspend fun deleteVtxos()
+
+    /**
+     * Persists an [ArkContract] for the given wallet.
+     *
+     * @param contract the contract to persist.
+     * @param state the [ContractState] to associate with this contract.
+     * @param walletId the identifier of the wallet that owns the contract.
+     * @param network the Bitcoin network used to derive the contract's `scriptPubKey`.
+     */
+    suspend fun saveContract(
+        contract: ArkContract,
+        state: ContractState,
+        walletId: String,
+        network: Network,
+    )
+
+    /**
+     * Retrieves a single [ArkContract] by its P2TR `scriptPubKey`.
+     *
+     * @param scriptPubKey the hex-encoded scriptPubKey that identifies the contract.
+     * @return the [ArkContract] matching the given [scriptPubKey].
+     * @throws IllegalArgumentException if no contract with the given [scriptPubKey] exists.
+     */
+    suspend fun getContract(scriptPubKey: String): ArkContract
+
+    /**
+     * Retrieves all [ArkContract] instances belonging to the specified wallet.
+     *
+     * @param walletId the identifier of the wallet whose contracts should be retrieved.
+     * @return a list of contracts associated with the given [walletId].
+     */
+    suspend fun getContracts(walletId: String): List<ArkContract>
+
+    /**
+     * Deletes all [ArkContract] instances belonging to the specified wallet.
+     *
+     * @param walletId the identifier of the wallet whose contracts should be deleted.
+     */
+    suspend fun deleteContracts(walletId: String)
 }

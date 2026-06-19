@@ -24,5 +24,7 @@ class ContractStorageImpl(
 
     override suspend fun get(scriptPubKey: String): ContractEntity? = contractDao.get(scriptPubKey)
 
-    override suspend fun getAll(): List<ContractEntity> = contractDao.getAll()
+    override suspend fun getAll(walletId: String): List<ContractEntity> = contractDao.getAll(walletId)
+
+    override suspend fun deleteAll(walletId: String) = contractDao.deleteAll(walletId)
 }

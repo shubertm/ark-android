@@ -1,6 +1,9 @@
 package com.arkade.core.wallet
 
 import com.arkade.core.Vtxo
+import com.arkade.core.bitcoin.Network
+import com.arkade.core.contracts.ArkContract
+import com.arkade.core.contracts.ContractState
 import com.arkade.repositories.WalletRepo
 
 class WalletImpl(
@@ -49,4 +52,31 @@ class WalletImpl(
     override suspend fun getVtxos(): List<Vtxo.Data> = repo.getVtxos()
 
     override suspend fun deleteVtxos() = repo.deleteVtxos()
+
+    /**
+     * Persists [contract] for this wallet by delegating to the repository with this wallet's [id].
+     *
+     * @param contract the contract to persist.
+     * @param state the lifecycle state to associate with the contract.
+     * @param network the Bitcoin network used to derive the contract's `scriptPubKey`.
+     */
+    override suspend fun saveContract(
+        contract: ArkContract,
+        state: ContractState,
+        network: Network,
+    ) {
+        repo.saveContract(contract, state, id, network)
+    }
+
+    /**
+     * Retrieves all contracts stored for this wallet.
+     *
+     * @return a list of [ArkContract] instances associated with this wallet's [id].
+     */
+    override suspend fun getContracts() = repo.getContracts(id)
+
+    /**
+     * Deletes all contracts stored for this wallet.
+     */
+    override suspend fun deleteContracts() = repo.deleteContracts(id)
 }

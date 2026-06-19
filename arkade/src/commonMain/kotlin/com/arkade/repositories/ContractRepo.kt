@@ -42,10 +42,18 @@ interface ContractRepo {
     suspend fun get(scriptPubKey: String): ArkContract
 
     /**
-     * Retrieves all persisted [ArkContract] instances.
+     * Retrieves all persisted [ArkContract] instances belonging to the specified wallet.
      *
-     * @return a list of all stored contracts, or throws if no contracts are found.
-     * @throws IllegalArgumentException if the database contains no contracts.
+     * @param walletId the identifier of the wallet whose contracts should be retrieved.
+     * @return a list of all stored contracts for the given wallet, or throws if none are found.
+     * @throws IllegalArgumentException if the database contains no contracts for [walletId].
      */
-    suspend fun getAll(): List<ArkContract>
+    suspend fun getAll(walletId: String): List<ArkContract>
+
+    /**
+     * Deletes all persisted [ArkContract] instances belonging to the specified wallet.
+     *
+     * @param walletId the identifier of the wallet whose contracts should be deleted.
+     */
+    suspend fun deleteAll(walletId: String)
 }

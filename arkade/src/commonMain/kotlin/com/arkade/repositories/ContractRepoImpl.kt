@@ -25,6 +25,7 @@ class ContractRepoImpl(
     databaseBuilder: RoomDatabase.Builder<Database>,
 ) : ContractRepo {
     private val storage: ContractStorage = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
+    private val contractParser: ArkContractParserImpl = ArkadeDI.arkadeKoin.get()
 
     /**
      * Converts [contract] to a [ContractEntity] and upserts it via [ContractStorage].
@@ -54,20 +55,28 @@ class ContractRepoImpl(
     override suspend fun get(scriptPubKey: String): ArkContract {
         val contractEntity = storage.get(scriptPubKey)
         requireNotNull(contractEntity) { "Contract not found" }
-        return ArkContractParserImpl().parse(contractEntity.additionalData, contractEntity.type)
+        return contractParser.parse(contractEntity.additionalData, contractEntity.type)
     }
 
     /**
-     * Fetches all stored [ContractEntity] rows and parses each back to an [ArkContract].
+     * Fetches all [ContractEntity] rows for the given wallet and parses each back to an [ArkContract].
      *
-     * @return a non-empty list of all persisted contracts.
-     * @throws IllegalArgumentException if no contracts are stored.
+     * @param walletId the identifier of the wallet whose contracts should be retrieved.
+     * @return a non-empty list of contracts for the given wallet.
+     * @throws IllegalArgumentException if no contracts are stored for [walletId].
      */
-    override suspend fun getAll(): List<ArkContract> {
-        val contractEntities = storage.getAll()
+    override suspend fun getAll(walletId: String): List<ArkContract> {
+        val contractEntities = storage.getAll(walletId)
         require(contractEntities.isNotEmpty()) { "No contracts found" }
         return contractEntities.map {
-            ArkContractParserImpl().parse(it.additionalData, it.type)
+            contractParser.parse(it.additionalData, it.type)
         }
     }
+
+    /**
+     * Deletes all [ContractEntity] rows for the given wallet from storage.
+     *
+     * @param walletId the identifier of the wallet whose contracts should be deleted.
+     */
+    override suspend fun deleteAll(walletId: String) = storage.deleteAll(walletId)
 }

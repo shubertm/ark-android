@@ -5,6 +5,8 @@ import com.arkade.core.ArkAddress
 import com.arkade.core.ArkServerInfo
 import com.arkade.core.Vtxo
 import com.arkade.core.bitcoin.Network
+import com.arkade.core.contracts.ArkContract
+import com.arkade.core.contracts.ContractState
 import com.arkade.core.encodePubKeyByNetwork
 import com.arkade.di.ArkadeDI
 import com.arkade.repositories.WalletRepo
@@ -102,6 +104,31 @@ interface Wallet {
     suspend fun getVtxos(): List<Vtxo.Data>
 
     suspend fun deleteVtxos()
+
+    /**
+     * Persists an [ArkContract] for this wallet.
+     *
+     * @param contract the contract to persist.
+     * @param state the [ContractState] to associate with this contract.
+     * @param network the Bitcoin network used to derive the contract's `scriptPubKey`.
+     */
+    suspend fun saveContract(
+        contract: ArkContract,
+        state: ContractState,
+        network: Network,
+    )
+
+    /**
+     * Retrieves all [ArkContract] instances stored for this wallet.
+     *
+     * @return a list of all contracts associated with this wallet's identifier.
+     */
+    suspend fun getContracts(): List<ArkContract>
+
+    /**
+     * Deletes all [ArkContract] instances stored for this wallet.
+     */
+    suspend fun deleteContracts()
 
     enum class Type {
         HD,

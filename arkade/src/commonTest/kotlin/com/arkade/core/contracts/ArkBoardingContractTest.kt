@@ -2,7 +2,7 @@ package com.arkade.core.contracts
 
 import com.arkade.core.bitcoin.Hrp
 import com.arkade.core.bitcoin.Network
-import com.arkade.core.taproot.taprootDescriptorFromPubKey
+import com.arkade.core.taproot.parseTaprootDescriptor
 import com.arkade.storage.db.entities.ContractEntity
 import fr.acinq.bitcoin.OP_CHECKSEQUENCEVERIFY
 import fr.acinq.bitcoin.OP_CHECKSIG
@@ -15,9 +15,9 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class ArkBoardingContractTest {
-    val serverPubKeyDescriptor = taprootDescriptorFromPubKey("03a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c")
-    val ownerPubKeyDescriptor = taprootDescriptorFromPubKey("0315fbe13a8cf7e4d0c81b0caf4040f37666933d97080abb04f908964bb14588a8")
-    val diffOwnerPubKeyDescriptor = taprootDescriptorFromPubKey("2f9c3daffa6d41e380e036433e9eea09b82bbbc5d9c772286655aa1c5b9ab3f0")
+    val serverPubKeyDescriptor = parseTaprootDescriptor("03a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c")
+    val ownerPubKeyDescriptor = parseTaprootDescriptor("0315fbe13a8cf7e4d0c81b0caf4040f37666933d97080abb04f908964bb14588a8")
+    val diffOwnerPubKeyDescriptor = parseTaprootDescriptor("2f9c3daffa6d41e380e036433e9eea09b82bbbc5d9c772286655aa1c5b9ab3f0")
 
     val exitDelay = 144L
 

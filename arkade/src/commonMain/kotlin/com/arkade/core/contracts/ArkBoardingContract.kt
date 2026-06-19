@@ -6,6 +6,7 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.csvSigScript
 import com.arkade.core.multisigScript
 import com.arkade.core.taproot.getTaprootScriptPubKey
+import com.arkade.core.taproot.parseTaprootDescriptor
 import com.arkade.core.taproot.pubKeyFromTaprootDescriptor
 import com.arkade.core.toXOnlyPubKey
 
@@ -103,12 +104,15 @@ class ArkBoardingContract(
         /**
          * Parses an [ArkBoardingContract] from a key/value data map.
          *
-         * Expected keys: `server` (server Taproot descriptor), `user` (user Taproot descriptor),
-         * and optionally `exit_delay` (defaults to `0` if absent or not parseable).
+         * Expected keys: `server` (server Taproot descriptor or compressed/x-only public key hex),
+         * `user` (user Taproot descriptor or compressed/x-only public key hex), and optionally
+         * `exit_delay` (defaults to `0` if absent). Both descriptors are normalized to the canonical
+         * `tr(<xOnlyPubKeyHex>)` form before construction.
          *
          * @param data the key/value map produced by [ArkContractParser.getAdditionalData].
          * @return an [ArkBoardingContract] constructed from the provided data.
-         * @throws IllegalArgumentException if `server` or `user` keys are missing.
+         * @throws IllegalArgumentException if `server` or `user` keys are missing or blank,
+         * or if `exit_delay` is a negative number.
          */
         fun parse(data: Map<String, String>): ArkContract {
             val serverPubKeyDescriptor = data["server"]
@@ -116,9 +120,14 @@ class ArkBoardingContract(
             val exitDelay = data["exit_delay"]?.toLong()
             requireNotNull(serverPubKeyDescriptor) { "Invalid server public key" }
             requireNotNull(userPubKeyDescriptor) { "Invalid user public key" }
+            if (exitDelay != null) {
+                require(exitDelay >= 0) { "Invalid exit delay" }
+            }
+            require(serverPubKeyDescriptor.isNotBlank()) { "Invalid server public key" }
+            require(userPubKeyDescriptor.isNotBlank()) { "Invalid user public key" }
             return ArkBoardingContract(
-                serverPubKeyDescriptor,
-                userPubKeyDescriptor,
+                parseTaprootDescriptor(serverPubKeyDescriptor),
+                parseTaprootDescriptor(userPubKeyDescriptor),
                 exitDelay ?: 0,
             )
         }

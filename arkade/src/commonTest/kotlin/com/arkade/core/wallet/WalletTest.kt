@@ -8,6 +8,9 @@ import com.arkade.core.bitcoin.Address
 import com.arkade.core.bitcoin.Hrp
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.bitcoin.WitnessVersion
+import com.arkade.core.contracts.ArkContract
+import com.arkade.core.contracts.ArkContractParserImpl
+import com.arkade.core.contracts.ContractState
 import com.arkade.core.toXOnlyPubKey
 import com.arkade.core.wallet.Wallet.Companion.masterKeyFromSecret
 import com.arkade.di.ArkadeDI
@@ -48,6 +51,9 @@ expect abstract class WalletTest() : com.arkade.Test {
 
     @Test
     abstract fun should_store_and_retrieve_valid_vtxo_data_successfully()
+
+    @Test
+    abstract fun should_store_and_retrieve_valid_ark_contracts_successfully()
 }
 
 fun getArkServerInfo(): ArkServerInfo =
@@ -86,6 +92,10 @@ class SingleKeyWalletTest : WalletTest() {
     val testVtxoData = Json.parseToJsonElement(readJsonFile("fixtures/vtxo-data.json"))
     val validTestVtxosJsonArray = testVtxoData.jsonObject["valid"]?.jsonObject["vtxos"]?.jsonArray
     val invalidTestVtxosJsonArray = testVtxoData.jsonObject["invalid"]?.jsonObject["vtxos"]?.jsonArray
+
+    val testContractsData = Json.parseToJsonElement(readJsonFile("fixtures/contracts-data.json"))
+    val validContractsJsonArray = testContractsData.jsonObject["valid"]?.jsonObject["contracts"]?.jsonArray
+    val invalidContractsJsonArray = testContractsData.jsonObject["invalid"]?.jsonObject["contracts"]?.jsonArray
 
     @Test
     override fun should_create_wallet_successfully() {
@@ -161,8 +171,7 @@ class SingleKeyWalletTest : WalletTest() {
             val vtxosJson = assertNotNull(validTestVtxosJsonArray, "Missing valid test VTXOs")
 
             wallet.deleteVtxos()
-            val vtxos = wallet.getVtxos()
-            println("VTXOs size: ${vtxos.size}")
+
             vtxosJson.forEachIndexed { index, vtxoJson ->
                 val (vtxo, comment) = vtxoFromJson(vtxoJson)
                 wallet.saveVtxo(vtxo)
@@ -170,6 +179,32 @@ class SingleKeyWalletTest : WalletTest() {
                 assertEquals(index + 1, vtxos.size)
                 assertEquals(vtxo, vtxos[index])
                 Log.success(LOG_TAG, comment)
+            }
+        }
+    }
+
+    @Test
+    override fun should_store_and_retrieve_valid_ark_contracts_successfully() {
+        runTest {
+            val nsec = "nsec1wr49duqpjavggh78ewu9zlcuvw5huh6x5kqweqwnmjgw78kqqt6qsk0w9k"
+            val wallet =
+                Wallet.create(
+                    nsec,
+                    serverInfo = serverInfo,
+                    dbBuilder = dbBuilder,
+                )
+
+            val contractsJson = assertNotNull(validContractsJsonArray, "Missing valid test contracts")
+
+            wallet.deleteContracts()
+
+            contractsJson.forEachIndexed { index, contractJson ->
+                val (contract, state) = contractFromJson(contractJson)
+                wallet.saveContract(contract, state, Network.TESTNET)
+                val contracts = wallet.getContracts()
+                assertEquals(index + 1, contracts.size)
+
+                assertEquals(contract.toString(), contracts[index].toString())
             }
         }
     }
@@ -192,6 +227,27 @@ class SingleKeyWalletTest : WalletTest() {
         }
     }
 
+    @Test
+    fun should_fail_storing_invalid_contracts() {
+        runTest {
+            val contractsJson =
+                assertNotNull(invalidContractsJsonArray, "Missing valid test contracts")
+
+            contractsJson.forEachIndexed { index, contractJson ->
+                val comment =
+                    contractJson.jsonObject["comment"]
+                        ?.jsonPrimitive
+                        .toString()
+                        .removeSurrounding("\"")
+                assertFailsWith<IllegalArgumentException> {
+                    contractFromJson(contractJson)
+                    println(contractJson)
+                }
+                Log.success(LOG_TAG, comment)
+            }
+        }
+    }
+
     companion object {
         private const val LOG_TAG = "SingleKeyWalletTest"
     }
@@ -202,6 +258,9 @@ class HDWalletTest : WalletTest() {
 
     val testVtxoData = Json.parseToJsonElement(readJsonFile("fixtures/vtxo-data.json"))
     val validTestVtxosJsonArray = testVtxoData.jsonObject["valid"]?.jsonObject["vtxos"]?.jsonArray
+
+    val testContractsData = Json.parseToJsonElement(readJsonFile("fixtures/contracts-data.json"))
+    val validContractsJsonArray = testContractsData.jsonObject["valid"]?.jsonObject["contracts"]?.jsonArray
 
     @Test
     override fun should_create_wallet_successfully() {
@@ -310,6 +369,34 @@ class HDWalletTest : WalletTest() {
     }
 
     @Test
+    override fun should_store_and_retrieve_valid_ark_contracts_successfully() {
+        runTest {
+            val secret =
+                "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+            val wallet =
+                Wallet.create(
+                    secret,
+                    serverInfo = serverInfo,
+                    dbBuilder = dbBuilder,
+                )
+
+            val contractsJson =
+                assertNotNull(validContractsJsonArray, "Missing valid test contracts")
+
+            wallet.deleteContracts()
+
+            contractsJson.forEachIndexed { index, contractJson ->
+                val (contract, state) = contractFromJson(contractJson)
+                wallet.saveContract(contract, state, Network.TESTNET)
+                val contracts = wallet.getContracts()
+                assertEquals(index + 1, contracts.size)
+
+                assertEquals(contract.toString(), contracts[index].toString())
+            }
+        }
+    }
+
+    @Test
     fun should_load_null_wallet_for_nonexistent_fingerprint() {
         runTest {
             val wallet = Wallet.loadByFingerprint("00000000", dbBuilder)
@@ -383,4 +470,22 @@ private fun vtxoFromJson(json: JsonElement): Pair<Vtxo.Data, String> {
         commitmentTxIds,
         assets,
     ) to comment
+}
+
+private fun contractFromJson(json: JsonElement): Pair<ArkContract, ContractState> {
+    val type = json.jsonObject["type"]?.jsonPrimitive?.content!!
+    val state =
+        when (json.jsonObject["state"]?.jsonPrimitive?.content!!) {
+            "Active" -> ContractState.ACTIVE
+            "InActive" -> ContractState.INACTIVE
+            "AwaitingFundsBeforeDeactivate" -> ContractState.AWAITING_FUNDS_BEFORE_DEACTIVATE
+            else -> throw IllegalArgumentException("Invalid contract state")
+        }
+    val data =
+        json.jsonObject["data"]?.jsonObject!!.entries.associate { entry ->
+            val key = entry.key
+            val value = entry.value
+            key to value.jsonPrimitive.content
+        }
+    return ArkContractParserImpl().parse(data, type) to state
 }

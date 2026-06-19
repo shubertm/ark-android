@@ -1,6 +1,7 @@
 package com.arkade.di
 
 import androidx.room.RoomDatabase
+import com.arkade.core.contracts.ArkContractParserImpl
 import com.arkade.repositories.ContractRepo
 import com.arkade.repositories.ContractRepoImpl
 import com.arkade.repositories.VtxoRepo
@@ -37,4 +38,14 @@ val databaseModule =
             val dbBuilder: RoomDatabase.Builder<Database> = params.get()
             dbBuilder.getDatabase()
         }
+    }
+
+/**
+ * Koin module that registers contract parser singletons.
+ *
+ * Provides a single [ArkContractParserImpl] instance shared across the application.
+ */
+val parsersModule =
+    module {
+        single { ArkContractParserImpl() }
     }
