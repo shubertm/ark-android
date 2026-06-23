@@ -1,8 +1,10 @@
 package com.arkade.core
 
 import fr.acinq.bitcoin.ByteVector
+import fr.acinq.bitcoin.PrivateKey
 import fr.acinq.bitcoin.PublicKey
 import fr.acinq.bitcoin.ScriptTree
+import kotlin.random.Random
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -60,7 +62,9 @@ class ScriptTest {
     @Test
     fun should_build_script_tree_from_scripts_successfully() {
         val scripts = mutableListOf<ByteArray>()
-        for (i in 0..10) {
+        for (seed in 0..10) {
+            val secret = Random(seed).nextBytes(32).toHexString()
+            val ownerPubKey = PrivateKey.fromHex(secret).xOnlyPublicKey()
             scripts.add(multisigScript(serverPubKey, ownerPubKey))
         }
         for (i in 0..10) {
@@ -81,7 +85,9 @@ class ScriptTest {
     @Test
     fun should_build_script_tree_from_odd_number_of_leaves() {
         val scripts = mutableListOf<ByteArray>()
-        for (i in 0..10) {
+        for (seed in 0..10) {
+            val secret = Random(seed).nextBytes(32).toHexString()
+            val ownerPubKey = PrivateKey.fromHex(secret).xOnlyPublicKey()
             scripts.add(multisigScript(serverPubKey, ownerPubKey))
         }
         for (i in 0..9) {
