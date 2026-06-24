@@ -42,6 +42,7 @@ data class VtxoEntity(
             script = script,
             createdAt = createdAt,
             expiresAt = expiresAt,
+            expiresAtHeight = expiresAtHeight,
             isPreConfirmed = isPreConfirmed,
             isSwept = isSwept,
             isUnrolled = isUnrolled,

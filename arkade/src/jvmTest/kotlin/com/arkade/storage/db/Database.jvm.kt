@@ -1,8 +1,6 @@
 package com.arkade.storage.db
 
 import androidx.room.Room
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
-import kotlinx.coroutines.Dispatchers
 
 /**
  * Initializes an in-memory Room test database configured for JVM tests.
@@ -13,10 +11,8 @@ import kotlinx.coroutines.Dispatchers
  *
  * @return A configured in-memory `Database` instance suitable for testing.
  */
-actual fun initializeTestDb(): Database =
+actual fun initializeTestDatabaseBuilder() =
     Room
         .inMemoryDatabaseBuilder<Database>(
             factory = { DatabaseConstructor.initialize() },
-        ).setQueryCoroutineContext(Dispatchers.IO)
-        .setDriver(BundledSQLiteDriver())
-        .build()
+        )

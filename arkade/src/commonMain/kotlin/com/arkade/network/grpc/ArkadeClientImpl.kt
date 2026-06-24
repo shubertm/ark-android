@@ -25,6 +25,7 @@ import com.arkade.core.bitcoin.Address
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.fees.FeeInfo
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.toBlockHeight
 import com.arkade.core.txs.ArkTransaction
 import com.arkade.core.txs.Notification
 import com.arkade.core.txs.Transaction
@@ -350,6 +351,7 @@ internal fun ark.v1.Vtxo.getVtxoData(): Vtxo.Data {
         script,
         created_at,
         expires_at,
+        expires_at.toBlockHeight(),
         is_preconfirmed,
         is_swept,
         is_unrolled,

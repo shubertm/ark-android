@@ -1,8 +1,16 @@
-package com.arkade.core.wallet
+package com.arkade.storage
 
 import com.arkade.storage.db.entities.WalletEntity
 
-interface Storage {
+/**
+ * Storage interface for [WalletEntity] persistence operations.
+ *
+ * [WalletStorage] abstracts DAO access, allowing higher layers such as [WalletRepo]
+ * to manage wallet records without depending directly on Room.
+ *
+ * @see WalletStorageImpl
+ */
+interface WalletStorage {
     /**
      * Loads the wallet with the given identifier.
      *

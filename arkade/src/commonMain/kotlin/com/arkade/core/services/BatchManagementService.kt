@@ -4,24 +4,27 @@ import com.arkade.core.ArkServerInfo
 import com.arkade.core.batches.BatchEvent
 import com.arkade.core.batches.BatchSession
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.wallet.Wallet
 import com.arkade.network.ArkadeClient
-import com.arkade.repositories.contracts.ContractsRepo
-import com.arkade.repositories.wallet.WalletRepo
+import com.arkade.repositories.contracts.ContractRepo
 import com.arkade.utils.Log
 import com.arkade.utils.error
 import com.arkade.utils.info
 import com.arkade.utils.warning
 import fr.acinq.bitcoin.Crypto.sha256
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class BatchManagementService(
     private val client: ArkadeClient,
-    private val walletRepo: WalletRepo,
-    private val contractsRepo: ContractsRepo,
+    private val wallet: Wallet,
+    private val contractsRepo: ContractRepo,
 ) {
     private var streamId: String? = null
     private val activeIntents: MutableMap<String, ArkIntent> = mutableMapOf()
     private val activeBatchSessions: MutableMap<String, BatchSession> = mutableMapOf()
+    private val batchIdToIntentIds = mutableMapOf<String, HashSet<String>>()
 
     suspend fun start() {
         client
@@ -94,21 +97,20 @@ class BatchManagementService(
         try {
             val walletIds = arrayOf(intent.walletId)
             val vtxos =
-                walletRepo.getVtxos(
+                wallet.getVtxos(
                     outpoints = intent.vtxos,
-                    walletIds = walletIds,
                     includeSpent = true,
                 )
 
             val vtxosScripts =
                 vtxos
-                    .mapNotNull { vtxo ->
-                        vtxo.data?.script
+                    .map { vtxo ->
+                        vtxo.script
                     }.toHashSet()
                     .toTypedArray()
 
             val contracts =
-                contractsRepo.getContracts(
+                contractsRepo.getAll(
                     walletIds,
                     vtxosScripts,
                 )
@@ -117,7 +119,7 @@ class BatchManagementService(
                 intent.vtxos.map { outpoint ->
                     val vtxo =
                         vtxos.find { vtxo ->
-                            vtxo.data?.outpoint == outpoint
+                            vtxo.outpoint == outpoint
                         }
 
                     if (vtxo == null) {
@@ -127,14 +129,42 @@ class BatchManagementService(
 
                     val contract =
                         contracts.find { contract ->
-                            contract.script == vtxo.data?.script
+                            contract.getScriptPubKey(serverInfo.network) == vtxo.script
                         }
                     if (contract == null) {
                         Log.error(LOG_TAG, "Contract for VTXO $outpoint not found in storage for intent $intentId")
                         throw IllegalArgumentException("Contract for VTXO $outpoint not found in storage for intent $intentId")
                     }
+
+                    contract.toArkCoin(vtxo)
                 }
+            val batchSession =
+                BatchSession(
+                    client.getInfo(),
+                    wallet,
+                    intent,
+                    spendableCoins,
+                    event,
+                )
+
+            batchSession.init()
+
+            activeBatchSessions[intentId] = batchSession
+
+            val batchIntentIds = hashSetOf<String>()
+            Mutex().withLock {
+                batchIntentIds.add(intentId)
+            }
+            batchIdToIntentIds[event.id] = batchIntentIds
+
+            try {
+                client.confirmIntentRegistration(intentId)
+
+                // Store intent
+            } catch (_: Exception) {
+            }
         } catch (e: Exception) {
+        } catch (_: Exception) {
         }
     }
 

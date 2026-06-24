@@ -1,13 +1,23 @@
-package com.arkade.core.wallet
+package com.arkade.storage
 
+import androidx.room.RoomDatabase
+import com.arkade.di.ArkadeDI
 import com.arkade.storage.db.Database
-import com.arkade.storage.db.DatabaseConstructor
 import com.arkade.storage.db.entities.WalletEntity
+import org.koin.core.parameter.parametersOf
 
-internal class StorageImpl(
-    testDb: Database? = null,
-) : Storage {
-    private val db = testDb ?: DatabaseConstructor.initialize()
+/**
+ * Room-backed implementation of [WalletStorage].
+ *
+ * Resolves a [Database] instance from the Koin DI container using the provided [databaseBuilder],
+ * then delegates all wallet storage operations to [WalletDao].
+ *
+ * @param databaseBuilder the Room database builder used to obtain the [Database] singleton.
+ */
+internal class WalletStorageImpl(
+    databaseBuilder: RoomDatabase.Builder<Database>,
+) : WalletStorage {
+    private val db: Database = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
     private val walletDao = db.walletDao()
 
     /**

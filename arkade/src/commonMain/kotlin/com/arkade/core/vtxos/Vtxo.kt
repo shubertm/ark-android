@@ -17,8 +17,10 @@ import com.arkade.core.toXOnlyPubKey
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import fr.acinq.bitcoin.ByteVector
 import fr.acinq.bitcoin.OutPoint
+import fr.acinq.bitcoin.Satoshi
 import fr.acinq.bitcoin.Script
 import fr.acinq.bitcoin.ScriptTree
+import fr.acinq.bitcoin.TxOut
 import fr.acinq.bitcoin.XonlyPublicKey
 import kotlinx.serialization.Serializable
 import kotlin.collections.iterator
@@ -154,6 +156,7 @@ data class Vtxo(
         val script: String,
         val createdAt: Long,
         val expiresAt: Long,
+        val expiresAtHeight: Long,
         val isPreConfirmed: Boolean = false,
         val isSwept: Boolean = false,
         val isUnrolled: Boolean = false,
@@ -178,6 +181,8 @@ data class Vtxo(
             }
         }
 
+        val txOut: TxOut = TxOut(Satoshi(amount.longValue()), script.encodeToByteArray())
+
         companion object {
             fun normalized(
                 outpoint: OutPoint,
@@ -185,6 +190,7 @@ data class Vtxo(
                 script: String,
                 createdAt: Long,
                 expiresAt: Long,
+                expiresAtHeight: Long,
                 isPreConfirmed: Boolean = false,
                 isSwept: Boolean = false,
                 isUnrolled: Boolean = false,
@@ -207,6 +213,7 @@ data class Vtxo(
                     script = script,
                     createdAt = createdAt,
                     expiresAt = expiresAt,
+                    expiresAtHeight = expiresAtHeight,
                     isPreConfirmed = isPreConfirmed,
                     isSwept = isSwept,
                     isUnrolled = isUnrolled,

@@ -1,4 +1,4 @@
-package com.arkade.core
+package com.arkade.core.coins
 
 import com.arkade.core.assets.Asset
 import com.arkade.core.contracts.ArkContract
@@ -10,6 +10,7 @@ import fr.acinq.bitcoin.ScriptWitness
 import fr.acinq.bitcoin.TxOut
 
 data class ArkCoin(
+    val walletId: String,
     val contract: ArkContract,
     val createdAt: Long,
     val expiresAt: Long,
@@ -18,7 +19,7 @@ data class ArkCoin(
     val txOut: TxOut,
     val signerDescriptor: String,
     val spendingScriptPath: ScriptSpendingPath,
-    val spendingConditionWitness: ScriptWitness,
+    val spendingConditionWitness: ScriptWitness?,
     val lockTime: Long?,
     val sequence: Long?,
     val isSpent: Boolean,

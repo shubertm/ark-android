@@ -1,8 +1,12 @@
 package com.arkade.core.wallet
 
+import androidx.room.RoomDatabase
 import com.arkade.core.ArkAddress
 import com.arkade.core.ArkServerInfo
 import com.arkade.core.bitcoin.Network
+import com.arkade.core.contracts.ArkContract
+import com.arkade.core.contracts.ContractState
+import com.arkade.core.encodePubKeyByNetwork
 import com.arkade.core.vtxos.Vtxo
 import com.arkade.di.ArkadeDI
 import com.arkade.repositories.wallet.WalletRepo
@@ -13,6 +17,7 @@ import fr.acinq.bitcoin.Crypto
 import fr.acinq.bitcoin.DeterministicWallet
 import fr.acinq.bitcoin.KeyPath
 import fr.acinq.bitcoin.MnemonicCode
+import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.PrivateKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -97,7 +102,42 @@ interface Wallet {
 
     suspend fun saveVtxo(vtxo: Vtxo.Data)
 
-    suspend fun getVtxos(): List<Vtxo.Data>
+    suspend fun getVtxos(
+        outpoints: Array<OutPoint>? = null,
+        includeSpent: Boolean? = null,
+    ): List<Vtxo.Data>
+
+    suspend fun deleteVtxos()
+
+    /**
+     * Persists an [ArkContract] for this wallet.
+     *
+     * @param contract the contract to persist.
+     * @param state the [ContractState] to associate with this contract.
+     * @param network the Bitcoin network used to derive the contract's `scriptPubKey`.
+     */
+    suspend fun saveContract(
+        contract: ArkContract,
+        state: ContractState,
+        network: Network,
+    )
+
+    /**
+     * Retrieves all [ArkContract] instances stored for this wallet.
+     *
+     * @return a list of all contracts associated with this wallet's identifier.
+     */
+    suspend fun getContracts(
+        walletIds: Array<String>? = null,
+        scripts: Array<String>? = null,
+        contractTypes: Array<String>? = null,
+        isActive: Boolean? = null,
+    ): List<ArkContract>
+
+    /**
+     * Deletes all [ArkContract] instances stored for this wallet.
+     */
+    suspend fun deleteContracts()
 
     enum class Type {
         HD,
@@ -118,7 +158,7 @@ interface Wallet {
          * is validated against `serverInfo`.
          * @param serverInfo Server information used to validate the destination and to derive
          * network-specific values for HD wallet creation.
-         * @param testDb Optional in-memory or test database passed to the repository for
+         * @param dbBuilder Database builder passed to the repository for
          * initialization.
          * @return The created [Wallet] instance.
          */
@@ -126,14 +166,14 @@ interface Wallet {
             secret: String,
             destination: String? = null,
             serverInfo: ArkServerInfo,
-            testDb: Database? = null,
+            dbBuilder: RoomDatabase.Builder<Database>,
         ): Wallet =
             withContext(Dispatchers.IO) {
                 if (destination != null) {
                     validateDestination(destination, serverInfo)
                 }
 
-                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
+                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
 
                 if (secret.startsWith(NSEC_HRP)) {
                     createNSecWallet(secret, destination, repo)
@@ -146,16 +186,16 @@ interface Wallet {
          * Load a wallet by its identifier from persistent storage.
          *
          * @param id The wallet identifier to look up.
-         * @param testDb Optional database instance used for repository initialization
+         * @param dbBuilder Database builder instance used for repository initialization
          * (primarily for tests).
          * @return The wallet with the given `id`, or `null` if no matching wallet is found.
          */
         suspend fun loadById(
             id: String,
-            testDb: Database? = null,
+            dbBuilder: RoomDatabase.Builder<Database>,
         ): Wallet? =
             withContext(Dispatchers.IO) {
-                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
+                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
                 repo.loadWalletById(id)
             }
 
@@ -163,16 +203,16 @@ interface Wallet {
          * Load a wallet by its fingerprint from persistent storage.
          *
          * @param fingerprint The wallet fingerprint to look up.
-         * @param testDb Optional database instance used for repository initialization
+         * @param dbBuilder Database builder instance used for repository initialization
          * (primarily for tests).
          * @return The wallet with the given `fingerprint`, or `null` if no matching wallet is found.
          */
         suspend fun loadByFingerprint(
             fingerprint: String,
-            testDb: Database? = null,
+            dbBuilder: RoomDatabase.Builder<Database>,
         ): Wallet? =
             withContext(Dispatchers.IO) {
-                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(testDb) }
+                val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
                 repo.loadWalletByFingerprint(fingerprint)
             }
 
@@ -263,14 +303,6 @@ interface Wallet {
 
             val (masterKey, fingerprint) = masterKeyFromSecret(mnemonics)
 
-            fun encodePubKeyByNetwork(
-                pubKey: DeterministicWallet.ExtendedPublicKey,
-                network: Network,
-            ): String =
-                when (network) {
-                    Network.MAINNET -> pubKey.encode(false)
-                    else -> pubKey.encode(true)
-                }
             val coinType =
                 when (serverInfo.network) {
                     Network.MAINNET -> 0
