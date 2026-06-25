@@ -4,6 +4,7 @@ import com.arkade.core.Vtxo
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
+import com.arkade.core.intents.ArkIntent
 import com.arkade.repositories.WalletRepo
 
 class WalletImpl(
@@ -79,4 +80,10 @@ class WalletImpl(
      * Deletes all contracts stored for this wallet.
      */
     override suspend fun deleteContracts() = repo.deleteContracts(id)
+
+    override suspend fun saveIntent(intent: ArkIntent) = repo.saveIntent(intent)
+
+    override suspend fun getIntents(): List<ArkIntent> = repo.getIntents()
+
+    internal suspend fun deleteIntents() = repo.deleteIntents()
 }

@@ -8,8 +8,12 @@ import com.arkade.repositories.VtxoRepo
 import com.arkade.repositories.VtxoRepoImpl
 import com.arkade.repositories.WalletRepo
 import com.arkade.repositories.WalletRepoImpl
+import com.arkade.repositories.intents.IntentRepo
+import com.arkade.repositories.intents.IntentRepoImpl
 import com.arkade.storage.ContractStorage
 import com.arkade.storage.ContractStorageImpl
+import com.arkade.storage.IntentStorage
+import com.arkade.storage.IntentStorageImpl
 import com.arkade.storage.VtxoStorage
 import com.arkade.storage.VtxoStorageImpl
 import com.arkade.storage.WalletStorage
@@ -23,6 +27,7 @@ val storageModule =
         factory<WalletStorage> { params -> WalletStorageImpl(params.get()) }
         factory<VtxoStorage> { params -> VtxoStorageImpl(params.get()) }
         factory<ContractStorage> { params -> ContractStorageImpl(params.get()) }
+        factory<IntentStorage> { params -> IntentStorageImpl(params.get()) }
     }
 
 val repoModule =
@@ -30,6 +35,7 @@ val repoModule =
         factory<WalletRepo> { params -> WalletRepoImpl(params.get()) }
         factory<VtxoRepo> { params -> VtxoRepoImpl(params.get()) }
         factory<ContractRepo> { params -> ContractRepoImpl(params.get()) }
+        factory<IntentRepo> { params -> IntentRepoImpl(params.get()) }
     }
 
 val databaseModule =

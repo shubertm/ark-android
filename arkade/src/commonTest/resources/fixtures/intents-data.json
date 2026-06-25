@@ -1,0 +1,182 @@
+{
+  "valid": {
+    "intents": [
+      {
+        "tx_id": "8f3b2a1c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a",
+        "id": "e6b5a392-4f1d-4c8a-92e1-5b7c3d9e4a1f",
+        "state": "WAITING_TO_SUBMIT",
+        "valid_from": 1782403200,
+        "valid_until": 1782489600,
+        "created_at": 1782403200,
+        "updated_at": 1782403200,
+        "register_proof": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "register_proof_message": "bc5782ad24eb23649646b12a321d45763e9112f45100ba934ca49511b852bc21",
+        "delete_proof": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
+        "delete_proof_message": "6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d",
+        "batch_id": "",
+        "commitment_txid": "",
+        "cancellation_reason": "",
+        "vtxos": [
+          "4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b:0",
+          "7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c:1",
+          "3c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d:2"
+        ],
+        "signer_descriptor": "tr([d34db33f/86'/1'/0']tpubDCwYje2Za8jVp9mAnFdfD8bXgH2HwQc6J7DtgBfZXb91F7Cg8eXyMnM17JvRw9H7Wv6u5rN7Z6vA9uMk1p/0/*)#6g7w2h8r"
+      },
+      {
+        "tx_id": "3c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d",
+        "id": "a1c2e3f4-b5a6-4c7d-8e9f-0a1b2c3d4e5f",
+        "state": "WAITING_FOR_BATCH",
+        "valid_from": 1782403200,
+        "valid_until": 1782489600,
+        "created_at": 1782403200,
+        "updated_at": 1782403500,
+        "register_proof": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+        "register_proof_message": "f4726c5183ba72e901a5b84c321d89ee5101fa24b56a934cf495881b7852df85",
+        "delete_proof": "3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a",
+        "delete_proof_message": "b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7",
+        "batch_id": "41a13b5e-9e7f-4b0c-9d2e-3f4a5b6c7d8e",
+        "commitment_txid": "",
+        "cancellation_reason": "",
+        "vtxos": [
+          "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b:0",
+          "5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f:4",
+          "bc3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d:1"
+        ],
+        "signer_descriptor": "tr([d34db33f/86'/1'/0']tpubDCwYje2Za8jVp9mAnFdfD8bXgH2HwQc6J7DtgBfZXb91F7Cg8eXyMnM17JvRw9H7Wv6u5rN7Z6vA9uMk1p/1/*)#k4m9v2qw"
+      },
+      {
+        "tx_id": "5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f",
+        "id": "b2d3f4a5-e6b7-4c8d-9e0f-1a2b3c4d5e6f",
+        "state": "BATCH_IN_PROGRESS",
+        "valid_from": 1782401000,
+        "valid_until": 1782487400,
+        "created_at": 1782401000,
+        "updated_at": 1782402000,
+        "register_proof": "a3f5e1c2d3b4a5f6e7d8c9b0a1f2e3d4c5b6a7f8e9d0c1b2a3f4e5d6c7b8a9f0",
+        "register_proof_message": "06c59b21f3a214d5e786b10a23bc45e718f2d9a0451e6b328a7d4f5e6a7b8c9d",
+        "delete_proof": "e7d8c9b0a1f2e3d4c5b6a7f8e9d0c1b2a3f4e5d6c7b8a9f0a3f5e1c2d3b4a5f6",
+        "delete_proof_message": "a5f6e7d8c9b0a1f2e3d4c5b6a7f8e9d0c1b2a3f4e5d6c7b8a9f0a3f5e1c2d3b4",
+        "batch_id": "713b4e5f-6a7b-4c9d-0e1f-2a3b4c5d6e7f",
+        "commitment_txid": "bc3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d",
+        "cancellation_reason": "",
+        "vtxos": [
+          "fa6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b:1",
+          "8f3b2a1c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a:0",
+          "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824:3"
+        ],
+        "signer_descriptor": "tr([a1b2c3d4/86'/1'/0']tpubD6NzVbkrYhZ4XRV1p7X6e2UjL7G29qS79yv7uM5XmH1wQ5T6y9Z3X4W5V6U7T8S9R0Q1P2O3N4M/*)#j8x5n2pt"
+      },
+      {
+        "tx_id": "1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
+        "id": "f8e7d6c5-b4a3-4210-9876-543210abcdef",
+        "state": "BATCH_SUCCEEDED",
+        "valid_from": 1782390000,
+        "valid_until": 1782476400,
+        "created_at": 1782390000,
+        "updated_at": 1782391500,
+        "register_proof": "11223344556677889900aabbccddeeff11223344556677889900aabbccddeeff",
+        "register_proof_message": "887766554433221100fedeabcdaef1234567890abcdef1234567890abcdef123",
+        "delete_proof": "554433221100fedeabcdaef1234567890abcdef1234567890abcdef123887766",
+        "delete_proof_message": "cdaef1234567890abcdef1234567890abcdef123887766554433221100fedeab",
+        "batch_id": "da6b7c8d-9e0f-4a2b-3c4d-5e6f7a8b9c0d",
+        "commitment_txid": "fa6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b",
+        "cancellation_reason": "",
+        "vtxos": [
+          "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855:0",
+          "bc5782ad24eb23649646b12a321d45763e9112f45100ba934ca49511b852bc21:1",
+          "11223344556677889900aabbccddeeff11223344556677889900aabbccddeeff:2"
+        ],
+        "signer_descriptor": "tr([a1b2c3d4/86'/1'/0']tpubD6NzVbkrYhZ4XRV1p7X6e2UjL7G29qS79yv7uM5XmH1wQ5T6y9Z3X4W5V6U7T8S9R0Q1P2O3N4M/*)#j8x5n2pt"
+      },
+      {
+        "tx_id": "9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b",
+        "id": "2d9e3f4a-5b6c-7d8e-9f0a-1b2c3d4e5f6a",
+        "state": "WAITING_TO_SUBMIT",
+        "valid_from": 1782410000,
+        "valid_until": 1782496400,
+        "created_at": 1782410000,
+        "updated_at": 1782410500,
+        "register_proof": "6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c",
+        "register_proof_message": "3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d",
+        "delete_proof": "a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3",
+        "delete_proof_message": "7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d",
+        "batch_id": "",
+        "commitment_txid": "",
+        "cancellation_reason": "",
+        "vtxos": [
+          "a8f7e6d5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7:0",
+          "5c4b3a2f1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b:1",
+          "1e0d9c8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b3a2f1e0d:2"
+        ],
+        "signer_descriptor": "tr([b4c3d2e1/86'/1'/0']tpubDEX7G6f81H2Jk7M5p9Y3v7X6w5U4t3S2r1Q0p9O8n7M6l5K4j3I2h1G0f9E8d7C/*)#7x4v9n2k"
+      }
+    ]
+  },
+  "invalid": {
+    "intents": [
+      {
+        "tx_id": "000000000000000000000000000000000000000000000000000000000000000",
+        "id": "7c9d0e1f-2a3b-4c5d-6e7f-8a9b0c1d2e3f",
+        "state": "BATCH_FAILED",
+        "valid_from": 1782384000,
+        "valid_until": 1782470400,
+        "created_at": 1782384000,
+        "updated_at": 1782386000,
+        "register_proof": "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+        "register_proof_message": "e0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1",
+        "delete_proof": "9999999999999999999999999999999999999999999999999999999999999999",
+        "delete_proof_message": "8888888888888888888888888888888888888888888888888888888888888888",
+        "batch_id": "00000000-0000-0000-0000-000000000000",
+        "commitment_txid": "",
+        "cancellation_reason": "Insufficient companion fees provided for batch completion.",
+        "vtxos": [],
+        "signer_descriptor": "tr([e5f6a7b8/86'/1'/0']tpubD6NzVbkrYhZ4Y2pM7e1v5Wq3x9Yz8X7W6V5U4T3S2R1Q0P9O8N7M6L5K4J3I2H1G/*)#3f8v2d9s"
+      },
+      {
+        "tx_id": "2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3",
+        "id": "3fa8b9c0-d1e2-4f3a-8b9c-0d1e2f3a4b5c",
+        "state": "CANCELLED",
+        "valid_from": 1782370000,
+        "valid_until": 1782456400,
+        "created_at": 1782370000,
+        "updated_at": 1782371000,
+        "register_proof": "7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b",
+        "register_proof_message": "4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e",
+        "delete_proof": "cb8371a39f61b0a32e1837c4d51b329a1b023e4f5a6b7c8d9e0f1a2b3c4d5e6f",
+        "delete_proof_message": "9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+        "batch_id": "",
+        "commitment_txid": "",
+        "cancellation_reason": "User requested manual cancellation before batch construction.",
+        "vtxos": [
+          "0000000000000000000000000000000000000000000000000000000000000000:0",
+          "1111111111111111111111111111111111111111111111111111111111111111:1",
+          "2222222222222222222222222222222222222222222222222222222222222222:2"
+        ],
+        "signer_descriptor": "tr([e5f6a7b8/86'/1'/0']tpubD6NzVbkrYhZ4Y2pM7e1v5Wq3x9Yz8X7W6V5U4T3S2R1Q0P9O8N7M6L5K4J3I2H1G/*)#3f8v2d9s"
+      },
+      {
+        "tx_id": "0000000000000000000000000000000000000000000000000000000000000000",
+        "id": "9f8e7d6c-5b4a-3210-9876-543210abcdef",
+        "state": "BATCH_FAILED",
+        "valid_from": 1782350000,
+        "valid_until": 1782436400,
+        "created_at": 1782350000,
+        "updated_at": 1782352000,
+        "register_proof": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+        "register_proof_message": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+        "delete_proof": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "delete_proof_message": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "batch_id": "11111111-2222-3333-4444-555555555555",
+        "commitment_txid": "fa6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6",
+        "cancellation_reason": "RBF transaction overrode the batch commitment output.",
+        "vtxos": [
+          "fa6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b:0",
+          "8f3b2a1c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a:1",
+          "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824:2"
+        ],
+        "signer_descriptor": "tr([f1e2d3c4/86'/1'/0']tpubD6NzVbkrYhZ4Y2pM7e1v5Wq3x9Yz8X7W6V5U4T3S2R1Q0P9O8N7M6L5K4J3I2H1G/*)#4k8v2s1m"
+      }
+    ]
+  }
+}

@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "c6657a47a97430229065b7c8d40092be",
+    "identityHash": "4323af861ac97dcfab66563bacd4a12d",
     "entities": [
       {
         "tableName": "wallets",
@@ -217,11 +217,124 @@
             "scriptPubKey"
           ]
         }
+      },
+      {
+        "tableName": "intents",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`intentTxId` TEXT NOT NULL, `intentId` TEXT, `walletId` TEXT NOT NULL, `state` TEXT NOT NULL, `vtxos` TEXT NOT NULL, `validFrom` INTEGER, `validUntil` INTEGER, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `registerProof` TEXT NOT NULL, `registerProofMessage` TEXT NOT NULL, `deleteProof` TEXT NOT NULL, `deleteProofMessage` TEXT NOT NULL, `batchId` TEXT, `commitmentTxId` TEXT, `cancellationReason` TEXT, `partialForfeits` TEXT NOT NULL, `signerDescriptor` TEXT, PRIMARY KEY(`intentTxId`))",
+        "fields": [
+          {
+            "fieldPath": "intentTxId",
+            "columnName": "intentTxId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "intentId",
+            "columnName": "intentId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "walletId",
+            "columnName": "walletId",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "vtxos",
+            "columnName": "vtxos",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "validFrom",
+            "columnName": "validFrom",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "validUntil",
+            "columnName": "validUntil",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "createdAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "registerProof",
+            "columnName": "registerProof",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "registerProofMessage",
+            "columnName": "registerProofMessage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deleteProof",
+            "columnName": "deleteProof",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "deleteProofMessage",
+            "columnName": "deleteProofMessage",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "batchId",
+            "columnName": "batchId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "commitmentTxId",
+            "columnName": "commitmentTxId",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "cancellationReason",
+            "columnName": "cancellationReason",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "partialForfeits",
+            "columnName": "partialForfeits",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "signerDescriptor",
+            "columnName": "signerDescriptor",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "intentTxId"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c6657a47a97430229065b7c8d40092be')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4323af861ac97dcfab66563bacd4a12d')"
     ]
   }
 }

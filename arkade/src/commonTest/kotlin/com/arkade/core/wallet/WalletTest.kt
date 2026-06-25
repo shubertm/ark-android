@@ -11,6 +11,8 @@ import com.arkade.core.bitcoin.WitnessVersion
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ArkContractParserImpl
 import com.arkade.core.contracts.ContractState
+import com.arkade.core.intents.ArkIntent
+import com.arkade.core.intents.IntentState
 import com.arkade.core.toXOnlyPubKey
 import com.arkade.core.wallet.Wallet.Companion.masterKeyFromSecret
 import com.arkade.di.ArkadeDI
@@ -54,6 +56,9 @@ expect abstract class WalletTest() : com.arkade.Test {
 
     @Test
     abstract fun should_store_and_retrieve_valid_ark_contracts_successfully()
+
+    @Test
+    abstract fun should_store_and_retrieve_valid_ark_intents_successfully()
 }
 
 fun getArkServerInfo(): ArkServerInfo =
@@ -96,6 +101,10 @@ class SingleKeyWalletTest : WalletTest() {
     val testContractsData = Json.parseToJsonElement(readJsonFile("fixtures/contracts-data.json"))
     val validContractsJsonArray = testContractsData.jsonObject["valid"]?.jsonObject["contracts"]?.jsonArray
     val invalidContractsJsonArray = testContractsData.jsonObject["invalid"]?.jsonObject["contracts"]?.jsonArray
+
+    val testIntentsData = Json.parseToJsonElement(readJsonFile("fixtures/intents-data.json"))
+    val validIntentsJsonArray = testIntentsData.jsonObject["valid"]?.jsonObject["intents"]?.jsonArray
+    val invalidIntentsJsonArray = testIntentsData.jsonObject["invalid"]?.jsonObject["intents"]?.jsonArray
 
     @Test
     override fun should_create_wallet_successfully() {
@@ -209,6 +218,30 @@ class SingleKeyWalletTest : WalletTest() {
         }
     }
 
+    override fun should_store_and_retrieve_valid_ark_intents_successfully() {
+        runTest {
+            val nsec = "nsec1wr49duqpjavggh78ewu9zlcuvw5huh6x5kqweqwnmjgw78kqqt6qsk0w9k"
+            val wallet =
+                Wallet.create(
+                    nsec,
+                    serverInfo = serverInfo,
+                    dbBuilder = dbBuilder,
+                )
+
+            val intentsJson = assertNotNull(validIntentsJsonArray, "Missing valid test intents")
+
+            (wallet as WalletImpl).deleteIntents()
+
+            intentsJson.forEachIndexed { index, intentJson ->
+                val intent = intentFromJson(intentJson, wallet.id)
+                wallet.saveIntent(intent)
+                val intents = wallet.getIntents()
+                assertEquals(index + 1, intents.size)
+                assertEquals(intent, intents[index])
+            }
+        }
+    }
+
     @Test
     fun should_fail_constructing_invalid_vtxo_data() {
         runTest {
@@ -228,7 +261,7 @@ class SingleKeyWalletTest : WalletTest() {
     }
 
     @Test
-    fun should_fail_storing_invalid_contracts() {
+    fun should_fail_constructing_invalid_contracts() {
         runTest {
             val contractsJson =
                 assertNotNull(invalidContractsJsonArray, "Missing valid test contracts")
@@ -248,6 +281,22 @@ class SingleKeyWalletTest : WalletTest() {
         }
     }
 
+    @Test
+    fun should_fail_constructing_invalid_intents() {
+        runTest {
+            val intentsJson =
+                assertNotNull(invalidIntentsJsonArray, "Missing valid test contracts")
+
+            intentsJson.forEachIndexed { index, intentJson ->
+                val exception =
+                    assertFailsWith<IllegalArgumentException> {
+                        intentFromJson(intentJson, "test-wallet")
+                    }
+                Log.success(LOG_TAG, exception.message.toString())
+            }
+        }
+    }
+
     companion object {
         private const val LOG_TAG = "SingleKeyWalletTest"
     }
@@ -261,6 +310,8 @@ class HDWalletTest : WalletTest() {
 
     val testContractsData = Json.parseToJsonElement(readJsonFile("fixtures/contracts-data.json"))
     val validContractsJsonArray = testContractsData.jsonObject["valid"]?.jsonObject["contracts"]?.jsonArray
+    val testIntentsData = Json.parseToJsonElement(readJsonFile("fixtures/intents-data.json"))
+    val validIntentsJsonArray = testIntentsData.jsonObject["valid"]?.jsonObject["intents"]?.jsonArray
 
     @Test
     override fun should_create_wallet_successfully() {
@@ -396,6 +447,31 @@ class HDWalletTest : WalletTest() {
         }
     }
 
+    override fun should_store_and_retrieve_valid_ark_intents_successfully() {
+        runTest {
+            val secret =
+                "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+            val wallet =
+                Wallet.create(
+                    secret,
+                    serverInfo = serverInfo,
+                    dbBuilder = dbBuilder,
+                )
+
+            val intentsJson = assertNotNull(validIntentsJsonArray, "Missing valid test intents")
+
+            (wallet as WalletImpl).deleteIntents()
+
+            intentsJson.forEachIndexed { index, intentJson ->
+                val intent = intentFromJson(intentJson, wallet.id)
+                wallet.saveIntent(intent)
+                val intents = wallet.getIntents()
+                assertEquals(index + 1, intents.size)
+                assertEquals(intent, intents[index])
+            }
+        }
+    }
+
     @Test
     fun should_load_null_wallet_for_nonexistent_fingerprint() {
         runTest {
@@ -488,4 +564,53 @@ private fun contractFromJson(json: JsonElement): Pair<ArkContract, ContractState
             key to value.jsonPrimitive.content
         }
     return ArkContractParserImpl().parse(data, type) to state
+}
+
+private fun intentFromJson(
+    json: JsonElement,
+    walletId: String,
+): ArkIntent {
+    val txId = json.jsonObject["tx_id"]?.jsonPrimitive?.content!!
+    val id = json.jsonObject["id"]?.jsonPrimitive?.content!!
+    val state = IntentState.valueOf(json.jsonObject["state"]?.jsonPrimitive?.content!!)
+    val validFrom = json.jsonObject["valid_from"]?.jsonPrimitive?.long!!
+    val validUntil = json.jsonObject["valid_until"]?.jsonPrimitive?.long!!
+    val createdAt = json.jsonObject["created_at"]?.jsonPrimitive?.long!!
+    val updatedAt = json.jsonObject["updated_at"]?.jsonPrimitive?.long!!
+    val registerProof = json.jsonObject["register_proof"]?.jsonPrimitive?.content!!
+    val registerProofMessage = json.jsonObject["register_proof"]?.jsonPrimitive?.content!!
+    val deleteProof = json.jsonObject["register_proof"]?.jsonPrimitive?.content!!
+    val deleteProofMessage = json.jsonObject["register_proof"]?.jsonPrimitive?.content!!
+    val batchId = json.jsonObject["batch_id"]?.jsonPrimitive?.content!!
+    val commitmentTxId =
+        json.jsonObject["commitment_txid"]
+            ?.jsonPrimitive
+            ?.content
+            ?.ifEmpty { null }
+    val cancellationReason = json.jsonObject["cancellation_reason"]?.jsonPrimitive?.content!!
+    val vtxos =
+        json.jsonObject["vtxos"]?.jsonArray!!.map {
+            val (txId, index) = it.jsonPrimitive.content.split(":")
+            OutPoint(TxId(txId), index.toLong())
+        }
+    val signerDescriptor = json.jsonObject["signer_descriptor"]?.jsonPrimitive?.content!!
+    return ArkIntent(
+        txId,
+        id,
+        walletId,
+        state,
+        validFrom,
+        validUntil,
+        createdAt,
+        updatedAt,
+        registerProof,
+        registerProofMessage,
+        deleteProof,
+        deleteProofMessage,
+        batchId,
+        commitmentTxId,
+        cancellationReason,
+        vtxos,
+        signerDescriptor,
+    )
 }

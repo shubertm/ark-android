@@ -5,8 +5,10 @@ import com.arkade.core.Vtxo
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
+import com.arkade.core.intents.ArkIntent
 import com.arkade.core.wallet.Wallet
 import com.arkade.di.ArkadeDI
+import com.arkade.repositories.intents.IntentRepo
 import com.arkade.storage.WalletStorage
 import com.arkade.storage.db.Database
 import org.koin.core.parameter.parametersOf
@@ -17,6 +19,7 @@ internal class WalletRepoImpl(
     private val storage: WalletStorage = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
     override val vtxoRepo: VtxoRepo = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
     override val contractRepo: ContractRepo = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
+    override val intentRepo: IntentRepo = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
 
     /**
      * Persists the given wallet into the repository's storage.
@@ -119,4 +122,10 @@ internal class WalletRepoImpl(
      * @param walletId the identifier of the wallet whose contracts should be deleted.
      */
     override suspend fun deleteContracts(walletId: String) = contractRepo.deleteAll(walletId)
+
+    override suspend fun saveIntent(intent: ArkIntent) = intentRepo.save(intent)
+
+    override suspend fun getIntents(): List<ArkIntent> = intentRepo.getAll()
+
+    override suspend fun deleteIntents() = intentRepo.deleteAll()
 }

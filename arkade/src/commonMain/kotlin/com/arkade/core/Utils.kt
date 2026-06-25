@@ -95,3 +95,8 @@ object Json {
         }
     }
 }
+
+fun checkSha256Hash(hash: String): Boolean {
+    val regex = "^[0-9a-fA-F]{64}$".toRegex()
+    return regex.matches(hash)
+}
