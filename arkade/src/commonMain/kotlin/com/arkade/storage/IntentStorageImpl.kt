@@ -14,7 +14,7 @@ class IntentStorageImpl(
 
     override suspend fun save(intent: IntentEntity) = intentDao.save(intent)
 
-    override suspend fun getAll(): List<IntentEntity> = intentDao.getAll()
+    override suspend fun getAll(walletId: String): List<IntentEntity> = intentDao.getAll(walletId)
 
-    override suspend fun deleteAll() = intentDao.deleteAll()
+    override suspend fun deleteAll(walletId: String) = intentDao.deleteAll(walletId)
 }

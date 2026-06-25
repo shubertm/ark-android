@@ -11,9 +11,9 @@ interface IntentDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun save(intent: IntentEntity)
 
-    @Query("SELECT * FROM intents")
-    suspend fun getAll(): List<IntentEntity>
+    @Query("SELECT * FROM intents WHERE walletId = :walletId")
+    suspend fun getAll(walletId: String): List<IntentEntity>
 
-    @Query("DELETE FROM intents")
-    suspend fun deleteAll()
+    @Query("DELETE FROM intents WHERE walletId = :walletId")
+    suspend fun deleteAll(walletId: String)
 }

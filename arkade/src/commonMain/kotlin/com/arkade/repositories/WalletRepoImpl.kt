@@ -125,7 +125,7 @@ internal class WalletRepoImpl(
 
     override suspend fun saveIntent(intent: ArkIntent) = intentRepo.save(intent)
 
-    override suspend fun getIntents(): List<ArkIntent> = intentRepo.getAll()
+    override suspend fun getIntents(walletId: String): List<ArkIntent> = intentRepo.getAll(walletId)
 
-    override suspend fun deleteIntents() = intentRepo.deleteAll()
+    override suspend fun deleteIntents(walletId: String) = intentRepo.deleteAll(walletId)
 }

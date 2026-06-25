@@ -230,7 +230,7 @@ class SingleKeyWalletTest : WalletTest() {
 
             val intentsJson = assertNotNull(validIntentsJsonArray, "Missing valid test intents")
 
-            (wallet as WalletImpl).deleteIntents()
+            wallet.deleteIntents()
 
             intentsJson.forEachIndexed { index, intentJson ->
                 val intent = intentFromJson(intentJson, wallet.id)
@@ -447,6 +447,7 @@ class HDWalletTest : WalletTest() {
         }
     }
 
+    @Test
     override fun should_store_and_retrieve_valid_ark_intents_successfully() {
         runTest {
             val secret =
@@ -460,7 +461,7 @@ class HDWalletTest : WalletTest() {
 
             val intentsJson = assertNotNull(validIntentsJsonArray, "Missing valid test intents")
 
-            (wallet as WalletImpl).deleteIntents()
+            wallet.deleteIntents()
 
             intentsJson.forEachIndexed { index, intentJson ->
                 val intent = intentFromJson(intentJson, wallet.id)
@@ -578,9 +579,9 @@ private fun intentFromJson(
     val createdAt = json.jsonObject["created_at"]?.jsonPrimitive?.long!!
     val updatedAt = json.jsonObject["updated_at"]?.jsonPrimitive?.long!!
     val registerProof = json.jsonObject["register_proof"]?.jsonPrimitive?.content!!
-    val registerProofMessage = json.jsonObject["register_proof"]?.jsonPrimitive?.content!!
-    val deleteProof = json.jsonObject["register_proof"]?.jsonPrimitive?.content!!
-    val deleteProofMessage = json.jsonObject["register_proof"]?.jsonPrimitive?.content!!
+    val registerProofMessage = json.jsonObject["register_proof_message"]?.jsonPrimitive?.content!!
+    val deleteProof = json.jsonObject["delete_proof"]?.jsonPrimitive?.content!!
+    val deleteProofMessage = json.jsonObject["delete_proof_message"]?.jsonPrimitive?.content!!
     val batchId = json.jsonObject["batch_id"]?.jsonPrimitive?.content!!
     val commitmentTxId =
         json.jsonObject["commitment_txid"]

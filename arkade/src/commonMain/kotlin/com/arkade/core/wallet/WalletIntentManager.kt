@@ -8,7 +8,7 @@ interface WalletIntentManager {
 
     suspend fun saveIntent(intent: ArkIntent)
 
-    suspend fun getIntents(): List<ArkIntent>
+    suspend fun getIntents(walletId: String): List<ArkIntent>
 
-    suspend fun deleteIntents()
+    suspend fun deleteIntents(walletId: String)
 }

@@ -81,9 +81,12 @@ class WalletImpl(
      */
     override suspend fun deleteContracts() = repo.deleteContracts(id)
 
-    override suspend fun saveIntent(intent: ArkIntent) = repo.saveIntent(intent)
+    override suspend fun saveIntent(intent: ArkIntent) {
+        require(intent.walletId == id) { "Wallet should own intent" }
+        repo.saveIntent(intent)
+    }
 
-    override suspend fun getIntents(): List<ArkIntent> = repo.getIntents()
+    override suspend fun getIntents(): List<ArkIntent> = repo.getIntents(id)
 
-    internal suspend fun deleteIntents() = repo.deleteIntents()
+    override suspend fun deleteIntents() = repo.deleteIntents(id)
 }

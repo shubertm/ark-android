@@ -135,6 +135,8 @@ interface Wallet {
 
     suspend fun getIntents(): List<ArkIntent>
 
+    suspend fun deleteIntents()
+
     enum class Type {
         HD,
         SINGLE_KEY,

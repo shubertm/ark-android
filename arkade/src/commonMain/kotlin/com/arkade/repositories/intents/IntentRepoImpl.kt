@@ -18,10 +18,10 @@ class IntentRepoImpl(
         storage.save(intentEntity)
     }
 
-    override suspend fun getAll(): List<ArkIntent> {
-        val intentEntities = storage.getAll()
+    override suspend fun getAll(walletId: String): List<ArkIntent> {
+        val intentEntities = storage.getAll(walletId)
         return intentEntities.map { it.toIntent() }
     }
 
-    override suspend fun deleteAll() = storage.deleteAll()
+    override suspend fun deleteAll(walletId: String) = storage.deleteAll(walletId)
 }
