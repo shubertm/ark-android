@@ -218,6 +218,7 @@ class SingleKeyWalletTest : WalletTest() {
         }
     }
 
+    @Test
     override fun should_store_and_retrieve_valid_ark_intents_successfully() {
         runTest {
             val nsec = "nsec1wr49duqpjavggh78ewu9zlcuvw5huh6x5kqweqwnmjgw78kqqt6qsk0w9k"
