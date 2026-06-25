@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "4323af861ac97dcfab66563bacd4a12d",
+    "identityHash": "a4afc76e5a79466a88924228cfae7f43",
     "entities": [
       {
         "tableName": "wallets",
@@ -220,7 +220,7 @@
       },
       {
         "tableName": "intents",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`intentTxId` TEXT NOT NULL, `intentId` TEXT, `walletId` TEXT NOT NULL, `state` TEXT NOT NULL, `vtxos` TEXT NOT NULL, `validFrom` INTEGER, `validUntil` INTEGER, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `registerProof` TEXT NOT NULL, `registerProofMessage` TEXT NOT NULL, `deleteProof` TEXT NOT NULL, `deleteProofMessage` TEXT NOT NULL, `batchId` TEXT, `commitmentTxId` TEXT, `cancellationReason` TEXT, `partialForfeits` TEXT NOT NULL, `signerDescriptor` TEXT, PRIMARY KEY(`intentTxId`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`intentTxId` TEXT NOT NULL, `intentId` TEXT, `walletId` TEXT NOT NULL, `state` TEXT NOT NULL, `vtxos` TEXT NOT NULL, `validFrom` INTEGER, `validUntil` INTEGER, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `registerProof` TEXT NOT NULL, `registerProofMessage` TEXT NOT NULL, `deleteProof` TEXT NOT NULL, `deleteProofMessage` TEXT NOT NULL, `batchId` TEXT, `commitmentTxId` TEXT, `cancellationReason` TEXT, `signerDescriptor` TEXT, PRIMARY KEY(`intentTxId`))",
         "fields": [
           {
             "fieldPath": "intentTxId",
@@ -313,12 +313,6 @@
             "affinity": "TEXT"
           },
           {
-            "fieldPath": "partialForfeits",
-            "columnName": "partialForfeits",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
             "fieldPath": "signerDescriptor",
             "columnName": "signerDescriptor",
             "affinity": "TEXT"
@@ -334,7 +328,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '4323af861ac97dcfab66563bacd4a12d')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a4afc76e5a79466a88924228cfae7f43')"
     ]
   }
 }
