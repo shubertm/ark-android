@@ -2,11 +2,9 @@ package com.arkade.storage.db.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
 import com.arkade.core.intents.ArkIntent
 import com.arkade.core.intents.IntentState
 import com.arkade.core.intents.IntentVtxo
-import com.arkade.utils.StringListTypeConverter
 import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.TxId
 import kotlin.time.Clock.System.now
@@ -30,8 +28,6 @@ data class IntentEntity(
     val batchId: String?,
     val commitmentTxId: String?,
     val cancellationReason: String?,
-    @TypeConverters(StringListTypeConverter::class)
-    val partialForfeits: List<String> = emptyList(),
     val signerDescriptor: String?,
 ) {
     fun toIntent(): ArkIntent =
