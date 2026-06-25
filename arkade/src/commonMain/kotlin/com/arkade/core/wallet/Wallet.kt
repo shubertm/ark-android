@@ -8,6 +8,7 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.encodePubKeyByNetwork
+import com.arkade.core.intents.ArkIntent
 import com.arkade.di.ArkadeDI
 import com.arkade.repositories.WalletRepo
 import com.arkade.storage.db.Database
@@ -129,6 +130,12 @@ interface Wallet {
      * Deletes all [ArkContract] instances stored for this wallet.
      */
     suspend fun deleteContracts()
+
+    suspend fun saveIntent(intent: ArkIntent)
+
+    suspend fun getIntents(): List<ArkIntent>
+
+    suspend fun deleteIntents()
 
     enum class Type {
         HD,

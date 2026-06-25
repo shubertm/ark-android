@@ -19,4 +19,7 @@ actual abstract class WalletTest actual constructor() : com.arkade.Test() {
 
     @Test
     actual abstract fun should_store_and_retrieve_valid_ark_contracts_successfully()
+
+    @Test
+    actual abstract fun should_store_and_retrieve_valid_ark_intents_successfully()
 }

@@ -1,6 +1,7 @@
 package com.arkade.utils
 
 import androidx.room.TypeConverter
+import com.arkade.core.intents.IntentVtxo
 import kotlinx.serialization.json.Json
 
 /**
@@ -45,4 +46,20 @@ class StringMapTypeConverter : ArkadeRoomTypeConverter<Map<String, String>> {
     /** Decodes a JSON object string back to a `Map<String, String>`. */
     @TypeConverter
     override fun to(json: String): Map<String, String> = Json.decodeFromString(json)
+}
+
+class StringListTypeConverter : ArkadeRoomTypeConverter<List<String>> {
+    @TypeConverter
+    override fun from(value: List<String>): String = Json.encodeToString(value)
+
+    @TypeConverter
+    override fun to(json: String): List<String> = Json.decodeFromString(json)
+}
+
+class IntentVtxoListTypeConverter : ArkadeRoomTypeConverter<List<IntentVtxo>> {
+    @TypeConverter
+    override fun from(value: List<IntentVtxo>): String = Json.encodeToString(value)
+
+    @TypeConverter
+    override fun to(json: String): List<IntentVtxo> = Json.decodeFromString(json)
 }
