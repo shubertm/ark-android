@@ -93,6 +93,7 @@ abstract class ArkContract(
      */
     protected fun getTaprootSpendingInfo(): TaprootSpendingInfo {
         val unSpendablePubKey = UNSPENDABLE_PUBKEY.toXOnlyPubKey()
+
         val leafScripts = getTapLeafScripts()
 
         val scriptTree = buildScriptTree(leafScripts)

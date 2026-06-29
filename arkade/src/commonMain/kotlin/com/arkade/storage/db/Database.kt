@@ -7,22 +7,30 @@ import androidx.room.RoomDatabaseConstructor
 import androidx.room.TypeConverters
 import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import com.arkade.storage.db.dao.ContractDao
+import com.arkade.storage.db.dao.IntentDao
 import com.arkade.storage.db.dao.VtxoDao
 import com.arkade.storage.db.dao.WalletDao
 import com.arkade.storage.db.entities.ContractEntity
+import com.arkade.storage.db.entities.IntentEntity
 import com.arkade.storage.db.entities.VtxoEntity
 import com.arkade.storage.db.entities.WalletEntity
+import com.arkade.utils.IntentVtxoListTypeConverter
+import com.arkade.utils.StringListTypeConverter
 import com.arkade.utils.StringMapTypeConverter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 
 @Database(
-    entities = [WalletEntity::class, VtxoEntity::class, ContractEntity::class],
+    entities = [WalletEntity::class, VtxoEntity::class, ContractEntity::class, IntentEntity::class],
     version = 1,
     exportSchema = true,
 )
 @ConstructedBy(DatabaseConstructor::class)
-@TypeConverters(StringMapTypeConverter::class)
+@TypeConverters(
+    StringMapTypeConverter::class,
+    StringListTypeConverter::class,
+    IntentVtxoListTypeConverter::class,
+)
 abstract class Database : RoomDatabase() {
     /**
      * Provides access to the DAO responsible for wallet persistence operations.
@@ -34,6 +42,8 @@ abstract class Database : RoomDatabase() {
     abstract fun vtxoDao(): VtxoDao
 
     abstract fun contractDao(): ContractDao
+
+    abstract fun intentDao(): IntentDao
 }
 
 @Suppress("NO_ACTUAL_FOR_EXPECT")

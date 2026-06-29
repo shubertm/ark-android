@@ -98,7 +98,7 @@ class BatchManagementService(
             val walletIds = arrayOf(intent.walletId)
             val vtxos =
                 wallet.getVtxos(
-                    outpoints = intent.vtxos,
+                    outpoints = intent.vtxos.toTypedArray(),
                     includeSpent = true,
                 )
 

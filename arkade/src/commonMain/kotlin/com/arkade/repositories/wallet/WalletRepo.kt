@@ -5,11 +5,12 @@ import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.vtxos.Vtxo
 import com.arkade.core.wallet.Wallet
+import com.arkade.core.wallet.WalletIntentManager
 import com.arkade.repositories.contracts.ContractRepo
 import com.arkade.repositories.vtxos.VtxoRepo
 import fr.acinq.bitcoin.OutPoint
 
-interface WalletRepo {
+interface WalletRepo : WalletIntentManager {
     val vtxoRepo: VtxoRepo
 
     /** The [ContractRepo] used by this wallet repository for contract persistence operations. */

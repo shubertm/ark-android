@@ -3,6 +3,7 @@ package com.arkade.core.wallet
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
+import com.arkade.core.intents.ArkIntent
 import com.arkade.core.vtxos.Vtxo
 import com.arkade.repositories.wallet.WalletRepo
 import fr.acinq.bitcoin.OutPoint
@@ -98,5 +99,12 @@ class WalletImpl(
      */
     override suspend fun deleteContracts() = repo.deleteContracts(id)
 
-    internal suspend fun deleteAllContracts() = repo.deleteContracts()
+    override suspend fun saveIntent(intent: ArkIntent) {
+        require(intent.walletId == id) { "Wallet should own intent" }
+        repo.saveIntent(intent)
+    }
+
+    override suspend fun getIntents(): List<ArkIntent> = repo.getIntents(id)
+
+    override suspend fun deleteIntents() = repo.deleteIntents(id)
 }
