@@ -29,7 +29,7 @@ data class ArkCoin(
 ) {
     init {
         val script = Script.parse(spendingScriptPath.script)
-        if (sequence != null && script.contains(OP_CHECKSEQUENCEVERIFY)) {
+        if (sequence == null && script.contains(OP_CHECKSEQUENCEVERIFY)) {
             throw IllegalArgumentException("Sequence is required")
         }
     }
