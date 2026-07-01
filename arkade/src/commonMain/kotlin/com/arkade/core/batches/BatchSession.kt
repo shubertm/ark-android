@@ -13,9 +13,11 @@ class BatchSession(
     private val inputs: List<ArkCoin>,
     private val batchStartedEvent: BatchEvent.BatchStartedEvent,
 ) : BatchEventHandler {
-    suspend fun init() {
+    private lateinit var sweepTapScript: ByteArray
+
+    fun init() {
         val serverInfo = arkServerInfo
-        val sweepTapScript = csvSigScript(serverInfo.sessionDuration.inWholeSeconds, serverInfo.forfeitPubKey)
+        sweepTapScript = csvSigScript(batchStartedEvent.batchExpiry.inWholeSeconds, serverInfo.forfeitPubKey)
     }
 
     override fun onBatchStarted() {

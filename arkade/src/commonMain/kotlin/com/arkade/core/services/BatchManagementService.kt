@@ -52,21 +52,25 @@ class BatchManagementService(
 
     private suspend fun handleBatchStartedForAllIntents(event: BatchEvent.BatchStartedEvent) {
         val intentHashMap =
-            activeIntents.keys.associateBy { intentId ->
-                sha256(intentId.encodeToByteArray()).toHexString()
+            activeIntents.mapKeys { entry ->
+                sha256(entry.key.encodeToByteArray()).toHexString()
             }
 
-        val selectedIntentIds =
-            event.intentIdHashes.map { intentHash ->
-                intentHashMap.getValue(intentHash)
+        val selectedIntents =
+            try {
+                event.intentIdHashes.map { intentHash ->
+                    intentHashMap.getValue(intentHash)
+                }
+            } catch (e: Exception) {
+                throw e
             }
 
-        if (selectedIntentIds.isEmpty()) return
+        if (selectedIntents.isEmpty()) return
 
         val walletIds =
-            selectedIntentIds
-                .mapNotNull { intentId ->
-                    activeIntents.getOrElse(intentId) { null }?.walletId
+            selectedIntents
+                .map { intent ->
+                    intent.walletId
                 }.distinct()
                 .toTypedArray()
 
@@ -74,14 +78,13 @@ class BatchManagementService(
 
         val serverInfo = client.getInfo()
 
-        selectedIntentIds.forEach { intentId ->
-            val intent = activeIntents.getOrElse(intentId) { null }
-            if (intent == null || activeBatchSessions.containsKey(intentId)) {
+        selectedIntents.forEach { intent ->
+            val intentId = intent.id
+            if (activeBatchSessions.containsKey(intentId)) {
                 return@forEach
             }
-
             try {
-                setupBatchSession(intentId, intent, serverInfo, event)
+                setupBatchSession(intent, serverInfo, event)
             } catch (e: Exception) {
                 Log.warning(LOG_TAG, "Failed to handle batch started event for intent $intentId: $e")
             }
@@ -89,11 +92,11 @@ class BatchManagementService(
     }
 
     private suspend fun setupBatchSession(
-        intentId: String,
         intent: ArkIntent,
         serverInfo: ArkServerInfo,
         event: BatchEvent.BatchStartedEvent,
     ) {
+        val intentId = requireNotNull(intent.id)
         try {
             val walletIds = arrayOf(intent.walletId)
             val vtxos =
@@ -140,7 +143,7 @@ class BatchManagementService(
                 }
             val batchSession =
                 BatchSession(
-                    client.getInfo(),
+                    serverInfo,
                     wallet,
                     intent,
                     spendableCoins,
@@ -159,12 +162,14 @@ class BatchManagementService(
 
             try {
                 client.confirmIntentRegistration(intentId)
-
-                // Store intent
-            } catch (_: Exception) {
+                wallet.saveIntent(intent)
+            } catch (e: Exception) {
+                Log.error(LOG_TAG, "Failed to confirm intent registration for intent $intentId: $e")
+                throw e
             }
         } catch (e: Exception) {
-        } catch (_: Exception) {
+            Log.error(LOG_TAG, "Failed to setup batch session for intent $intentId: $e")
+            throw e
         }
     }
 
