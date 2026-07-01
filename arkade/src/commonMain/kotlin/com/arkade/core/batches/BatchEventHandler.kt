@@ -1,10 +1,6 @@
 package com.arkade.core.batches
 
 interface BatchEventHandler {
-    fun onBatchStarted()
-
-    fun onBatchFinalized()
-
     fun onBatchFinalization()
 
     fun onBatchFailed()

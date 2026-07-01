@@ -13,6 +13,7 @@ class BatchSession(
     private val inputs: List<ArkCoin>,
     private val batchStartedEvent: BatchEvent.BatchStartedEvent,
 ) : BatchEventHandler {
+    private val batchId = batchStartedEvent.id
     private lateinit var sweepTapScript: ByteArray
 
     fun init() {
@@ -20,12 +21,55 @@ class BatchSession(
         sweepTapScript = csvSigScript(batchStartedEvent.batchExpiry.inWholeSeconds, serverInfo.forfeitPubKey)
     }
 
-    override fun onBatchStarted() {
-        TODO("Not yet implemented")
-    }
+    fun processEvent(event: BatchEvent): Boolean {
+        try {
+            when (event) {
+                is BatchEvent.StreamStartedEvent -> {}
 
-    override fun onBatchFinalized() {
-        TODO("Not yet implemented")
+                is BatchEvent.BatchStartedEvent -> {}
+
+                is BatchEvent.BatchFinalizedEvent -> {
+                    if (event.id != batchId) {
+                        return true
+                    }
+                }
+
+                is BatchEvent.BatchFinalizationEvent -> {
+                    onBatchFinalization()
+                }
+
+                is BatchEvent.BatchFailedEvent -> {
+                    if (event.id == batchId) {
+                        throw UnsupportedOperationException("Batch failed: ${event.reason}")
+                    }
+                }
+
+                is BatchEvent.TreeSigningStartedEvent -> {
+                    onTreeSigningStarted()
+                }
+
+                is BatchEvent.TreeNoncesAggregatedEvent -> {
+                    onTreeNoncesAggregated()
+                }
+
+                is BatchEvent.TreeTxEvent -> {
+                    onTreeTx()
+                }
+
+                is BatchEvent.TreeSignatureEvent -> {
+                    onTreeSignature()
+                }
+
+                is BatchEvent.TreeNoncesEvent -> {
+                    onTreeNonces()
+                }
+
+                is BatchEvent.HeartbeatEvent -> {}
+            }
+            return false
+        } catch (e: Exception) {
+            throw e
+        }
     }
 
     override fun onBatchFinalization() {

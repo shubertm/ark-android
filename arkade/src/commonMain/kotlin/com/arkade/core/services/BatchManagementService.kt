@@ -46,6 +46,7 @@ class BatchManagementService(
                 handleBatchStartedForAllIntents(event)
             }
             else -> {
+                handleBatchEvent(event)
             }
         }
     }
@@ -172,6 +173,32 @@ class BatchManagementService(
             throw e
         }
     }
+
+    private fun handleBatchEvent(event: BatchEvent) {
+        val batchId = event.getBatchId()
+        val intentIds = batchIdToIntentIds[batchId]
+        if (intentIds == null) {
+            Log.warning(LOG_TAG, "No intent ids found for batch $batchId")
+            return
+        }
+        for (id in intentIds) {
+            val batchSession = activeBatchSessions[id]
+            batchSession?.processEvent(event)
+        }
+    }
+
+    private fun BatchEvent.getBatchId(): String? =
+        when (this) {
+            is BatchEvent.BatchFinalizedEvent -> id
+            is BatchEvent.BatchFinalizationEvent -> id
+            is BatchEvent.BatchFailedEvent -> id
+            is BatchEvent.TreeTxEvent -> id
+            is BatchEvent.TreeNoncesEvent -> id
+            is BatchEvent.TreeSignatureEvent -> id
+            is BatchEvent.TreeNoncesAggregatedEvent -> id
+            is BatchEvent.TreeSigningStartedEvent -> id
+            else -> null
+        }
 
     companion object {
         private const val LOG_TAG = "BatchManagementService"
