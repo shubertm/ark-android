@@ -174,7 +174,7 @@ class BatchManagementService(
         }
     }
 
-    private fun handleBatchEvent(event: BatchEvent) {
+    private suspend fun handleBatchEvent(event: BatchEvent) {
         val batchId = event.getBatchId()
         val intentIds = batchIdToIntentIds[batchId]
         if (intentIds == null) {

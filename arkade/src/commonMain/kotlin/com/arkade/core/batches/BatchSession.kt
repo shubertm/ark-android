@@ -5,6 +5,7 @@ import com.arkade.core.coins.ArkCoin
 import com.arkade.core.csvSigScript
 import com.arkade.core.intents.ArkIntent
 import com.arkade.core.wallet.Wallet
+import fr.acinq.bitcoin.psbt.Psbt
 
 class BatchSession(
     private val arkServerInfo: ArkServerInfo,
@@ -15,13 +16,14 @@ class BatchSession(
 ) : BatchEventHandler {
     private val batchId = batchStartedEvent.id
     private lateinit var sweepTapScript: ByteArray
+    private val connectors: MutableList<TxTreeNode> = mutableListOf()
 
     fun init() {
         val serverInfo = arkServerInfo
         sweepTapScript = csvSigScript(batchStartedEvent.batchExpiry.inWholeSeconds, serverInfo.forfeitPubKey)
     }
 
-    fun processEvent(event: BatchEvent): Boolean {
+    suspend fun processEvent(event: BatchEvent): Boolean {
         try {
             when (event) {
                 is BatchEvent.StreamStartedEvent -> {}
@@ -35,7 +37,7 @@ class BatchSession(
                 }
 
                 is BatchEvent.BatchFinalizationEvent -> {
-                    onBatchFinalization()
+                    onBatchFinalization(event, connectors)
                 }
 
                 is BatchEvent.BatchFailedEvent -> {
@@ -72,31 +74,39 @@ class BatchSession(
         }
     }
 
-    override fun onBatchFinalization() {
+    override suspend fun onBatchFinalization(
+        event: BatchEvent.BatchFinalizationEvent,
+        connectors: List<TxTreeNode>,
+    ) {
+        var connectorsGraph: TxTree? = null
+        if (connectors.isNotEmpty()) {
+            connectorsGraph = TxTree.create(connectors)
+            val commitmentPSBT = Psbt.read(event.commitmentTx.encodeToByteArray())
+            // Validate the connectors graph
+        }
+    }
+
+    override suspend fun onBatchFailed() {
         TODO("Not yet implemented")
     }
 
-    override fun onBatchFailed() {
+    override suspend fun onTreeSigningStarted() {
         TODO("Not yet implemented")
     }
 
-    override fun onTreeSigningStarted() {
+    override suspend fun onTreeNoncesAggregated() {
         TODO("Not yet implemented")
     }
 
-    override fun onTreeNoncesAggregated() {
+    override suspend fun onTreeTx() {
         TODO("Not yet implemented")
     }
 
-    override fun onTreeTx() {
+    override suspend fun onTreeSignature() {
         TODO("Not yet implemented")
     }
 
-    override fun onTreeSignature() {
-        TODO("Not yet implemented")
-    }
-
-    override fun onTreeNonces() {
+    override suspend fun onTreeNonces() {
         TODO("Not yet implemented")
     }
 }
