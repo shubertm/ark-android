@@ -6,6 +6,7 @@ import com.arkade.core.csvSigScript
 import com.arkade.core.intents.ArkIntent
 import com.arkade.core.wallet.Wallet
 import fr.acinq.bitcoin.psbt.Psbt
+import fr.acinq.bitcoin.utils.getOrElse
 
 class BatchSession(
     private val arkServerInfo: ArkServerInfo,
@@ -81,8 +82,41 @@ class BatchSession(
         var connectorsGraph: TxTree? = null
         if (connectors.isNotEmpty()) {
             connectorsGraph = TxTree.create(connectors)
-            val commitmentPSBT = Psbt.read(event.commitmentTx.encodeToByteArray())
-            // Validate the connectors graph
+            val commitmentPSBT =
+                Psbt.read(event.commitmentTx.encodeToByteArray()).getOrElse {
+                    throw IllegalStateException("Failed to read commitment tx")
+                }
+
+            TreeValidator.validateConnectorsTxGraph(commitmentPSBT, connectorsGraph)
+        }
+
+        val signedForfeits: MutableList<String> = mutableListOf()
+
+        val connectorsLeaves = connectorsGraph?.leaves()?.toList() ?: listOf()
+        var connectorIndex = 0
+
+        for (vtxoCoin in inputs) {
+            if (vtxoCoin.requiresForfeit()) {
+                continue
+            }
+
+            require(connectorsLeaves.isNotEmpty()) { "Connectors not received from operator" }
+
+            require(connectorIndex < connectorsLeaves.size) {
+                "Not enough connectors received. Need at least ${connectorIndex + 1}, got ${connectorsLeaves.size}"
+            }
+
+            val connectorLeaf = connectorsLeaves[connectorIndex]
+            val connectorOutput =
+                connectorLeaf.global.tx.txOut
+                    .firstOrNull()
+            if (connectorOutput != null) {
+                throw IllegalStateException("Connector leaf at index $connectorIndex has no outputs")
+            }
+
+            val connectorTxId = connectorLeaf.global.tx.txid
+
+            connectorIndex++
         }
     }
 

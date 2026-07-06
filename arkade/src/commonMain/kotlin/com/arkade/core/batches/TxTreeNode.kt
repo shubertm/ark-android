@@ -5,5 +5,5 @@ import fr.acinq.bitcoin.psbt.Psbt
 
 data class TxTreeNode(
     val tx: Psbt,
-    val children: Map<Int, TxId>,
+    val children: Map<Long, TxId>,
 )

@@ -33,4 +33,6 @@ data class ArkCoin(
             throw IllegalArgumentException("Sequence is required")
         }
     }
+
+    fun requiresForfeit(): Boolean = !isSwept && !isUnrolled
 }

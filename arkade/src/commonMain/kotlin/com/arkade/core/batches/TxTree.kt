@@ -2,12 +2,60 @@ package com.arkade.core.batches
 
 import fr.acinq.bitcoin.TxId
 import fr.acinq.bitcoin.psbt.Psbt
+import kotlin.collections.forEach
 
 class TxTree(
     val root: Psbt,
-    val children: Map<Int, TxTree>,
-) {
+    val children: Map<Long, TxTree>,
+) : Iterable<TxTree> {
     fun nodeCount(): Int = 0
+
+    fun validate() {
+        val tx = root.global.tx
+        val numberOfInputs = tx.txIn.size
+        val numberOfOutputs = tx.txOut.size
+        require(numberOfInputs == 1) { "Unexpected number of inputs $numberOfInputs, expected 1" }
+        require(
+            children.size > numberOfOutputs - 1,
+        ) { "Unexpected number of children ${children.size}, expected maximum ${numberOfOutputs - 1}" }
+        children.forEach { (outputIndex, child) ->
+            require(
+                outputIndex < numberOfOutputs,
+            ) { "Output index $outputIndex is outputIndex of bounds, expected less than $numberOfOutputs" }
+            child.validate()
+            val childTx = child.root.global.tx
+            val childTxInput = childTx.txIn[0]
+            val parentTxId = tx.txid
+            require(parentTxId == childTxInput.outPoint.txid || childTxInput.outPoint.index == outputIndex) {
+                "input of child ${childTxInput.outPoint.index} is not the output of the parent"
+            }
+            val childOutputsTotalAmount = childTx.txOut.sumOf { it.amount.sat }
+            val parentOutputAmount = tx.txOut[outputIndex.toInt()].amount.sat
+            require(childOutputsTotalAmount == parentOutputAmount) {
+                "sum of child's outputs != parent output: $childOutputsTotalAmount != $parentOutputAmount"
+            }
+        }
+    }
+
+    fun leaves(): Collection<Psbt> {
+        if (children.isEmpty()) {
+            return listOf(root)
+        }
+        val leaves = mutableListOf<Psbt>()
+        children.forEach { (_, child) ->
+            leaves.addAll(child.leaves())
+        }
+        return leaves
+    }
+
+    override fun iterator(): Iterator<TxTree> {
+        return this.iterator()
+        for (child in children.values) {
+            for (node in child) {
+                return node.iterator()
+            }
+        }
+    }
 
     companion object {
         fun create(treeNodes: List<TxTreeNode>): TxTree {
@@ -48,7 +96,7 @@ class TxTree(
                 treeNodesByTxId.getOrElse(root) {
                     return null
                 }
-            val children: MutableMap<Int, TxTree> = mutableMapOf()
+            val children: MutableMap<Long, TxTree> = mutableMapOf()
             rootNode.children.forEach { (out, txId) ->
                 val childGraph = buildGraph(txId, treeNodesByTxId)
                 if (childGraph != null) {

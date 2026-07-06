@@ -30,7 +30,7 @@ class BatchManagementService(
         client
             .getBatchEventStream()
             .catch { exception ->
-                Log.error(LOG_TAG, "Error in batch stream: $exception")
+                Log.error(LOG_TAG, "Errors in batch stream: $exception")
             }.collect { event ->
                 processEvent(event)
             }
