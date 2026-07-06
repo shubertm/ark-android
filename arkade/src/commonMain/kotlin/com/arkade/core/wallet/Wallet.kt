@@ -9,6 +9,7 @@ import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.encodePubKeyByNetwork
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.wallet.signer.WalletSignerManager
 import com.arkade.di.ArkadeDI
 import com.arkade.repositories.WalletRepo
 import com.arkade.storage.db.Database
@@ -24,7 +25,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import org.koin.core.parameter.parametersOf
 
-interface Wallet {
+interface Wallet : WalletSignerManager {
     val id: String
     val secret: String
     val destination: String?
@@ -143,7 +144,7 @@ interface Wallet {
     }
 
     companion object {
-        private const val NSEC_HRP = "nsec"
+        const val NSEC_HRP = "nsec"
 
         /**
          * Create a Wallet from a secret (mnemonic phrase or an nsec-encoded private key) and an
@@ -355,7 +356,7 @@ interface Wallet {
          * @throws IllegalArgumentException If the HRP is not "nsec" or the decoded payload
          * is not 32 bytes.
          */
-        private fun getPrivateKeyFromNSec(nsec: String): PrivateKey {
+        fun getPrivateKeyFromNSec(nsec: String): PrivateKey {
             val (hrp, bytes, _) = Bech32.decodeBytes(nsec)
             require(hrp == NSEC_HRP) { "Invalid nsec HRP: $hrp" }
             require(bytes.size == 32) { "Invalid nsec payload size: ${bytes.size}" }

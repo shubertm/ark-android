@@ -5,7 +5,13 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.wallet.Wallet.Companion.NSEC_HRP
+import com.arkade.core.wallet.signer.HDSigner
+import com.arkade.core.wallet.signer.Signer
+import com.arkade.core.wallet.signer.SingleKeySigner
 import com.arkade.repositories.WalletRepo
+import fr.acinq.bitcoin.Transaction
+import fr.acinq.bitcoin.psbt.Psbt
 
 class WalletImpl(
     override val repo: WalletRepo,
@@ -16,6 +22,13 @@ class WalletImpl(
     override val accountDescriptor: String,
     override var lastUsedIndex: Int,
 ) : Wallet {
+    override val signer: Signer =
+        if (secret.startsWith(NSEC_HRP)) {
+            SingleKeySigner.fromNSec(secret)
+        } else {
+            HDSigner.fromMnemonic(secret)
+        }
+
     /**
      * Persists this wallet to the configured repository.
      */
@@ -89,4 +102,11 @@ class WalletImpl(
     override suspend fun getIntents(): List<ArkIntent> = repo.getIntents(id)
 
     override suspend fun deleteIntents() = repo.deleteIntents(id)
+
+    override suspend fun sign(
+        psbt: Psbt,
+        inputIndexes: Array<Int>,
+    ): Transaction = signer.sign(psbt, inputIndexes)
+
+    override suspend fun signMessage(message: ByteArray): ByteArray = signer.signMessage(message)
 }
