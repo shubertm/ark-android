@@ -60,6 +60,7 @@ abstract class SignerImpl : Signer {
     ): ByteArray =
         when (signatureType) {
             SignatureType.SCHNORR -> {
+                require(message.size == 32) { "Invalid message size for Schnorr signing: ${message.size}" }
                 Crypto
                     .signSchnorr(
                         ByteVector32(message),
