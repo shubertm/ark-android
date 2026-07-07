@@ -33,11 +33,11 @@ abstract class SignerImpl : Signer {
     ): Transaction {
         var signedTx = psbt
         if (inputIndexes.isEmpty()) {
-            val txInputs = signedTx.global.tx.txIn
-            txInputs.forEach { input ->
+            val txInputs = signedTx.inputs
+            txInputs.forEachIndexed { index, _ ->
                 val result =
-                    signedTx.sign(privateKey, input.outPoint.index.toInt()).getOrElse {
-                        throw IllegalStateException("Failed to sign transaction: $it")
+                    signedTx.sign(privateKey, index).getOrElse {
+                        throw IllegalStateException("Failed to sign transaction")
                     }
                 signedTx = result.psbt
             }
@@ -47,7 +47,7 @@ abstract class SignerImpl : Signer {
         inputIndexes.forEach { index ->
             val result =
                 signedTx.sign(privateKey, index).getOrElse {
-                    throw IllegalStateException("Failed to sign transaction: $it")
+                    throw IllegalStateException("Failed to sign transaction")
                 }
             signedTx = result.psbt
         }
