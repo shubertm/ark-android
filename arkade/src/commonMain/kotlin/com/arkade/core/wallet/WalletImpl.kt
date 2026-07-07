@@ -5,7 +5,6 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.intents.ArkIntent
-import com.arkade.core.wallet.Wallet.Companion.NSEC_HRP
 import com.arkade.core.wallet.signer.HDSigner
 import com.arkade.core.wallet.signer.Signer
 import com.arkade.core.wallet.signer.SingleKeySigner
@@ -23,10 +22,9 @@ class WalletImpl(
     override var lastUsedIndex: Int,
 ) : Wallet {
     override val signer: Signer =
-        if (secret.startsWith(NSEC_HRP)) {
-            SingleKeySigner.fromNSec(secret)
-        } else {
-            HDSigner.fromMnemonic(secret)
+        when (Wallet.Type.fromSecret(secret)) {
+            Wallet.Type.SINGLE_KEY -> SingleKeySigner.fromNSec(secret)
+            Wallet.Type.HD -> HDSigner.fromMnemonic(secret)
         }
 
     /**

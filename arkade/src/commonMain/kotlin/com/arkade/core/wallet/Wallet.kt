@@ -141,10 +141,19 @@ interface Wallet : WalletSignerManager {
     enum class Type {
         HD,
         SINGLE_KEY,
+        ;
+
+        companion object {
+            fun fromSecret(secret: String) =
+                when {
+                    secret.startsWith(NSEC_HRP) -> SINGLE_KEY
+                    else -> HD
+                }
+        }
     }
 
     companion object {
-        const val NSEC_HRP = "nsec"
+        private const val NSEC_HRP = "nsec"
 
         /**
          * Create a Wallet from a secret (mnemonic phrase or an nsec-encoded private key) and an
@@ -174,10 +183,9 @@ interface Wallet : WalletSignerManager {
 
                 val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
 
-                if (secret.startsWith(NSEC_HRP)) {
-                    createNSecWallet(secret, destination, repo)
-                } else {
-                    createHDWallet(secret, destination, serverInfo, repo)
+                when (Type.fromSecret(secret)) {
+                    Type.SINGLE_KEY -> createNSecWallet(secret, destination, repo)
+                    Type.HD -> createHDWallet(secret, destination, serverInfo, repo)
                 }
             }
 
@@ -232,7 +240,7 @@ interface Wallet : WalletSignerManager {
          * @param mnemonics is the mnemonic phrase to use for key derivation.
          * @return A pair containing the derived master key and its fingerprint.
          */
-        fun masterKeyFromSecret(mnemonics: String): Pair<DeterministicWallet.ExtendedPrivateKey, String> {
+        internal fun masterKeyFromSecret(mnemonics: String): Pair<DeterministicWallet.ExtendedPrivateKey, String> {
             val seed = MnemonicCode.toSeed(mnemonics, "")
             val masterKey = DeterministicWallet.generate(seed)
             val fingerprint = masterKey.extendedPublicKey.keyFingerprint()
@@ -356,7 +364,7 @@ interface Wallet : WalletSignerManager {
          * @throws IllegalArgumentException If the HRP is not "nsec" or the decoded payload
          * is not 32 bytes.
          */
-        fun getPrivateKeyFromNSec(nsec: String): PrivateKey {
+        internal fun getPrivateKeyFromNSec(nsec: String): PrivateKey {
             val (hrp, bytes, _) = Bech32.decodeBytes(nsec)
             require(hrp == NSEC_HRP) { "Invalid nsec HRP: $hrp" }
             require(bytes.size == 32) { "Invalid nsec payload size: ${bytes.size}" }
