@@ -32,6 +32,7 @@ interface Wallet : WalletSignerManager {
     val type: Type
     val accountDescriptor: String
     val lastUsedIndex: Int
+    val network: Network
 
     val repo: WalletRepo
 
@@ -80,6 +81,7 @@ interface Wallet : WalletSignerManager {
             fingerprint(),
             accountDescriptor,
             lastUsedIndex,
+            network,
         )
 
     /**
@@ -155,6 +157,15 @@ interface Wallet : WalletSignerManager {
     companion object {
         private const val NSEC_HRP = "nsec"
 
+        fun getAccountKeyPath(network: Network): Pair<KeyPath, Int> {
+            val coinType =
+                when (network) {
+                    Network.MAINNET -> 0
+                    else -> 1
+                }
+            return KeyPath("m/86'/$coinType'/0'") to coinType
+        }
+
         /**
          * Create a Wallet from a secret (mnemonic phrase or an nsec-encoded private key) and an
          * optional destination tied to the provided server information.
@@ -184,7 +195,7 @@ interface Wallet : WalletSignerManager {
                 val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
 
                 when (Type.fromSecret(secret)) {
-                    Type.SINGLE_KEY -> createNSecWallet(secret, destination, repo)
+                    Type.SINGLE_KEY -> createNSecWallet(secret, destination, repo, serverInfo.network)
                     Type.HD -> createHDWallet(secret, destination, serverInfo, repo)
                 }
             }
@@ -272,6 +283,7 @@ interface Wallet : WalletSignerManager {
             nsec: String,
             destination: String?,
             repo: WalletRepo,
+            network: Network,
         ): Wallet {
             val outputDescriptor = getOutputDescriptorFromNSec(nsec)
             return WalletImpl(
@@ -282,6 +294,7 @@ interface Wallet : WalletSignerManager {
                 Type.SINGLE_KEY,
                 outputDescriptor,
                 0,
+                network,
             )
         }
 
@@ -309,13 +322,8 @@ interface Wallet : WalletSignerManager {
             }.onFailure { throw it }
 
             val (masterKey, fingerprint) = masterKeyFromSecret(mnemonics)
-
-            val coinType =
-                when (serverInfo.network) {
-                    Network.MAINNET -> 0
-                    else -> 1
-                }
-            val accountKeyPath = KeyPath("m/86'/$coinType'/0'")
+            val network = serverInfo.network
+            val (accountKeyPath, coinType) = getAccountKeyPath(network)
             val accountPrivateKey = masterKey.derivePrivateKey(accountKeyPath)
             val accountPublicKey = encodePubKeyByNetwork(accountPrivateKey.extendedPublicKey, serverInfo.network)
             require(fingerprint.length == 8) { "Invalid fingerprint length: expected 8 but is ${fingerprint.length}" }
@@ -329,6 +337,7 @@ interface Wallet : WalletSignerManager {
                 Type.HD,
                 accountDescriptor,
                 0,
+                network,
             )
         }
 

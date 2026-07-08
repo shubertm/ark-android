@@ -20,11 +20,12 @@ class WalletImpl(
     override val type: Wallet.Type,
     override val accountDescriptor: String,
     override var lastUsedIndex: Int,
+    override val network: Network,
 ) : Wallet {
     override val signer: Signer =
         when (Wallet.Type.fromSecret(secret)) {
             Wallet.Type.SINGLE_KEY -> SingleKeySigner.fromNSec(secret)
-            Wallet.Type.HD -> HDSigner.fromMnemonic(secret)
+            Wallet.Type.HD -> HDSigner.fromMnemonic(secret, network)
         }
 
     /**
