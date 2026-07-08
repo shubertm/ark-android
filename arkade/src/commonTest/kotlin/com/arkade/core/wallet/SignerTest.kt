@@ -17,8 +17,11 @@ import fr.acinq.bitcoin.psbt.Psbt
 import kotlin.test.assertTrue
 
 open class SignerTest {
-    suspend fun testSigningTransaction(signer: Signer) {
-        val (outputKey, _) = signer.xOnlyPublicKey().outputKey(Crypto.TaprootTweak.KeyPathTweak)
+    suspend fun testSigningTransaction(
+        descriptor: String,
+        signer: Signer,
+    ) {
+        val (outputKey, _) = signer.xOnlyPublicKey(descriptor).outputKey(Crypto.TaprootTweak.KeyPathTweak)
         val scriptPubKey = getTaprootScriptPubKey(outputKey.value.toByteArray())
 
         val prevOut =
@@ -58,20 +61,23 @@ open class SignerTest {
                     input.outPoint,
                     output,
                     sighashType = SigHash.SIGHASH_ALL,
-                    taprootInternalKey = signer.xOnlyPublicKey(),
+                    taprootInternalKey = signer.xOnlyPublicKey(descriptor),
                 )
             }.right!!
 
-        val singedTx = signer.sign(psbt, arrayOf(0))
+        val singedTx = signer.sign(descriptor, psbt, arrayOf(0))
 
         singedTx.correctlySpends(listOf(prevTx), ScriptFlags.MANDATORY_SCRIPT_VERIFY_FLAGS)
     }
 
-    suspend fun testSigningMessageUsingSchnorr(signer: Signer) {
+    suspend fun testSigningMessageUsingSchnorr(
+        descriptor: String,
+        signer: Signer,
+    ) {
         val message = sha256("message".encodeToByteArray())
-        val signature = signer.signMessage(message)
+        val signature = signer.signMessage(descriptor, message)
         assertTrue {
-            Crypto.verifySignatureSchnorr(ByteVector32(message), ByteVector(signature), signer.xOnlyPublicKey())
+            Crypto.verifySignatureSchnorr(ByteVector32(message), ByteVector(signature), signer.xOnlyPublicKey(descriptor))
         }
     }
 }

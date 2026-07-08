@@ -7,9 +7,13 @@ interface WalletSignerManager {
     val signer: Signer
 
     suspend fun sign(
+        descriptor: String,
         psbt: Psbt,
         inputIndexes: Array<Int>,
     ): Transaction
 
-    suspend fun signMessage(message: ByteArray): ByteArray
+    suspend fun signMessage(
+        descriptor: String,
+        message: ByteArray,
+    ): ByteArray
 }
