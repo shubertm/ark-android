@@ -10,24 +10,29 @@ import fr.acinq.bitcoin.utils.getOrElse
 
 interface Signer {
     suspend fun sign(
+        descriptor: String,
         psbt: Psbt,
         inputIndexes: Array<Int>,
     ): Transaction
 
     suspend fun signMessage(
+        descriptor: String,
         message: ByteArray,
         signatureType: SignatureType = SignatureType.SCHNORR,
     ): ByteArray
 
     suspend fun signerSession(): SignerSession
 
-    fun xOnlyPublicKey(): XonlyPublicKey
+    fun xOnlyPublicKey(descriptor: String): XonlyPublicKey
+
+    fun accountDescriptor(): String
 }
 
 abstract class SignerImpl : Signer {
-    protected abstract val privateKey: PrivateKey
+    protected abstract var privateKey: PrivateKey
 
     override suspend fun sign(
+        descriptor: String,
         psbt: Psbt,
         inputIndexes: Array<Int>,
     ): Transaction {
@@ -55,6 +60,7 @@ abstract class SignerImpl : Signer {
     }
 
     override suspend fun signMessage(
+        descriptor: String,
         message: ByteArray,
         signatureType: SignatureType,
     ): ByteArray =
@@ -72,7 +78,7 @@ abstract class SignerImpl : Signer {
             SignatureType.ECDSA -> Crypto.sign(message, privateKey).toByteArray()
         }
 
-    override fun xOnlyPublicKey(): XonlyPublicKey = privateKey.xOnlyPublicKey()
+    override fun xOnlyPublicKey(descriptor: String): XonlyPublicKey = privateKey.xOnlyPublicKey()
 }
 
 enum class SignatureType {

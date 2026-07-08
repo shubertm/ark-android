@@ -5,12 +5,19 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.wallet.addresses.AddressProvider
+import com.arkade.core.wallet.addresses.HDAddressProvider
+import com.arkade.core.wallet.addresses.SingleKeyAddressProvider
 import com.arkade.core.wallet.signer.HDSigner
 import com.arkade.core.wallet.signer.Signer
 import com.arkade.core.wallet.signer.SingleKeySigner
 import com.arkade.repositories.WalletRepo
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.psbt.Psbt
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.launch
 
 class WalletImpl(
     override val repo: WalletRepo,
@@ -22,10 +29,26 @@ class WalletImpl(
     override var lastUsedIndex: Int,
     override val network: Network,
 ) : Wallet {
+    private val ioScope = CoroutineScope(Dispatchers.IO)
+
     override val signer: Signer =
-        when (Wallet.Type.fromSecret(secret)) {
+        when (type) {
             Wallet.Type.SINGLE_KEY -> SingleKeySigner.fromNSec(secret)
             Wallet.Type.HD -> HDSigner.fromMnemonic(secret, network)
+        }
+    private val addressProvider: AddressProvider =
+        when (type) {
+            Wallet.Type.SINGLE_KEY -> SingleKeyAddressProvider(accountDescriptor)
+            Wallet.Type.HD ->
+                HDAddressProvider(
+                    accountDescriptor,
+                    getLastUsedIndex = { lastUsedIndex },
+                    updateLastUsedIndex = {
+                        ioScope.launch {
+                            updateLastUsedIndex(it)
+                        }
+                    },
+                )
         }
 
     /**
@@ -103,9 +126,13 @@ class WalletImpl(
     override suspend fun deleteIntents() = repo.deleteIntents(id)
 
     override suspend fun sign(
+        descriptor: String,
         psbt: Psbt,
         inputIndexes: Array<Int>,
-    ): Transaction = signer.sign(psbt, inputIndexes)
+    ): Transaction = signer.sign(descriptor, psbt, inputIndexes)
 
-    override suspend fun signMessage(message: ByteArray): ByteArray = signer.signMessage(message)
+    override suspend fun signMessage(
+        descriptor: String,
+        message: ByteArray,
+    ): ByteArray = signer.signMessage(accountDescriptor, message)
 }
