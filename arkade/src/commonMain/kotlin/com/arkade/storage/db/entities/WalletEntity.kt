@@ -28,7 +28,7 @@ data class WalletEntity(
      *
      * @param repo Repository used by the created [Wallet] for persistence and operations.
      * @return A [Wallet] initialized with this entity's `id`, `secret`, `destination`, `type`,
-     * `accountDescriptor`, and `lastUsedIndex`.
+     * `accountDescriptor`, `lastUsedIndex`, and `network`.
      */
     fun toWallet(repo: WalletRepo): Wallet = WalletImpl(repo, id, secret, destination, type, accountDescriptor, lastUsedIndex, network)
 }
