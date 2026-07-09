@@ -25,11 +25,11 @@ class HDSigner private constructor(
     override suspend fun sign(
         descriptor: String,
         psbt: Psbt,
-        inputIndexes: Array<Int>,
+        inputIndices: Array<Int>,
     ): Transaction =
         mutex.withLock {
             deriveChildPrivateKey(descriptor)
-            super.sign(descriptor, psbt, inputIndexes)
+            super.sign(descriptor, psbt, inputIndices)
         }
 
     override suspend fun signMessage(

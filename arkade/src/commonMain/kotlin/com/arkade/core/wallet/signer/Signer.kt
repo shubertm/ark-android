@@ -12,7 +12,7 @@ interface Signer {
     suspend fun sign(
         descriptor: String,
         psbt: Psbt,
-        inputIndexes: Array<Int>,
+        inputIndices: Array<Int>,
     ): Transaction
 
     suspend fun signMessage(
@@ -35,22 +35,17 @@ SignerImpl : Signer {
     override suspend fun sign(
         descriptor: String,
         psbt: Psbt,
-        inputIndexes: Array<Int>,
+        inputIndices: Array<Int>,
     ): Transaction {
         var signedTx = psbt
-        if (inputIndexes.isEmpty()) {
-            val txInputs = signedTx.inputs
-            txInputs.forEachIndexed { index, _ ->
-                val result =
-                    signedTx.sign(privateKey, index).getOrElse {
-                        throw IllegalStateException("Failed to sign transaction")
-                    }
-                signedTx = result.psbt
+        val indices =
+            if (inputIndices.isEmpty()) {
+                signedTx.inputs.indices
+            } else {
+                inputIndices.asList()
             }
-            return signedTx.global.tx
-        }
 
-        inputIndexes.forEach { index ->
+        indices.forEach { index ->
             val result =
                 signedTx.sign(privateKey, index).getOrElse {
                     throw IllegalStateException("Failed to sign transaction")

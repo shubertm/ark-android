@@ -65,9 +65,9 @@ open class SignerTest {
                 )
             }.right!!
 
-        val singedTx = signer.sign(descriptor, psbt, arrayOf(0))
+        val signedTx = signer.sign(descriptor, psbt, arrayOf(0))
 
-        singedTx.correctlySpends(listOf(prevTx), ScriptFlags.MANDATORY_SCRIPT_VERIFY_FLAGS)
+        signedTx.correctlySpends(listOf(prevTx), ScriptFlags.MANDATORY_SCRIPT_VERIFY_FLAGS)
     }
 
     suspend fun testSigningMessageUsingSchnorr(
