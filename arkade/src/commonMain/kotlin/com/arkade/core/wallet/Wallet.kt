@@ -32,6 +32,8 @@ interface Wallet : WalletSignerManager {
     val type: Type
     val accountDescriptor: String
     val lastUsedIndex: Int
+
+    /** The Bitcoin network this wallet was created for, used to derive keys and descriptors. */
     val network: Network
 
     val repo: WalletRepo
@@ -70,7 +72,7 @@ interface Wallet : WalletSignerManager {
      * Converts this wallet into a Room persistence entity.
      *
      * @return A `WalletEntity` containing this wallet's `id`, `secret`, optional `destination`,
-     * `type`, `accountDescriptor`, and `lastUsedIndex`.
+     * `type`, `accountDescriptor`, `lastUsedIndex`, and `network`.
      */
     fun toRoomEntity(): WalletEntity =
         WalletEntity(
@@ -146,6 +148,13 @@ interface Wallet : WalletSignerManager {
         ;
 
         companion object {
+            /**
+             * Classifies a secret as [SINGLE_KEY] or [HD] based on its encoding.
+             *
+             * @param secret Either an nsec-encoded private key (prefix "nsec") or an HD
+             * mnemonic phrase.
+             * @return [SINGLE_KEY] if `secret` starts with the nsec HRP, [HD] otherwise.
+             */
             fun fromSecret(secret: String) =
                 when {
                     secret.startsWith(NSEC_HRP) -> SINGLE_KEY
@@ -157,6 +166,13 @@ interface Wallet : WalletSignerManager {
     companion object {
         private const val NSEC_HRP = "nsec"
 
+        /**
+         * Derives the BIP-86 Taproot account key path and coin type for the given network.
+         *
+         * @param network The [Network] to derive the coin type for; mainnet uses coin type
+         * 0, all other networks use coin type 1.
+         * @return A pair of the account [KeyPath] (`m/86'/<coinType>'/0'`) and its coin type.
+         */
         fun getAccountKeyPath(network: Network): Pair<KeyPath, Int> {
             val coinType =
                 when (network) {
@@ -276,6 +292,7 @@ interface Wallet : WalletSignerManager {
          * @param nsec The nsec-encoded private key string.
          * @param destination Optional destination address associated with the wallet.
          * @param repo Repository instance used by the returned wallet for persistence.
+         * @param network The [Network] the wallet is created for.
          * @return A [Wallet] initialized with a Taproot output descriptor derived from `nsec`,
          * [Type.SINGLE_KEY], and `lastUsedIndex` set to 0.
          */
