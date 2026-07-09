@@ -6,7 +6,7 @@ import kotlinx.coroutines.sync.withLock
 class HDAddressProvider(
     private val accountDescriptor: String,
     private val getLastUsedIndex: () -> Int,
-    private val updateLastUsedIndex: (Int) -> Unit = {},
+    private val updateLastUsedIndex: suspend (Int) -> Unit = {},
 ) : AddressProvider {
     private val mutex = Mutex()
 

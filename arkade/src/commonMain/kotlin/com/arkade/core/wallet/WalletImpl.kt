@@ -14,10 +14,6 @@ import com.arkade.core.wallet.signer.SingleKeySigner
 import com.arkade.repositories.WalletRepo
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.psbt.Psbt
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.launch
 
 class WalletImpl(
     override val repo: WalletRepo,
@@ -29,8 +25,6 @@ class WalletImpl(
     override var lastUsedIndex: Int,
     override val network: Network,
 ) : Wallet {
-    private val ioScope = CoroutineScope(Dispatchers.IO)
-
     override val signer: Signer =
         when (type) {
             Wallet.Type.SINGLE_KEY -> SingleKeySigner.fromNSec(secret)
@@ -72,12 +66,12 @@ class WalletImpl(
      * @param index The new last-used index; must be greater than or equal to the current value.
      * @throws IllegalArgumentException if `index` is less than the current `lastUsedIndex`.
      */
-    override fun updateLastUsedIndex(index: Int) {
+    override suspend fun updateLastUsedIndex(index: Int) {
         require(index >= lastUsedIndex) { "Invalid last used index" }
         val oldLastUsedIndex = lastUsedIndex
         lastUsedIndex = index
-        ioScope.launch {
-            runCatching { update() }.onFailure { lastUsedIndex = oldLastUsedIndex }
+        runCatching { update() }.onFailure {
+            if (lastUsedIndex == index) lastUsedIndex = oldLastUsedIndex
         }
     }
 
