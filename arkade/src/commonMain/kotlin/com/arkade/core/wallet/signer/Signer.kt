@@ -28,7 +28,8 @@ interface Signer {
     fun accountDescriptor(): String
 }
 
-abstract class SignerImpl : Signer {
+abstract class
+SignerImpl : Signer {
     protected abstract var privateKey: PrivateKey
 
     override suspend fun sign(

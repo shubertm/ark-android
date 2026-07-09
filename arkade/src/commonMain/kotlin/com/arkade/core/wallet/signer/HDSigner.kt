@@ -8,33 +8,39 @@ import fr.acinq.bitcoin.PrivateKey
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.XonlyPublicKey
 import fr.acinq.bitcoin.psbt.Psbt
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class HDSigner private constructor(
     mnemonics: String,
     private val network: Network,
 ) : SignerImpl() {
+    private val mutex = Mutex()
     private val extendedKey = masterKeyFromSecret(mnemonics)
     private val accountKeyPath = getAccountKeyPath(network).first
     private val accountXPrivateKey = extendedKey.first.derivePrivateKey(accountKeyPath)
+    private val changeXPrivateKey = accountXPrivateKey.derivePrivateKey(0)
     override lateinit var privateKey: PrivateKey
 
     override suspend fun sign(
         descriptor: String,
         psbt: Psbt,
         inputIndexes: Array<Int>,
-    ): Transaction {
-        deriveChildPrivateKey(descriptor)
-        return super.sign(descriptor, psbt, inputIndexes)
-    }
+    ): Transaction =
+        mutex.withLock {
+            deriveChildPrivateKey(descriptor)
+            super.sign(descriptor, psbt, inputIndexes)
+        }
 
     override suspend fun signMessage(
         descriptor: String,
         message: ByteArray,
         signatureType: SignatureType,
-    ): ByteArray {
-        deriveChildPrivateKey(descriptor)
-        return super.signMessage(descriptor, message, signatureType)
-    }
+    ): ByteArray =
+        mutex.withLock {
+            deriveChildPrivateKey(descriptor)
+            super.signMessage(descriptor, message, signatureType)
+        }
 
     override suspend fun signerSession(): SignerSession {
         TODO("Not yet implemented")
@@ -58,7 +64,7 @@ class HDSigner private constructor(
     private fun deriveChildPrivateKey(descriptor: String) {
         val childKeyIndex = descriptor.substringAfterLast('/').substringBefore(')').toLongOrNull()
         requireNotNull(childKeyIndex) { "Invalid descriptor: $descriptor" }
-        privateKey = accountXPrivateKey.derivePrivateKey(childKeyIndex).privateKey
+        privateKey = changeXPrivateKey.derivePrivateKey(childKeyIndex).privateKey
     }
 
     companion object {

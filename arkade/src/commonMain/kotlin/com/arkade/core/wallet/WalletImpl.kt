@@ -43,11 +43,7 @@ class WalletImpl(
                 HDAddressProvider(
                     accountDescriptor,
                     getLastUsedIndex = { lastUsedIndex },
-                    updateLastUsedIndex = {
-                        ioScope.launch {
-                            updateLastUsedIndex(it)
-                        }
-                    },
+                    updateLastUsedIndex = { updateLastUsedIndex(it) },
                 )
         }
 
@@ -76,11 +72,13 @@ class WalletImpl(
      * @param index The new last-used index; must be greater than or equal to the current value.
      * @throws IllegalArgumentException if `index` is less than the current `lastUsedIndex`.
      */
-    override suspend fun updateLastUsedIndex(index: Int) {
+    override fun updateLastUsedIndex(index: Int) {
         require(index >= lastUsedIndex) { "Invalid last used index" }
         val oldLastUsedIndex = lastUsedIndex
         lastUsedIndex = index
-        runCatching { update() }.onFailure { lastUsedIndex = oldLastUsedIndex }
+        ioScope.launch {
+            runCatching { update() }.onFailure { lastUsedIndex = oldLastUsedIndex }
+        }
     }
 
     override suspend fun saveVtxo(vtxo: Vtxo.Data) = repo.saveVtxo(vtxo)

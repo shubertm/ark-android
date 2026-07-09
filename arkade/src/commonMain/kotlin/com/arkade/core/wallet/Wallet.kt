@@ -64,7 +64,7 @@ interface Wallet : WalletSignerManager {
      *
      * @param index The new last-used address index (must be greater than or equal to 0).
      */
-    suspend fun updateLastUsedIndex(index: Int)
+    fun updateLastUsedIndex(index: Int)
 
     /**
      * Converts this wallet into a Room persistence entity.
