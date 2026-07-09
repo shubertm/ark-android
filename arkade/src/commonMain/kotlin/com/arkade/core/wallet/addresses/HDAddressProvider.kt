@@ -10,21 +10,25 @@ class HDAddressProvider(
 ) : AddressProvider {
     private val mutex = Mutex()
 
-    override suspend fun getNextSigningDescriptor(): String = getNextDescriptorFromIndex(accountDescriptor, getLastUsedIndex())
+    override suspend fun getNextSigningDescriptor(): String =
+        mutex.withLock {
+            val newIndex = getLastUsedIndex() + 1
+            updateLastUsedIndex(newIndex)
+            getNextDescriptorFromIndex(accountDescriptor, newIndex)
+        }
 
     override suspend fun isOurDescriptor(descriptor: String): Boolean {
-        val index = descriptor.substringAfterLast("/").toIntOrNull() ?: return false
+        val index =
+            descriptor
+                .substringAfterLast("/")
+                .substringBefore(")")
+                .toIntOrNull() ?: return false
         val expectedDescriptor = getNextDescriptorFromIndex(accountDescriptor, index)
         return descriptor == expectedDescriptor
     }
 
-    private suspend fun getNextDescriptorFromIndex(
+    private fun getNextDescriptorFromIndex(
         accountDescriptor: String,
         index: Int,
-    ): String =
-        mutex.withLock {
-            val newIndex = index + 1
-            updateLastUsedIndex(newIndex)
-            accountDescriptor.replace("/*", "/$newIndex")
-        }
+    ): String = accountDescriptor.replace("/*", "/$index")
 }

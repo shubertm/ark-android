@@ -134,5 +134,5 @@ class WalletImpl(
     override suspend fun signMessage(
         descriptor: String,
         message: ByteArray,
-    ): ByteArray = signer.signMessage(accountDescriptor, message)
+    ): ByteArray = signer.signMessage(descriptor, message)
 }
