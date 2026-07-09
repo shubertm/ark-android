@@ -19,7 +19,7 @@ class HDSigner private constructor(
     private val extendedKey = masterKeyFromSecret(mnemonics)
     private val accountKeyPath = getAccountKeyPath(network).first
     private val accountXPrivateKey = extendedKey.first.derivePrivateKey(accountKeyPath)
-    private val changeXPrivateKey = accountXPrivateKey.derivePrivateKey(0)
+    private val receivingXPrivateKey = accountXPrivateKey.derivePrivateKey(0)
     override lateinit var privateKey: PrivateKey
 
     override suspend fun sign(
@@ -64,7 +64,7 @@ class HDSigner private constructor(
     private fun deriveChildPrivateKey(descriptor: String) {
         val childKeyIndex = descriptor.substringAfterLast('/').substringBefore(')').toLongOrNull()
         requireNotNull(childKeyIndex) { "Invalid descriptor: $descriptor" }
-        privateKey = changeXPrivateKey.derivePrivateKey(childKeyIndex).privateKey
+        privateKey = receivingXPrivateKey.derivePrivateKey(childKeyIndex).privateKey
     }
 
     companion object {
