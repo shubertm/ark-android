@@ -21,7 +21,6 @@ data class WalletEntity(
     val fingerprint: String?,
     val accountDescriptor: String,
     val lastUsedIndex: Int,
-    /** The Bitcoin network this wallet was created for. */
     val network: Network,
 ) {
     /**

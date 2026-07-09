@@ -6,12 +6,12 @@ import kotlinx.coroutines.sync.withLock
 /**
  * [AddressProvider] for HD (hierarchical deterministic) wallets.
  *
- * Derives per-index descriptors from a wildcard account descriptor (containing `/*`) by
+ * Derives per-index descriptors from a wildcard account descriptor (containing `/‍*`) by
  * substituting the wildcard with a concrete child index. The last used index is tracked
  * externally via [getLastUsedIndex] and [updateLastUsedIndex], and access to it is
  * serialized with a [Mutex] to avoid concurrent callers deriving the same index.
  *
- * @param accountDescriptor The wildcard account descriptor (e.g. containing `/*`) used to
+ * @param accountDescriptor The wildcard account descriptor (e.g. containing <code>&#47;*</code>) used to
  * derive per-index descriptors.
  * @param getLastUsedIndex Supplies the current last-used index.
  * @param updateLastUsedIndex Persists a new last-used index; defaults to a no-op.
@@ -55,7 +55,7 @@ class HDAddressProvider(
     }
 
     /**
-     * Derives the descriptor for a given index by replacing the wildcard `/*` in
+     * Derives the descriptor for a given index by replacing the wildcard `/‍*` in
      * [accountDescriptor] with `/<index>`.
      *
      * @param accountDescriptor The wildcard account descriptor.

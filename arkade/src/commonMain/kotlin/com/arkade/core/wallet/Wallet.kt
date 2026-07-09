@@ -32,10 +32,7 @@ interface Wallet : WalletSignerManager {
     val type: Type
     val accountDescriptor: String
     val lastUsedIndex: Int
-
-    /** The Bitcoin network this wallet was created for, used to derive keys and descriptors. */
     val network: Network
-
     val repo: WalletRepo
 
     /**

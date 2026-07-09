@@ -90,7 +90,8 @@ class HDSigner private constructor(
     /**
      * Builds this wallet's account-level Taproot output descriptor.
      *
-     * @return A descriptor of the form `tr([<fingerprint>/86'/<coinType>'/0']<accountPublicKey>/0/*)`.
+     * @return A descriptor of the form `tr([<fingerprint>/86'/<coinType>'/0']<accountPublicKey>/0/‍*)`
+     *
      * @throws IllegalStateException if the master key fingerprint is not 8 characters long.
      */
     override fun accountDescriptor(): String {
