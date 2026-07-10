@@ -5,8 +5,23 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.wallet.addresses.AddressProvider
+import com.arkade.core.wallet.addresses.HDAddressProvider
+import com.arkade.core.wallet.addresses.SingleKeyAddressProvider
+import com.arkade.core.wallet.signer.HDSigner
+import com.arkade.core.wallet.signer.Signer
+import com.arkade.core.wallet.signer.SingleKeySigner
 import com.arkade.repositories.WalletRepo
+import fr.acinq.bitcoin.Transaction
+import fr.acinq.bitcoin.psbt.Psbt
 
+/**
+ * Default [Wallet] implementation backed by a [WalletRepo] for persistence.
+ *
+ * Wires up the [signer] and [addressProvider] appropriate for this wallet's [type]: an
+ * HD wallet uses [HDSigner]/[HDAddressProvider] keyed off [lastUsedIndex], while a
+ * single-key wallet uses [SingleKeySigner]/[SingleKeyAddressProvider].
+ */
 class WalletImpl(
     override val repo: WalletRepo,
     override val id: String,
@@ -15,7 +30,30 @@ class WalletImpl(
     override val type: Wallet.Type,
     override val accountDescriptor: String,
     override var lastUsedIndex: Int,
+    override val network: Network,
 ) : Wallet {
+    /** The [Signer] used to fulfill [sign] and [signMessage], chosen based on [type]. */
+    override val signer: Signer =
+        when (type) {
+            Wallet.Type.SINGLE_KEY -> SingleKeySigner.fromNSec(secret)
+            Wallet.Type.HD -> HDSigner.fromMnemonic(secret, network)
+        }
+
+    /**
+     * The [AddressProvider] used to derive and recognize this wallet's descriptors, chosen
+     * based on [type]. For HD wallets, it reads and updates [lastUsedIndex] via [updateLastUsedIndex].
+     */
+    private val addressProvider: AddressProvider =
+        when (type) {
+            Wallet.Type.SINGLE_KEY -> SingleKeyAddressProvider(accountDescriptor)
+            Wallet.Type.HD ->
+                HDAddressProvider(
+                    accountDescriptor,
+                    getLastUsedIndex = { lastUsedIndex },
+                    updateLastUsedIndex = { updateLastUsedIndex(it) },
+                )
+        }
+
     /**
      * Persists this wallet to the configured repository.
      */
@@ -36,7 +74,9 @@ class WalletImpl(
      *
      * Validates that `index` is greater than or equal to the current `lastUsedIndex`, updates
      * the in-memory value, and calls `update()` to persist; if persistence fails, the
-     * previous `lastUsedIndex` is restored.
+     * previous `lastUsedIndex` is restored, but only if `lastUsedIndex` still equals `index`
+     * (i.e. no other concurrent call has already advanced it further), to avoid clobbering a
+     * more recent successful update.
      *
      * @param index The new last-used index; must be greater than or equal to the current value.
      * @throws IllegalArgumentException if `index` is less than the current `lastUsedIndex`.
@@ -45,7 +85,9 @@ class WalletImpl(
         require(index >= lastUsedIndex) { "Invalid last used index" }
         val oldLastUsedIndex = lastUsedIndex
         lastUsedIndex = index
-        runCatching { update() }.onFailure { lastUsedIndex = oldLastUsedIndex }
+        runCatching { update() }.onFailure {
+            if (lastUsedIndex == index) lastUsedIndex = oldLastUsedIndex
+        }
     }
 
     override suspend fun saveVtxo(vtxo: Vtxo.Data) = repo.saveVtxo(vtxo)
@@ -89,4 +131,30 @@ class WalletImpl(
     override suspend fun getIntents(): List<ArkIntent> = repo.getIntents(id)
 
     override suspend fun deleteIntents() = repo.deleteIntents(id)
+
+    /**
+     * Signs [psbt] by delegating to [signer].
+     *
+     * @param descriptor The output descriptor identifying which key to sign with.
+     * @param psbt The PSBT to sign.
+     * @param inputIndexes The indexes of the inputs to sign; if empty, all inputs are signed.
+     * @return The fully signed [Transaction].
+     */
+    override suspend fun sign(
+        descriptor: String,
+        psbt: Psbt,
+        inputIndexes: Array<Int>,
+    ): Transaction = signer.sign(descriptor, psbt, inputIndexes)
+
+    /**
+     * Signs [message] by delegating to [signer].
+     *
+     * @param descriptor The output descriptor identifying which key to sign with.
+     * @param message The message bytes to sign.
+     * @return The resulting signature bytes.
+     */
+    override suspend fun signMessage(
+        descriptor: String,
+        message: ByteArray,
+    ): ByteArray = signer.signMessage(descriptor, message)
 }

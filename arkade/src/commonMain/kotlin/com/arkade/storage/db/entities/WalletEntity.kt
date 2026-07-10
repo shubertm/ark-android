@@ -3,6 +3,7 @@ package com.arkade.storage.db.entities
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.arkade.core.bitcoin.Network
 import com.arkade.core.wallet.Wallet
 import com.arkade.core.wallet.WalletImpl
 import com.arkade.repositories.WalletRepo
@@ -20,13 +21,14 @@ data class WalletEntity(
     val fingerprint: String?,
     val accountDescriptor: String,
     val lastUsedIndex: Int,
+    val network: Network,
 ) {
     /**
      * Constructs a [Wallet] instance from this entity using the provided repository.
      *
      * @param repo Repository used by the created [Wallet] for persistence and operations.
      * @return A [Wallet] initialized with this entity's `id`, `secret`, `destination`, `type`,
-     * `accountDescriptor`, and `lastUsedIndex`.
+     * `accountDescriptor`, `lastUsedIndex`, and `network`.
      */
-    fun toWallet(repo: WalletRepo): Wallet = WalletImpl(repo, id, secret, destination, type, accountDescriptor, lastUsedIndex)
+    fun toWallet(repo: WalletRepo): Wallet = WalletImpl(repo, id, secret, destination, type, accountDescriptor, lastUsedIndex, network)
 }
