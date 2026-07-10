@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "a4afc76e5a79466a88924228cfae7f43",
+    "identityHash": "9d00423cdc2bd599b98e92906def613e",
     "entities": [
       {
         "tableName": "wallets",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `secret` TEXT NOT NULL, `destination` TEXT, `type` TEXT NOT NULL, `fingerprint` TEXT, `accountDescriptor` TEXT NOT NULL, `lastUsedIndex` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `secret` TEXT NOT NULL, `destination` TEXT, `type` TEXT NOT NULL, `fingerprint` TEXT, `accountDescriptor` TEXT NOT NULL, `lastUsedIndex` INTEGER NOT NULL, `network` TEXT NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -46,6 +46,12 @@
             "fieldPath": "lastUsedIndex",
             "columnName": "lastUsedIndex",
             "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "network",
+            "columnName": "network",
+            "affinity": "TEXT",
             "notNull": true
           }
         ],
@@ -328,7 +334,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a4afc76e5a79466a88924228cfae7f43')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9d00423cdc2bd599b98e92906def613e')"
     ]
   }
 }
