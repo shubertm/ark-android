@@ -9,6 +9,7 @@ import com.arkade.core.contracts.ContractState
 import com.arkade.core.encodePubKeyByNetwork
 import com.arkade.core.intents.ArkIntent
 import com.arkade.core.vtxos.Vtxo
+import com.arkade.core.wallet.signer.WalletSignerManager
 import com.arkade.di.ArkadeDI
 import com.arkade.repositories.wallet.WalletRepo
 import com.arkade.storage.db.Database
@@ -25,14 +26,14 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import org.koin.core.parameter.parametersOf
 
-interface Wallet {
+interface Wallet : WalletSignerManager {
     val id: String
     val secret: String
     val destination: String?
     val type: Type
     val accountDescriptor: String
     val lastUsedIndex: Int
-
+    val network: Network
     val repo: WalletRepo
 
     /**
@@ -69,7 +70,7 @@ interface Wallet {
      * Converts this wallet into a Room persistence entity.
      *
      * @return A `WalletEntity` containing this wallet's `id`, `secret`, optional `destination`,
-     * `type`, `accountDescriptor`, and `lastUsedIndex`.
+     * `type`, `accountDescriptor`, `lastUsedIndex`, and `network`.
      */
     fun toRoomEntity(): WalletEntity =
         WalletEntity(
@@ -80,6 +81,7 @@ interface Wallet {
             fingerprint(),
             accountDescriptor,
             lastUsedIndex,
+            network,
         )
 
     /**
@@ -149,10 +151,42 @@ interface Wallet {
     enum class Type {
         HD,
         SINGLE_KEY,
+        ;
+
+        companion object {
+            /**
+             * Classifies a secret as [SINGLE_KEY] or [HD] based on its encoding.
+             *
+             * @param secret Either an nsec-encoded private key (prefix "nsec") or an HD
+             * mnemonic phrase.
+             * @return [SINGLE_KEY] if `secret` starts with the nsec HRP, [HD] otherwise.
+             */
+            fun fromSecret(secret: String) =
+                when {
+                    secret.startsWith(NSEC_HRP) -> SINGLE_KEY
+                    else -> HD
+                }
+        }
     }
 
     companion object {
         private const val NSEC_HRP = "nsec"
+
+        /**
+         * Derives the BIP-86 Taproot account key path and coin type for the given network.
+         *
+         * @param network The [Network] to derive the coin type for; mainnet uses coin type
+         * 0, all other networks use coin type 1.
+         * @return A pair of the account [KeyPath] (`m/86'/<coinType>'/0'`) and its coin type.
+         */
+        fun getAccountKeyPath(network: Network): Pair<KeyPath, Int> {
+            val coinType =
+                when (network) {
+                    Network.MAINNET -> 0
+                    else -> 1
+                }
+            return KeyPath("m/86'/$coinType'/0'") to coinType
+        }
 
         /**
          * Create a Wallet from a secret (mnemonic phrase or an nsec-encoded private key) and an
@@ -182,10 +216,9 @@ interface Wallet {
 
                 val repo: WalletRepo = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
 
-                if (secret.startsWith(NSEC_HRP)) {
-                    createNSecWallet(secret, destination, repo)
-                } else {
-                    createHDWallet(secret, destination, serverInfo, repo)
+                when (Type.fromSecret(secret)) {
+                    Type.SINGLE_KEY -> createNSecWallet(secret, destination, repo, serverInfo.network)
+                    Type.HD -> createHDWallet(secret, destination, serverInfo, repo)
                 }
             }
 
@@ -240,7 +273,7 @@ interface Wallet {
          * @param mnemonics is the mnemonic phrase to use for key derivation.
          * @return A pair containing the derived master key and its fingerprint.
          */
-        fun masterKeyFromSecret(mnemonics: String): Pair<DeterministicWallet.ExtendedPrivateKey, String> {
+        internal fun masterKeyFromSecret(mnemonics: String): Pair<DeterministicWallet.ExtendedPrivateKey, String> {
             val seed = MnemonicCode.toSeed(mnemonics, "")
             val masterKey = DeterministicWallet.generate(seed)
             val fingerprint = masterKey.extendedPublicKey.keyFingerprint()
@@ -265,6 +298,7 @@ interface Wallet {
          * @param nsec The nsec-encoded private key string.
          * @param destination Optional destination address associated with the wallet.
          * @param repo Repository instance used by the returned wallet for persistence.
+         * @param network The [Network] the wallet is created for.
          * @return A [Wallet] initialized with a Taproot output descriptor derived from `nsec`,
          * [Type.SINGLE_KEY], and `lastUsedIndex` set to 0.
          */
@@ -272,6 +306,7 @@ interface Wallet {
             nsec: String,
             destination: String?,
             repo: WalletRepo,
+            network: Network,
         ): Wallet {
             val outputDescriptor = getOutputDescriptorFromNSec(nsec)
             return WalletImpl(
@@ -282,6 +317,7 @@ interface Wallet {
                 Type.SINGLE_KEY,
                 outputDescriptor,
                 0,
+                network,
             )
         }
 
@@ -309,13 +345,8 @@ interface Wallet {
             }.onFailure { throw it }
 
             val (masterKey, fingerprint) = masterKeyFromSecret(mnemonics)
-
-            val coinType =
-                when (serverInfo.network) {
-                    Network.MAINNET -> 0
-                    else -> 1
-                }
-            val accountKeyPath = KeyPath("m/86'/$coinType'/0'")
+            val network = serverInfo.network
+            val (accountKeyPath, coinType) = getAccountKeyPath(network)
             val accountPrivateKey = masterKey.derivePrivateKey(accountKeyPath)
             val accountPublicKey = encodePubKeyByNetwork(accountPrivateKey.extendedPublicKey, serverInfo.network)
             require(fingerprint.length == 8) { "Invalid fingerprint length: expected 8 but is ${fingerprint.length}" }
@@ -329,6 +360,7 @@ interface Wallet {
                 Type.HD,
                 accountDescriptor,
                 0,
+                network,
             )
         }
 
@@ -364,7 +396,7 @@ interface Wallet {
          * @throws IllegalArgumentException If the HRP is not "nsec" or the decoded payload
          * is not 32 bytes.
          */
-        private fun getPrivateKeyFromNSec(nsec: String): PrivateKey {
+        internal fun getPrivateKeyFromNSec(nsec: String): PrivateKey {
             val (hrp, bytes, _) = Bech32.decodeBytes(nsec)
             require(hrp == NSEC_HRP) { "Invalid nsec HRP: $hrp" }
             require(bytes.size == 32) { "Invalid nsec payload size: ${bytes.size}" }
