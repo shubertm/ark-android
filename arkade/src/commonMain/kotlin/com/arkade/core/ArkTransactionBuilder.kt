@@ -13,8 +13,32 @@ import fr.acinq.bitcoin.TxOut
 import fr.acinq.bitcoin.psbt.Psbt
 import fr.acinq.bitcoin.utils.getOrElse
 
+/**
+ * Builds Ark protocol-specific transactions.
+ *
+ * Currently only exposes construction of "forfeit" transactions, which spend a VTXO
+ * (and, when applicable, a connector output) to a forfeit destination controlled by the
+ * Ark server, as required when a client fails to unilaterally exit before a batch is settled.
+ */
 class ArkTransactionBuilder {
     companion object {
+        /**
+         * Constructs a forfeit transaction [Psbt] for [coin].
+         *
+         * The transaction spends [coin]'s outpoint and, when [connector] is provided, a second
+         * input from the connector output at index `0` of [connectorTxId]. Its outputs are a
+         * zero-value anchor (`p2A`) output and a forfeit output paying the combined input amount
+         * to [forfeitDestination]. The sighash type is `ANYONECANPAY|ALL` when no connector is
+         * used, or `DEFAULT` otherwise. The main input's witness data is pre-populated using
+         * [coin]'s outpoint/output and the unspendable internal key.
+         *
+         * @param coin The VTXO being forfeited; provides the main input and its expiry-derived locktime.
+         * @param connector The connector output to spend as a second input, or `null` if none is used.
+         * @param connectorTxId The transaction id containing [connector]'s output (at index `0`).
+         * @param forfeitDestination The address that will receive the forfeited funds.
+         * @return The constructed [Psbt] with the main input's witness data updated.
+         * @throws IllegalStateException if updating the main input's witness data fails.
+         */
         fun constructForfeitTx(
             coin: ArkCoin,
             connector: TxOut?,
