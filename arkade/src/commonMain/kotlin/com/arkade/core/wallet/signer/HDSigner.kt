@@ -82,10 +82,11 @@ class HDSigner private constructor(
      * @param descriptor The output descriptor whose trailing index identifies the child key.
      * @return The corresponding [XonlyPublicKey].
      */
-    override fun xOnlyPublicKey(descriptor: String): XonlyPublicKey {
-        deriveChildPrivateKey(descriptor)
-        return super.xOnlyPublicKey(descriptor)
-    }
+    override suspend fun xOnlyPublicKey(descriptor: String): XonlyPublicKey =
+        mutex.withLock {
+            deriveChildPrivateKey(descriptor)
+            super.xOnlyPublicKey(descriptor)
+        }
 
     /**
      * Builds this wallet's account-level Taproot output descriptor.
