@@ -73,8 +73,8 @@ class ArkTransactionBuilder {
             val forfeitTx =
                 with(Psbt(tx)) {
                     updateWitnessInput(
-                        vtxoInput.outPoint,
-                        forfeitOutput,
+                        coin.outpoint,
+                        coin.txOut,
                         sighashType = sighash,
                         taprootInternalKey = UNSPENDABLE_PUBKEY.toXOnlyPubKey(),
                     ).getOrElse { throw IllegalStateException("Failed to update witness input") }

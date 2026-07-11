@@ -85,14 +85,13 @@ class BatchSession(
         event: BatchEvent.BatchFinalizationEvent,
         connectors: List<TxTreeNode>,
     ) {
+        val commitmentPSBT =
+            Psbt
+                .read(event.commitmentTx.encodeToByteArray())
+                .getOrElse { throw IllegalStateException("Failed to read commitment tx") }
         var connectorsGraph: TxTree? = null
         if (connectors.isNotEmpty()) {
             connectorsGraph = TxTree.create(connectors)
-            val commitmentPSBT =
-                Psbt.read(event.commitmentTx.encodeToByteArray()).getOrElse {
-                    throw IllegalStateException("Failed to read commitment tx")
-                }
-
             TreeValidator.validateConnectorsTxGraph(commitmentPSBT, connectorsGraph)
         }
 
@@ -102,7 +101,7 @@ class BatchSession(
         var connectorIndex = 0
 
         for (vtxoCoin in inputs) {
-            if (vtxoCoin.requiresForfeit()) {
+            if (!vtxoCoin.requiresForfeit()) {
                 continue
             }
 
@@ -116,7 +115,7 @@ class BatchSession(
             val connectorOutput =
                 connectorLeaf.global.tx.txOut
                     .firstOrNull()
-            if (connectorOutput != null) {
+            if (connectorOutput == null) {
                 throw IllegalStateException("Connector leaf at index $connectorIndex has no outputs")
             }
 
@@ -137,34 +136,33 @@ class BatchSession(
             signedForfeitTxs.add(Base64.encode(signedForfeitTxBytes))
         }
 
-        var signedCommitmentTx: Transaction? = null
+        var signedCommitmentPSBT: Psbt? = null
         val boardingCoins = inputs.filter { it.isUnrolled }
         if (boardingCoins.isNotEmpty()) {
-            var commitmentPSBT =
-                Psbt
-                    .read(event.commitmentTx.encodeToByteArray())
-                    .getOrElse { throw IllegalStateException("Failed to read commitment tx") }
-
+            signedCommitmentPSBT = commitmentPSBT
             for (boardingCoin in boardingCoins) {
                 val outpoint = boardingCoin.outpoint
                 val boardingInput = commitmentPSBT.getInput(outpoint)
                 requireNotNull(boardingInput) { "Boarding input $outpoint not found in commitment tx" }
 
-                commitmentPSBT =
-                    commitmentPSBT
-                        .updateWitnessInput(
+                signedCommitmentPSBT =
+                    signedCommitmentPSBT
+                        ?.updateWitnessInput(
                             outpoint,
                             boardingCoin.txOut,
-                        ).getOrElse { throw IllegalStateException("Failed to update boarding input witness") }
+                        )?.getOrElse { throw IllegalStateException("Failed to update boarding input witness") }
 
-                signedCommitmentTx =
-                    wallet.sign(boardingCoin.signerDescriptor, commitmentPSBT, arrayOf(outpoint))
+                signedCommitmentPSBT =
+                    Psbt(wallet.sign(boardingCoin.signerDescriptor, signedCommitmentPSBT!!, arrayOf(outpoint)))
             }
-            if (signedForfeitTxs.isNotEmpty() || signedCommitmentTx != null) {
-                val signedCommitmentTxBytes = Transaction.write(signedCommitmentTx!!)
-                val signedCommitmentTxBase64 = Base64.encode(signedCommitmentTxBytes)
-                client.submitForfeitTxs(signedForfeitTxs, signedCommitmentTxBase64)
-            }
+        }
+
+        val signedCommitmentTx = signedCommitmentPSBT?.global?.tx
+
+        if (signedForfeitTxs.isNotEmpty() || signedCommitmentTx != null) {
+            val signedCommitmentTxBytes = Transaction.write(signedCommitmentTx!!)
+            val signedCommitmentTxBase64 = Base64.encode(signedCommitmentTxBytes)
+            client.submitForfeitTxs(signedForfeitTxs, signedCommitmentTxBase64)
         }
     }
 
