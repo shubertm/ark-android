@@ -12,6 +12,21 @@ import fr.acinq.bitcoin.psbt.Psbt
 import fr.acinq.bitcoin.utils.getOrElse
 import kotlin.io.encoding.Base64
 
+/**
+ * Drives a single batch through its lifecycle by reacting to [BatchEvent]s and implementing
+ * [BatchEventHandler].
+ *
+ * A session is created per batch that [inputs] have been registered for via [intent], and is
+ * responsible for finalizing the batch (building/signing forfeit transactions and signing the
+ * commitment transaction for boarding inputs) and, eventually, cooperatively signing the
+ * resulting VTXO tree.
+ *
+ * @property client Used to fetch server info and submit signed forfeit/commitment transactions.
+ * @property wallet Used to sign forfeit transactions and the commitment transaction.
+ * @property intent The intent that registered [inputs] for this batch.
+ * @property inputs The coins being spent/registered in this batch.
+ * @property batchStartedEvent The event that started this batch, providing [batchId] and expiry.
+ */
 class BatchSession(
     private val client: ArkadeClient,
     private val wallet: Wallet,
@@ -25,11 +40,25 @@ class BatchSession(
 
     private lateinit var serverInfo: ArkServerInfo
 
+    /**
+     * Fetches [serverInfo] from [client] and derives [sweepTapScript] from the batch's expiry
+     * and the server's forfeit public key.
+     *
+     * Must be called before [processEvent] handles a [BatchEvent.BatchFinalizationEvent].
+     */
     suspend fun init() {
         serverInfo = client.getInfo()
         sweepTapScript = csvSigScript(batchStartedEvent.batchExpiry.inWholeSeconds, serverInfo.forfeitPubKey)
     }
 
+    /**
+     * Dispatches [event] to the corresponding [BatchEventHandler] callback.
+     *
+     * @param event The batch event to process.
+     * @return `true` if the batch has been finalized under a different id than [batchId] and
+     * this session should stop processing further events; `false` otherwise.
+     * @throws UnsupportedOperationException if the batch fails with id [batchId].
+     */
     suspend fun processEvent(event: BatchEvent): Boolean {
         try {
             when (event) {
@@ -81,6 +110,25 @@ class BatchSession(
         }
     }
 
+    /**
+     * Builds and signs the forfeit/commitment transactions required to finalize the batch, then
+     * submits them via [client].
+     *
+     * For each input in [inputs] that [ArkCoin.requiresForfeit], this validates [connectors]
+     * (when present) into a [TxTree], pairs the coin with the next available connector leaf,
+     * builds a forfeit transaction via [ArkTransactionBuilder.constructForfeitTx], signs it with
+     * [wallet], and Base64-encodes it. For boarding inputs (`isUnrolled`), the commitment PSBT's
+     * witness data is updated and signed by [wallet] for each corresponding input.
+     *
+     * If any forfeit transaction was signed or the commitment transaction was signed, both are
+     * submitted to the server via [ArkadeClient.submitForfeitTxs].
+     *
+     * @param event The finalization event carrying the unsigned commitment transaction.
+     * @param connectors The connector tree nodes to use for funding forfeit transaction inputs.
+     * @throws IllegalStateException if the commitment tx cannot be read, a connector leaf has
+     * no outputs, or updating a boarding input's witness data fails.
+     * @throws IllegalArgumentException if a forfeit-requiring coin has no connector available.
+     */
     override suspend fun onBatchFinalization(
         event: BatchEvent.BatchFinalizationEvent,
         connectors: List<TxTreeNode>,

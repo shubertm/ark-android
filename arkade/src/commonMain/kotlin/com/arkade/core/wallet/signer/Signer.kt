@@ -31,6 +31,14 @@ interface Signer {
         inputIndices: Array<Int>,
     ): Transaction
 
+    /**
+     * Signs the given [psbt] using the key derived for [descriptor].
+     *
+     * @param descriptor The output descriptor identifying which key to sign with.
+     * @param psbt The PSBT to sign.
+     * @param outpoints The outpoints of the inputs to sign; if empty, all inputs are signed.
+     * @return The fully signed [Transaction].
+     */
     suspend fun sign(
         descriptor: String,
         psbt: Psbt,
@@ -116,6 +124,15 @@ SignerImpl : Signer {
         return signedTx.global.tx
     }
 
+    /**
+     * Signs the requested inputs of [psbt] with [privateKey], identified by their outpoints.
+     *
+     * @param descriptor The output descriptor identifying which key to sign with.
+     * @param psbt The PSBT to sign.
+     * @param outpoints The outpoints of the inputs to sign; if empty, all inputs are signed.
+     * @return The fully signed [Transaction].
+     * @throws IllegalStateException if signing any of the targeted inputs fails.
+     */
     override suspend fun sign(
         descriptor: String,
         psbt: Psbt,
@@ -174,6 +191,15 @@ SignerImpl : Signer {
      */
     override fun xOnlyPublicKey(descriptor: String): XonlyPublicKey = privateKey.xOnlyPublicKey()
 
+    /**
+     * Signs each of [indices] on [psbt] with [privateKey], in order, folding the result of each
+     * signature into the PSBT passed to the next.
+     *
+     * @param psbt The PSBT to sign.
+     * @param indices The input indices to sign; defaults to all of [psbt]'s inputs.
+     * @return The PSBT with all requested inputs signed.
+     * @throws IllegalStateException if signing any of the targeted inputs fails.
+     */
     private fun signAll(
         psbt: Psbt,
         indices: Iterable<Int> = psbt.inputs.indices,

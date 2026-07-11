@@ -164,6 +164,14 @@ class WalletImpl(
         inputIndexes: Array<Int>,
     ): Transaction = signer.sign(descriptor, psbt, inputIndexes)
 
+    /**
+     * Signs [psbt] by delegating to [signer].
+     *
+     * @param descriptor The output descriptor identifying which key to sign with.
+     * @param psbt The PSBT to sign.
+     * @param outpoints The outpoints of the inputs to sign; if empty, all inputs are signed.
+     * @return The fully signed [Transaction].
+     */
     override suspend fun sign(
         descriptor: String,
         psbt: Psbt,
