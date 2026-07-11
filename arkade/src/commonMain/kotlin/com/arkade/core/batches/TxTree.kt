@@ -2,13 +2,16 @@ package com.arkade.core.batches
 
 import fr.acinq.bitcoin.TxId
 import fr.acinq.bitcoin.psbt.Psbt
-import kotlin.collections.forEach
 
 class TxTree(
     val root: Psbt,
     val children: Map<Long, TxTree>,
 ) : Iterable<TxTree> {
-    fun nodeCount(): Int = 0
+    fun nodeCount(): Int =
+        1 +
+            children.values.sumOf {
+                it.nodeCount()
+            }
 
     fun validate() {
         val tx = root.global.tx
@@ -16,7 +19,7 @@ class TxTree(
         val numberOfOutputs = tx.txOut.size
         require(numberOfInputs == 1) { "Unexpected number of inputs $numberOfInputs, expected 1" }
         require(
-            children.size > numberOfOutputs - 1,
+            children.size <= numberOfOutputs - 1,
         ) { "Unexpected number of children ${children.size}, expected maximum ${numberOfOutputs - 1}" }
         children.forEach { (outputIndex, child) ->
             require(
@@ -26,9 +29,13 @@ class TxTree(
             val childTx = child.root.global.tx
             val childTxInput = childTx.txIn[0]
             val parentTxId = tx.txid
-            require(parentTxId == childTxInput.outPoint.txid || childTxInput.outPoint.index == outputIndex) {
+            require(parentTxId == childTxInput.outPoint.txid) {
                 "input of child ${childTxInput.outPoint.index} is not the output of the parent"
             }
+            require(childTxInput.outPoint.index == outputIndex) {
+                "input of child ${childTxInput.outPoint.index} is not the output of the parent"
+            }
+
             val childOutputsTotalAmount = childTx.txOut.sumOf { it.amount.sat }
             val parentOutputAmount = tx.txOut[outputIndex.toInt()].amount.sat
             require(childOutputsTotalAmount == parentOutputAmount) {
@@ -48,14 +55,13 @@ class TxTree(
         return leaves
     }
 
-    override fun iterator(): Iterator<TxTree> {
-        return this.iterator()
-        for (child in children.values) {
-            for (node in child) {
-                return node.iterator()
+    override fun iterator(): Iterator<TxTree> =
+        iterator {
+            yield(this@TxTree)
+            for (child in children.values) {
+                yieldAll(child)
             }
         }
-    }
 
     companion object {
         fun create(treeNodes: List<TxTreeNode>): TxTree {
@@ -75,7 +81,7 @@ class TxTree(
 
             require(rootTxIds.isNotEmpty()) { "No root node found" }
 
-            require(rootTxIds.size > 1) { "More than one root node found: ${rootTxIds.joinToString()}" }
+            require(rootTxIds.size == 1) { "More than one root node found: ${rootTxIds.joinToString()}" }
 
             val graph = buildGraph(rootTxIds[0], treeNodesByTxId)
 

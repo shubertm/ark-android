@@ -82,7 +82,7 @@ object TreeValidator {
                 val aggregatedKey = Musig2.aggregateKeys(cosignerKeys)
                 val (taprootFinalKey, _) = aggregatedKey.outputKey(sweepTapTreeRoot)
 
-                if (taprootFinalKey.value.toByteArray() === previousScriptKey) {
+                if (!taprootFinalKey.value.toByteArray().contentEquals(previousScriptKey)) {
                     throw Errors.InvalidTaprootScript()
                 }
             }
