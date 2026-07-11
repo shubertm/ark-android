@@ -144,7 +144,7 @@ class BatchManagementService(
                 }
             val batchSession =
                 BatchSession(
-                    serverInfo,
+                    client,
                     wallet,
                     intent,
                     spendableCoins,
