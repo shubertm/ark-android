@@ -112,13 +112,7 @@ SignerImpl : Signer {
                 inputIndices.asList()
             }
 
-        indices.forEach { index ->
-            val result =
-                signedTx.sign(privateKey, index).getOrElse {
-                    throw IllegalStateException("Failed to sign transaction")
-                }
-            signedTx = result.psbt
-        }
+        signedTx = signAll(signedTx, indices)
         return signedTx.global.tx
     }
 
@@ -129,13 +123,7 @@ SignerImpl : Signer {
     ): Transaction {
         var signedTx = psbt
         if (outpoints.isEmpty()) {
-            signedTx.inputs.indices.forEach { index ->
-                val result =
-                    signedTx.sign(privateKey, index).getOrElse {
-                        throw IllegalStateException("Failed to sign transaction")
-                    }
-                signedTx = result.psbt
-            }
+            signedTx = signAll(signedTx)
             return signedTx.global.tx
         }
 
@@ -185,6 +173,21 @@ SignerImpl : Signer {
      * @return The corresponding [XonlyPublicKey].
      */
     override fun xOnlyPublicKey(descriptor: String): XonlyPublicKey = privateKey.xOnlyPublicKey()
+
+    private fun signAll(
+        psbt: Psbt,
+        indices: Iterable<Int> = psbt.inputs.indices,
+    ): Psbt {
+        var signedTx = psbt
+        indices.forEach { index ->
+            val result =
+                signedTx.sign(privateKey, index).getOrElse {
+                    throw IllegalStateException("Failed to sign transaction")
+                }
+            signedTx = result.psbt
+        }
+        return signedTx
+    }
 }
 
 /**
