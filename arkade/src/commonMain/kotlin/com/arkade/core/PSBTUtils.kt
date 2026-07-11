@@ -12,6 +12,16 @@ private const val COSIGNER = "cosigner"
 private const val CONDITION_WITNESS = "condition"
 private const val ARK_PSBT_FIELD_KEY_TYPE: Byte = 222.toByte()
 
+/**
+ * Extracts Ark's proprietary "cosigner" public keys stored in this [Input]'s unknown fields.
+ *
+ * Ark VTXO tree PSBTs carry the public keys of the cosigners that co-signed a node's
+ * script using proprietary PSBT input fields keyed by [ARK_PSBT_FIELD_KEY_TYPE] and the
+ * [COSIGNER] identifier, followed by a one-byte cosigner index. This scans [Input.unknown]
+ * for such entries and decodes each matching value as a [PublicKey].
+ *
+ * @return The list of [CosignerPublicKeyData] found, in no particular order.
+ */
 fun Input.getArkFieldsCosigners(): List<CosignerPublicKeyData> {
     val cosignerBytes = COSIGNER.encodeToByteArray()
     val cosignerPrefix = byteArrayOf(ARK_PSBT_FIELD_KEY_TYPE) + cosignerBytes

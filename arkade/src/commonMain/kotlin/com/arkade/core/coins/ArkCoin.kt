@@ -34,5 +34,11 @@ data class ArkCoin(
         }
     }
 
+    /**
+     * Whether this coin must be spent by a forfeit transaction during batch finalization.
+     *
+     * This is the case for any coin that is neither being swept (`isSwept`) nor a boarding
+     * coin being unrolled into the batch (`isUnrolled`).
+     */
     fun requiresForfeit(): Boolean = !isSwept && !isUnrolled
 }
