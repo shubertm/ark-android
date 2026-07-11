@@ -1,5 +1,6 @@
 package com.arkade.core.wallet.signer
 
+import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.psbt.Psbt
 
@@ -25,6 +26,12 @@ interface WalletSignerManager {
         descriptor: String,
         psbt: Psbt,
         inputIndexes: Array<Int>,
+    ): Transaction
+
+    suspend fun sign(
+        descriptor: String,
+        psbt: Psbt,
+        outpoints: Array<OutPoint>,
     ): Transaction
 
     /**

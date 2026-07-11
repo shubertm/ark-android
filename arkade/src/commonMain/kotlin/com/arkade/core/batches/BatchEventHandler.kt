@@ -1,17 +1,20 @@
 package com.arkade.core.batches
 
 interface BatchEventHandler {
-    fun onBatchFinalization()
+    suspend fun onBatchFinalization(
+        event: BatchEvent.BatchFinalizationEvent,
+        connectors: List<TxTreeNode>,
+    )
 
-    fun onBatchFailed()
+    suspend fun onBatchFailed()
 
-    fun onTreeSigningStarted()
+    suspend fun onTreeSigningStarted()
 
-    fun onTreeNoncesAggregated()
+    suspend fun onTreeNoncesAggregated()
 
-    fun onTreeTx()
+    suspend fun onTreeTx()
 
-    fun onTreeSignature()
+    suspend fun onTreeSignature()
 
-    fun onTreeNonces()
+    suspend fun onTreeNonces()
 }

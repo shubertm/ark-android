@@ -2,6 +2,7 @@ package com.arkade.core.wallet.signer
 
 import fr.acinq.bitcoin.ByteVector32
 import fr.acinq.bitcoin.Crypto
+import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.PrivateKey
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.XonlyPublicKey
@@ -28,6 +29,12 @@ interface Signer {
         descriptor: String,
         psbt: Psbt,
         inputIndices: Array<Int>,
+    ): Transaction
+
+    suspend fun sign(
+        descriptor: String,
+        psbt: Psbt,
+        outpoints: Array<OutPoint>,
     ): Transaction
 
     /**
@@ -105,9 +112,24 @@ SignerImpl : Signer {
                 inputIndices.asList()
             }
 
-        indices.forEach { index ->
+        signedTx = signAll(signedTx, indices)
+        return signedTx.global.tx
+    }
+
+    override suspend fun sign(
+        descriptor: String,
+        psbt: Psbt,
+        outpoints: Array<OutPoint>,
+    ): Transaction {
+        var signedTx = psbt
+        if (outpoints.isEmpty()) {
+            signedTx = signAll(signedTx)
+            return signedTx.global.tx
+        }
+
+        outpoints.forEach { outpoint ->
             val result =
-                signedTx.sign(privateKey, index).getOrElse {
+                signedTx.sign(privateKey, outpoint).getOrElse {
                     throw IllegalStateException("Failed to sign transaction")
                 }
             signedTx = result.psbt
@@ -151,6 +173,21 @@ SignerImpl : Signer {
      * @return The corresponding [XonlyPublicKey].
      */
     override suspend fun xOnlyPublicKey(descriptor: String): XonlyPublicKey = privateKey.xOnlyPublicKey()
+    
+    private fun signAll(
+        psbt: Psbt,
+        indices: Iterable<Int> = psbt.inputs.indices,
+    ): Psbt {
+        var signedTx = psbt
+        indices.forEach { index ->
+            val result =
+                signedTx.sign(privateKey, index).getOrElse {
+                    throw IllegalStateException("Failed to sign transaction")
+                }
+            signedTx = result.psbt
+        }
+        return signedTx
+    }
 }
 
 /**

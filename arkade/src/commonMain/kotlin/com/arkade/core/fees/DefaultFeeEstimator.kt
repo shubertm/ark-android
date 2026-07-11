@@ -17,7 +17,7 @@ import com.arkade.core.bitcoin.Coin
  * is evaluated with the input/output's argument map, and the numeric result (which must be a
  * non-negative [Double]) is interpreted as a satoshi amount and wrapped in a [Fee].
  *
- * **Error handling:**
+ * **Errors handling:**
  * - Construction throws if any configured CEL program fails to compile.
  * - Estimation methods throw if the CEL result is not a [Double] or is negative.
  *

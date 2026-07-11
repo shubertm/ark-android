@@ -30,7 +30,7 @@ class BatchManagementService(
         client
             .getBatchEventStream()
             .catch { exception ->
-                Log.error(LOG_TAG, "Error in batch stream: $exception")
+                Log.error(LOG_TAG, "Errors in batch stream: $exception")
             }.collect { event ->
                 processEvent(event)
             }
@@ -144,7 +144,7 @@ class BatchManagementService(
                 }
             val batchSession =
                 BatchSession(
-                    serverInfo,
+                    client,
                     wallet,
                     intent,
                     spendableCoins,
@@ -174,7 +174,7 @@ class BatchManagementService(
         }
     }
 
-    private fun handleBatchEvent(event: BatchEvent) {
+    private suspend fun handleBatchEvent(event: BatchEvent) {
         val batchId = event.getBatchId()
         val intentIds = batchIdToIntentIds[batchId]
         if (intentIds == null) {
