@@ -2,6 +2,7 @@ package com.arkade.core.wallet.signer
 
 import fr.acinq.bitcoin.ByteVector32
 import fr.acinq.bitcoin.Crypto
+import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.PrivateKey
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.XonlyPublicKey
@@ -28,6 +29,12 @@ interface Signer {
         descriptor: String,
         psbt: Psbt,
         inputIndices: Array<Int>,
+    ): Transaction
+
+    suspend fun sign(
+        descriptor: String,
+        psbt: Psbt,
+        outpoints: Array<OutPoint>,
     ): Transaction
 
     /**
@@ -108,6 +115,33 @@ SignerImpl : Signer {
         indices.forEach { index ->
             val result =
                 signedTx.sign(privateKey, index).getOrElse {
+                    throw IllegalStateException("Failed to sign transaction")
+                }
+            signedTx = result.psbt
+        }
+        return signedTx.global.tx
+    }
+
+    override suspend fun sign(
+        descriptor: String,
+        psbt: Psbt,
+        outpoints: Array<OutPoint>,
+    ): Transaction {
+        var signedTx = psbt
+        if (outpoints.isEmpty()) {
+            signedTx.inputs.indices.forEach { index ->
+                val result =
+                    signedTx.sign(privateKey, index).getOrElse {
+                        throw IllegalStateException("Failed to sign transaction")
+                    }
+                signedTx = result.psbt
+            }
+            return signedTx.global.tx
+        }
+
+        outpoints.forEach { outpoint ->
+            val result =
+                signedTx.sign(privateKey, outpoint).getOrElse {
                     throw IllegalStateException("Failed to sign transaction")
                 }
             signedTx = result.psbt

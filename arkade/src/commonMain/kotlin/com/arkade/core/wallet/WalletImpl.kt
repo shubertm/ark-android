@@ -164,6 +164,12 @@ class WalletImpl(
         inputIndexes: Array<Int>,
     ): Transaction = signer.sign(descriptor, psbt, inputIndexes)
 
+    override suspend fun sign(
+        descriptor: String,
+        psbt: Psbt,
+        outpoints: Array<OutPoint>,
+    ): Transaction = signer.sign(descriptor, psbt, outpoints)
+
     /**
      * Signs [message] by delegating to [signer].
      *

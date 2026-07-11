@@ -140,7 +140,7 @@ class BatchSession(
         var signedCommitmentTx: Transaction? = null
         val boardingCoins = inputs.filter { it.isUnrolled }
         if (boardingCoins.isNotEmpty()) {
-            val commitmentPSBT =
+            var commitmentPSBT =
                 Psbt
                     .read(event.commitmentTx.encodeToByteArray())
                     .getOrElse { throw IllegalStateException("Failed to read commitment tx") }
@@ -150,9 +150,15 @@ class BatchSession(
                 val boardingInput = commitmentPSBT.getInput(outpoint)
                 requireNotNull(boardingInput) { "Boarding input $outpoint not found in commitment tx" }
 
-                // Sign using outpoint because there is no access to input indices
+                commitmentPSBT =
+                    commitmentPSBT
+                        .updateWitnessInput(
+                            outpoint,
+                            boardingCoin.txOut,
+                        ).getOrElse { throw IllegalStateException("Failed to update boarding input witness") }
+
                 signedCommitmentTx =
-                    wallet.sign(boardingCoin.signerDescriptor, commitmentPSBT, arrayOf())
+                    wallet.sign(boardingCoin.signerDescriptor, commitmentPSBT, arrayOf(outpoint))
             }
             if (signedForfeitTxs.isNotEmpty() || signedCommitmentTx != null) {
                 val signedCommitmentTxBytes = Transaction.write(signedCommitmentTx!!)
