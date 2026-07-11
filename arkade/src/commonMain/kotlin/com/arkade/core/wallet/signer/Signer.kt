@@ -64,7 +64,7 @@ interface Signer {
      * @param descriptor The output descriptor identifying which key to derive.
      * @return The corresponding [XonlyPublicKey].
      */
-    fun xOnlyPublicKey(descriptor: String): XonlyPublicKey
+    suspend fun xOnlyPublicKey(descriptor: String): XonlyPublicKey
 
     /**
      * Returns this signer's account-level output descriptor.
@@ -172,8 +172,8 @@ SignerImpl : Signer {
      * @param descriptor The output descriptor identifying which key to derive.
      * @return The corresponding [XonlyPublicKey].
      */
-    override fun xOnlyPublicKey(descriptor: String): XonlyPublicKey = privateKey.xOnlyPublicKey()
-
+    override suspend fun xOnlyPublicKey(descriptor: String): XonlyPublicKey = privateKey.xOnlyPublicKey()
+    
     private fun signAll(
         psbt: Psbt,
         indices: Iterable<Int> = psbt.inputs.indices,
