@@ -5,6 +5,7 @@ import com.arkade.core.wallet.addresses.HDAddressProvider
 import com.arkade.core.wallet.signer.HDSigner
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class HDSignerTest : SignerTest() {
@@ -47,6 +48,21 @@ class HDSignerTest : SignerTest() {
                 val descriptor = addressProvider.getNextSigningDescriptor()
                 assertTrue(descriptors.add(descriptor))
                 testSigningTransaction(descriptor, signer)
+            }
+        }
+    }
+
+    @Test
+    fun should_fail_generating_new_descriptor_when_update_last_used_index_fails() {
+        runTest {
+            val failingProvider =
+                HDAddressProvider(
+                    signer.accountDescriptor(),
+                    getLastUsedIndex = { 0 },
+                    updateLastUsedIndex = { false },
+                )
+            assertFailsWith<IllegalStateException> {
+                failingProvider.getNextSigningDescriptor()
             }
         }
     }
