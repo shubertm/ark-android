@@ -19,6 +19,7 @@ class HDSignerTest : SignerTest() {
             },
             updateLastUsedIndex = {
                 lastUsedIndex = it
+                true
             },
         )
 
