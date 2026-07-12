@@ -19,7 +19,7 @@ import kotlinx.coroutines.sync.withLock
 class HDAddressProvider(
     private val accountDescriptor: String,
     private val getLastUsedIndex: () -> Int,
-    private val updateLastUsedIndex: suspend (Int) -> Unit = {},
+    private val updateLastUsedIndex: suspend (Int) -> Boolean,
 ) : AddressProvider {
     private val mutex = Mutex()
 
@@ -32,8 +32,11 @@ class HDAddressProvider(
     override suspend fun getNextSigningDescriptor(): String =
         mutex.withLock {
             val newIndex = getLastUsedIndex() + 1
-            updateLastUsedIndex(newIndex)
-            getNextDescriptorFromIndex(accountDescriptor, newIndex)
+            if (updateLastUsedIndex(newIndex)) {
+                getNextDescriptorFromIndex(accountDescriptor, newIndex)
+            } else {
+                throw IllegalStateException("Cannot create next descriptor, failed to update last used index")
+            }
         }
 
     /**

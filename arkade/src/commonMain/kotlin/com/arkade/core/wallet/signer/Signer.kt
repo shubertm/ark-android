@@ -201,7 +201,6 @@ SignerImpl : Signer {
      * @throws IllegalStateException if signing any of the targeted inputs fails.
      */
 
-  
     private fun signAll(
         psbt: Psbt,
         indices: Iterable<Int> = psbt.inputs.indices,

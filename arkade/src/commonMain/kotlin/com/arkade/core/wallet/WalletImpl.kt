@@ -15,6 +15,7 @@ import com.arkade.repositories.wallet.WalletRepo
 import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.psbt.Psbt
+import kotlinx.coroutines.CancellationException
 
 /**
  * Default [Wallet] implementation backed by a [WalletRepo] for persistence.
@@ -82,13 +83,18 @@ class WalletImpl(
      * @param index The new last-used index; must be greater than or equal to the current value.
      * @throws IllegalArgumentException if `index` is less than the current `lastUsedIndex`.
      */
-    override suspend fun updateLastUsedIndex(index: Int) {
+    override suspend fun updateLastUsedIndex(index: Int): Boolean {
         require(index >= lastUsedIndex) { "Invalid last used index" }
         val oldLastUsedIndex = lastUsedIndex
         lastUsedIndex = index
-        runCatching { update() }.onFailure {
-            if (lastUsedIndex == index) lastUsedIndex = oldLastUsedIndex
-        }
+        val result =
+            runCatching {
+                update()
+            }.onFailure {
+                if (it is CancellationException) throw it
+                if (lastUsedIndex == index) lastUsedIndex = oldLastUsedIndex
+            }
+        return result.isSuccess
     }
 
     override suspend fun saveVtxo(vtxo: Vtxo.Data) = repo.saveVtxo(vtxo)
