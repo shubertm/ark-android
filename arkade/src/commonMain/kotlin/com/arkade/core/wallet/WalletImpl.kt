@@ -15,6 +15,7 @@ import com.arkade.repositories.wallet.WalletRepo
 import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.psbt.Psbt
+import kotlinx.coroutines.CancellationException
 
 /**
  * Default [Wallet] implementation backed by a [WalletRepo] for persistence.
@@ -90,6 +91,7 @@ class WalletImpl(
             runCatching {
                 update()
             }.onFailure {
+                if (it is CancellationException) throw it
                 if (lastUsedIndex == index) lastUsedIndex = oldLastUsedIndex
             }
         return result.isSuccess
