@@ -8,6 +8,7 @@ import com.arkade.core.intents.ArkIntent
 import com.arkade.core.wallet.Wallet
 import com.arkade.network.ArkadeClient
 import fr.acinq.bitcoin.Transaction
+import fr.acinq.bitcoin.TxId
 import fr.acinq.bitcoin.psbt.Psbt
 import fr.acinq.bitcoin.utils.getOrElse
 import kotlin.io.encoding.Base64
@@ -36,6 +37,7 @@ class BatchSession(
 ) : BatchEventHandler {
     private val batchId = batchStartedEvent.id
     private lateinit var sweepTapScript: ByteArray
+    private val vtxos: MutableList<TxTreeNode> = mutableListOf()
     private val connectors: MutableList<TxTreeNode> = mutableListOf()
 
     private lateinit var serverInfo: ArkServerInfo
@@ -91,7 +93,7 @@ class BatchSession(
                 }
 
                 is BatchEvent.TreeTxEvent -> {
-                    onTreeTx()
+                    onTreeTx(event)
                 }
 
                 is BatchEvent.TreeSignatureEvent -> {
@@ -226,8 +228,17 @@ class BatchSession(
         TODO("Not yet implemented")
     }
 
-    override suspend fun onTreeTx() {
-        TODO("Not yet implemented")
+    override suspend fun onTreeTx(event: BatchEvent.TreeTxEvent) {
+        val children =
+            event.children.entries.associate { child ->
+                child.key.toLong() to TxId(child.value)
+            }
+        val psbt = Psbt.read(event.tx.encodeToByteArray()).getOrElse { throw IllegalStateException("Failed to read tx") }
+        val txNode = TxTreeNode(psbt, children)
+        when (event.batchIndex) {
+            0 -> vtxos.add(txNode)
+            1 -> connectors.add(txNode)
+        }
     }
 
     override suspend fun onTreeSignature() {

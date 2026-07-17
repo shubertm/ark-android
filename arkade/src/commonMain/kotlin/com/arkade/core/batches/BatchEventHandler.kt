@@ -41,7 +41,7 @@ interface BatchEventHandler {
     /**
      * Called when a VTXO tree transaction is received from the server.
      */
-    suspend fun onTreeTx()
+    suspend fun onTreeTx(event: BatchEvent.TreeTxEvent)
 
     /**
      * Called when a VTXO tree signature is received from the server.
