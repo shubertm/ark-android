@@ -31,7 +31,7 @@ interface BatchEventHandler {
     /**
      * Called when signing of the VTXO tree has started.
      */
-    suspend fun onTreeSigningStarted()
+    suspend fun onTreeSigningStarted(event: BatchEvent.TreeSigningStartedEvent)
 
     /**
      * Called when the VTXO tree signing nonces have been aggregated by the server.
