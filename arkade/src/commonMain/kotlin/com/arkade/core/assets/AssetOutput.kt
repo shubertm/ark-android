@@ -14,8 +14,8 @@ class AssetOutput(
     }
 
     private enum class Type {
-        LOCAL,
         UNSPECIFIED,
+        LOCAL,
         ;
 
         fun toByte(): Byte = this.ordinal.toByte()
