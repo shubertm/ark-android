@@ -38,8 +38,8 @@ class Extension(
 
         fun fromScript(script: ByteArray): Extension {
             val script = Script.parse(script)
-            requireNotNull(script.isNotEmpty()) { "Missing OP_RETURN" }
-            requireNotNull(script[0] == OP_RETURN) { "Expected OP_RETURN" }
+            require(script.isNotEmpty()) { "Missing OP_RETURN" }
+            require(script[0] == OP_RETURN) { "Expected OP_RETURN" }
 
             val payload = ByteArrayOutput()
             for (i in 1 until script.size) {
