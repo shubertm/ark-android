@@ -29,7 +29,8 @@ class Extension(
             ) {
                 return false
             }
-            val data = (script[0] as OP_PUSHDATA).data
+            val op = script[1] as? OP_PUSHDATA ?: return false
+            val data = op.data
             if (data.size() == 0 || data.size() < ArkadeMagic.size) return false
 
             return data.take(ArkadeMagic.size).contentEquals(ArkadeMagic)
