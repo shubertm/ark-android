@@ -19,11 +19,13 @@ fun ByteArrayInput.readVarInt(): ULong {
 
 fun ByteArrayInput.readVarBytes(): ByteArray? {
     val size = readVarInt().toInt()
+    require(size in 0..availableBytes) { "Invalid size for var bytes: $size" }
     return readNBytes(size)
 }
 
 fun ByteArrayInput.readUInt16LE(): Int {
     val data = requireNotNull(readNBytes(2))
+    require(data.size == 2) { "Unexpected end of input" }
     val low = data[0].toInt() and 0xFF
     val high = data[1].toInt() and 0xFF
     return low or (high shl 8)
