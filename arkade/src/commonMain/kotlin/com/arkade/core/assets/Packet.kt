@@ -13,16 +13,21 @@ class Packet(
         val seenAssetIds: HashSet<String> = hashSetOf()
 
         groups.forEach { group ->
-            val isNotSeen = seenAssetIds.add(group.assetId.toString())
-            require(isNotSeen) { "Duplicate asset group for asset: ${group.assetId}" }
+            val assetId = group.assetId
+            if (assetId != null) {
+                val isNotSeen = seenAssetIds.add(group.assetId.toString())
+                require(isNotSeen) { "Duplicate asset group for asset: ${group.assetId}" }
+            }
 
-            val controlAsset = requireNotNull(group.controlAsset) { "Missing control asset" }
-            val groupIndex = requireNotNull(controlAsset.groupIndex) { "Missing control asset group index" }
+            val controlAsset = group.controlAsset
 
-            if (controlAsset.type == AssetRef.Type.BY_GROUP && groupIndex >= groups.size) {
-                throw IllegalArgumentException(
-                    "Invalid control asset group index: ${controlAsset.groupIndex} out of range [0, ${groups.size - 1}]",
-                )
+            if (controlAsset != null && controlAsset.type == AssetRef.Type.BY_GROUP) {
+                val groupIndex = requireNotNull(controlAsset.groupIndex) { "Missing group control asset index" }
+                if (groupIndex >= groups.size) {
+                    throw IllegalArgumentException(
+                        "Invalid control asset group index: ${controlAsset.groupIndex} out of range [0, ${groups.size - 1}]",
+                    )
+                }
             }
         }
     }
