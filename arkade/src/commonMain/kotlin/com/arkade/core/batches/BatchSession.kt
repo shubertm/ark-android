@@ -268,14 +268,13 @@ class BatchSession(
         TODO("Not yet implemented")
     }
 
-    private fun parseIntentOutputs(): List<TxOut> =
-        runCatching {
-            val registerProof =
-                Psbt
-                    .read(intent.registerProof.encodeToByteArray())
-                    .getOrElse { throw IllegalStateException("Failed to read intent register proof") }
-            registerProof.global.tx.txOut
-        }.getOrDefault(emptyList())
+    private fun parseIntentOutputs(): List<TxOut> {
+        val registerProof =
+            Psbt
+                .read(intent.registerProof.encodeToByteArray())
+                .getOrElse { throw IllegalStateException("Failed to read intent register proof") }
+        return registerProof.global.tx.txOut
+    }
 
     private fun validateIntentOutputs(
         vtxoGraph: TxTree,
@@ -352,6 +351,7 @@ class BatchSession(
                 if (assetPacketOutputMatch(intentPacket, leafPacket)) return
             }
         }
+        throw UnsupportedOperationException("Intent asset packet not found in VTXO tree leaves")
     }
 
     private fun assetPacketOutputMatch(
