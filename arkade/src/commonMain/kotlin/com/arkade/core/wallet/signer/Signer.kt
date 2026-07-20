@@ -4,9 +4,14 @@ import fr.acinq.bitcoin.ByteVector32
 import fr.acinq.bitcoin.Crypto
 import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.PrivateKey
+import fr.acinq.bitcoin.PublicKey
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.XonlyPublicKey
+import fr.acinq.bitcoin.crypto.musig2.IndividualNonce
+import fr.acinq.bitcoin.crypto.musig2.Musig2
+import fr.acinq.bitcoin.crypto.musig2.SecretNonce
 import fr.acinq.bitcoin.psbt.Psbt
+import fr.acinq.bitcoin.utils.Either
 import fr.acinq.bitcoin.utils.getOrElse
 
 /**
@@ -80,6 +85,14 @@ interface Signer {
      * @return The account descriptor string.
      */
     fun accountDescriptor(): String
+
+    suspend fun generateNonce(
+        sessionId: ByteVector32,
+        descriptor: String,
+        pubKeys: List<PublicKey>,
+        message: ByteVector32?,
+        extraInput: ByteVector32? = null,
+    ): Pair<SecretNonce, IndividualNonce>
 }
 
 /**
@@ -191,6 +204,17 @@ SignerImpl : Signer {
      */
     override suspend fun xOnlyPublicKey(descriptor: String): XonlyPublicKey = privateKey.xOnlyPublicKey()
 
+    override suspend fun generateNonce(
+        sessionId: ByteVector32,
+        descriptor: String,
+        pubKeys: List<PublicKey>,
+        message: ByteVector32?,
+        extraInput: ByteVector32?,
+    ): Pair<SecretNonce, IndividualNonce> {
+        val signingKey = Either.Left(privateKey)
+        return Musig2.generateNonce(sessionId, signingKey, pubKeys, message, extraInput)
+    }
+
     /**
      * Signs each of [indices] on [psbt] with [privateKey], in order, folding the result of each
      * signature into the PSBT passed to the next.
@@ -200,7 +224,6 @@ SignerImpl : Signer {
      * @return The PSBT with all requested inputs signed.
      * @throws IllegalStateException if signing any of the targeted inputs fails.
      */
-
     private fun signAll(
         psbt: Psbt,
         indices: Iterable<Int> = psbt.inputs.indices,

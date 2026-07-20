@@ -4,6 +4,7 @@ import com.arkade.core.bitcoin.Network
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import fr.acinq.bitcoin.ByteVector32
+import fr.acinq.bitcoin.Crypto
 import fr.acinq.bitcoin.DeterministicWallet
 import fr.acinq.bitcoin.OP_RETURN
 import fr.acinq.bitcoin.PublicKey
@@ -107,4 +108,15 @@ fun checkSha256Hash(hash: String): Boolean {
 fun TxOut.isUnSpendable(): Boolean {
     val scriptPubKey = Script.parse(publicKeyScript)
     return scriptPubKey.isNotEmpty() && scriptPubKey[0] == OP_RETURN
+}
+
+fun taggedMessageHash(
+    tag: String,
+    vararg data: ByteArray,
+): ByteVector32 {
+    var combinedData = byteArrayOf()
+    data.forEach { bytes ->
+        combinedData += bytes
+    }
+    return Crypto.taggedHash(combinedData, tag)
 }

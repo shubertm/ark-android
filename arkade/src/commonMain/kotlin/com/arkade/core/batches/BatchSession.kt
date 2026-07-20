@@ -10,8 +10,11 @@ import com.arkade.core.csvSigScript
 import com.arkade.core.intents.ArkIntent
 import com.arkade.core.intents.RegisterIntentMessage
 import com.arkade.core.isUnSpendable
+import com.arkade.core.toXOnlyPubKey
 import com.arkade.core.wallet.Wallet
 import com.arkade.network.ArkadeClient
+import com.arkade.utils.Log
+import com.arkade.utils.info
 import fr.acinq.bitcoin.ByteVector32
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.TxId
@@ -45,6 +48,8 @@ class BatchSession(
 ) : BatchEventHandler {
     private val batchId = batchStartedEvent.id
     private val intentParameters = RegisterIntentMessage.fromString(intent.registerProofMessage)
+
+    private val signerDescriptor = intent.signerDescriptor
     private lateinit var sweepTapScript: ByteArray
     private val vtxos: MutableList<TxTreeNode> = mutableListOf()
     private val connectors: MutableList<TxTreeNode> = mutableListOf()
@@ -241,6 +246,36 @@ class BatchSession(
         if (sharedOutput?.amount == null) {
             throw UnsupportedOperationException("Shared output not found in commitment transaction")
         }
+
+        val signerSession =
+            TreeSignerSession(
+                wallet,
+                vtxoGraph,
+                signerDescriptor!!,
+                sweepTapScript,
+                sharedOutput.amount.sat,
+            )
+
+        val nonces =
+            signerSession.getNonces().entries.associate { entry ->
+                entry.key.toHexString() to entry.value.data.toHex()
+            }
+
+        val signer = wallet.signer
+
+        val signerPubKey = signer.xOnlyPublicKey(signerDescriptor)
+
+        Log.info(
+            LOG_TAG,
+            "SubmitTreeNonces: using signerPubKey=$signerPubKey" +
+                " (descriptorPubKey would have been ${signerDescriptor.toXOnlyPubKey()})",
+        )
+
+        client.submitTreeNonces(
+            event.id,
+            signerPubKey.value.toHex(),
+            nonces,
+        )
     }
 
     override suspend fun onTreeNoncesAggregated() {
@@ -378,5 +413,9 @@ class BatchSession(
             }
         }
         return true
+    }
+
+    companion object {
+        private const val LOG_TAG = "BatchSession"
     }
 }
