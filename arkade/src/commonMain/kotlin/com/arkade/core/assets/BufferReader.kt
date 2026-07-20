@@ -8,7 +8,6 @@ fun ByteArrayInput.readVarInt(): ULong {
     var shift = 0
     var byte: Int
     do {
-        require(shift < 64) { "VarInt is too big" }
         byte = read()
         require(byte != -1) { "Unexpected end of input" }
         if (shift == 63) {
