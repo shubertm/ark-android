@@ -8,8 +8,14 @@ fun ByteArrayInput.readVarInt(): ULong {
     var shift = 0
     var byte: Int
     do {
+        require(shift < 64) { "VarInt is too big" }
         byte = read()
         require(byte != -1) { "Unexpected end of input" }
+        if (shift == 63) {
+            require(byte == 0x01) { "VarInt is too big, non-canonical or contains unwanted trailing bits" }
+            result = result or (byte.toULong() shl 63)
+            return result
+        }
         result = result or (((byte and 0x7F).toULong() shl shift))
         shift += 7
     } while ((byte and 0x80) != 0)
