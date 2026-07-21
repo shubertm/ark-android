@@ -15,7 +15,7 @@ class TreeSignerSession(
     private val wallet: Wallet,
     private val graph: TxTree,
     private val descriptor: String,
-    private val tapscriptMerkleRoot: ByteArray?,
+    private val tapScriptMerkleRoot: ByteArray?,
     private val rootSharedOutputAmount: Long,
 ) {
     private var nonces: Map<ByteVector32, Pair<SecretNonce, IndividualNonce>>? = null
@@ -49,13 +49,13 @@ class TreeSignerSession(
                     Satoshi(prevOutAmount),
                     scriptPubKey,
                 )
-            if (tapscriptMerkleRoot != null) {
+            if (tapScriptMerkleRoot != null) {
                 val sigHash =
                     tx.hashForSigningTaprootScriptPath(
                         0,
                         listOf(prevOut),
                         SigHash.SIGHASH_DEFAULT,
-                        ByteVector32(tapscriptMerkleRoot),
+                        ByteVector32(tapScriptMerkleRoot),
                     )
 
                 val nonce =
@@ -90,11 +90,11 @@ class TreeSignerSession(
 
         val aggregatedKey = Musig2.aggregateKeys(cosignerKeys)
 
-        if (tapscriptMerkleRoot == null) {
+        if (tapScriptMerkleRoot == null) {
             throw UnsupportedOperationException("Script root not set")
         }
 
-        val merkleRoot = ByteVector32(tapscriptMerkleRoot)
+        val merkleRoot = ByteVector32(tapScriptMerkleRoot)
 
         val (taprootFinalKey, _) = aggregatedKey.outputKey(merkleRoot)
 
