@@ -49,22 +49,24 @@ class TreeSignerSession(
                     Satoshi(prevOutAmount),
                     scriptPubKey,
                 )
-            val sigHash =
-                tx.hashForSigningTaprootScriptPath(
-                    0,
-                    listOf(prevOut),
-                    SigHash.SIGHASH_DEFAULT,
-                    ByteVector32(scriptPubKey),
-                )
+            if (tapscriptMerkleRoot != null) {
+                val sigHash =
+                    tx.hashForSigningTaprootScriptPath(
+                        0,
+                        listOf(prevOut),
+                        SigHash.SIGHASH_DEFAULT,
+                        ByteVector32(tapscriptMerkleRoot),
+                    )
 
-            val nonce =
-                signer.generateNonce(
-                    txId.value,
-                    descriptor,
-                    cosignersKeys,
-                    sigHash,
-                )
-            treeNonces[txId.value] = nonce
+                val nonce =
+                    signer.generateNonce(
+                        txId.value,
+                        descriptor,
+                        cosignersKeys,
+                        sigHash,
+                    )
+                treeNonces[txId.value] = nonce
+            }
         }
         return treeNonces
     }
