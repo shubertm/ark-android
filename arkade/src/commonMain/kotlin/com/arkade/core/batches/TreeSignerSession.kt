@@ -92,14 +92,9 @@ class TreeSignerSession(
 
         val merkleRoot = ByteVector32(tapScriptMerkleRoot)
 
-        val (taprootFinalKey, _) = aggregatedKey.outputKey(merkleRoot)
-
         val txId = graph.root.global.tx.txid
 
-        val scriptPubKey =
-            with(Script) {
-                write(pay2tr(taprootFinalKey, merkleRoot))
-            }
+        val scriptPubKey = Script.pay2tr(aggregatedKey, merkleRoot)
 
         if (txId == rootGraph.root.global.tx.txid) {
             return TxOut(rootSharedOutputAmount.sat(), scriptPubKey)
