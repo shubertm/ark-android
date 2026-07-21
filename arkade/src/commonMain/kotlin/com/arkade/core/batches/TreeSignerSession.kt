@@ -18,16 +18,16 @@ class TreeSignerSession(
     private val tapscriptMerkleRoot: ByteArray?,
     private val rootSharedOutputAmount: Long,
 ) {
-    private var nonces: Map<ByteArray, Pair<SecretNonce, IndividualNonce>>? = null
+    private var nonces: Map<ByteVector32, Pair<SecretNonce, IndividualNonce>>? = null
 
-    suspend fun generateNonces(): Map<ByteArray, Pair<SecretNonce, IndividualNonce>> {
+    suspend fun generateNonces(): Map<ByteVector32, Pair<SecretNonce, IndividualNonce>> {
         if (nonces != null) {
             throw UnsupportedOperationException("Nonces already generated")
         }
         val signer = wallet.signer
         val myPubKey = signer.xOnlyPublicKey(descriptor)
 
-        val nonces: MutableMap<ByteArray, Pair<SecretNonce, IndividualNonce>> = mutableMapOf()
+        val treeNonces: MutableMap<ByteVector32, Pair<SecretNonce, IndividualNonce>> = mutableMapOf()
 
         graph.forEach { node ->
             val tx = node.root.global.tx
@@ -64,12 +64,12 @@ class TreeSignerSession(
                     cosignersKeys,
                     sigHash,
                 )
-            nonces[txId.value.toByteArray()] = nonce
+            treeNonces[txId.value] = nonce
         }
-        return nonces
+        return treeNonces
     }
 
-    suspend fun getNonces(): Map<ByteArray, IndividualNonce> {
+    suspend fun getNonces(): Map<ByteVector32, IndividualNonce> {
         if (nonces == null) {
             nonces = generateNonces()
         }

@@ -258,7 +258,7 @@ class BatchSession(
 
         val nonces =
             signerSession.getNonces().entries.associate { entry ->
-                entry.key.toHexString() to entry.value.data.toHex()
+                entry.key.toHex() to entry.value.data.toHex()
             }
 
         val signer = wallet.signer
