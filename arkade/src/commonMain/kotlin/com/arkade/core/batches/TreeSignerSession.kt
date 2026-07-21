@@ -3,13 +3,13 @@ package com.arkade.core.batches
 import com.arkade.core.getArkFieldsCosigners
 import com.arkade.core.wallet.Wallet
 import fr.acinq.bitcoin.ByteVector32
-import fr.acinq.bitcoin.Satoshi
 import fr.acinq.bitcoin.Script
 import fr.acinq.bitcoin.SigHash
 import fr.acinq.bitcoin.TxOut
 import fr.acinq.bitcoin.crypto.musig2.IndividualNonce
 import fr.acinq.bitcoin.crypto.musig2.Musig2
 import fr.acinq.bitcoin.crypto.musig2.SecretNonce
+import fr.acinq.bitcoin.sat
 
 class TreeSignerSession(
     private val wallet: Wallet,
@@ -43,12 +43,8 @@ class TreeSignerSession(
                 return@forEach
             }
 
-            val (prevOutAmount, scriptPubKey) = getPrevOutput(node, graph)
-            val prevOut =
-                TxOut(
-                    Satoshi(prevOutAmount),
-                    scriptPubKey,
-                )
+            val prevOut = getPrevOutput(node, graph)
+
             if (tapScriptMerkleRoot != null) {
                 val sigHash =
                     tx.hashForSigningTaprootScriptPath(
@@ -81,7 +77,7 @@ class TreeSignerSession(
     private fun getPrevOutput(
         graph: TxTree,
         rootGraph: TxTree,
-    ): Pair<Long, ByteArray> {
+    ): TxOut {
         val cosignerKeys =
             graph.root.inputs[0]
                 .getArkFieldsCosigners()
@@ -106,7 +102,7 @@ class TreeSignerSession(
             }
 
         if (txId == rootGraph.root.global.tx.txid) {
-            return rootSharedOutputAmount to scriptPubKey
+            return TxOut(rootSharedOutputAmount.sat(), scriptPubKey)
         }
 
         val tx = graph.root.global.tx
@@ -118,6 +114,6 @@ class TreeSignerSession(
 
         val parentOutput = parent.root.global.tx.txOut[parentInput.outPoint.index.toInt()]
 
-        return parentOutput.amount.sat to scriptPubKey
+        return TxOut(parentOutput.amount, scriptPubKey)
     }
 }
