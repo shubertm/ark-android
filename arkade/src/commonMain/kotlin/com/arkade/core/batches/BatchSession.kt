@@ -15,6 +15,7 @@ import com.arkade.core.wallet.Wallet
 import com.arkade.network.ArkadeClient
 import com.arkade.utils.Log
 import com.arkade.utils.info
+import fr.acinq.bitcoin.ByteVector
 import fr.acinq.bitcoin.ByteVector32
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.TxId
@@ -309,7 +310,7 @@ class BatchSession(
         if (signerSession != null) {
             val treeNonces =
                 event.treeNonces.map { nonce ->
-                    IndividualNonce(nonce.value)
+                    IndividualNonce(ByteVector.fromHex(nonce.value))
                 }
             val txId = TxId(event.txId)
             signerSession?.aggregateNonces(treeNonces, txId)
