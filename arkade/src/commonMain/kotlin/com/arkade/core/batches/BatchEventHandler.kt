@@ -26,7 +26,7 @@ interface BatchEventHandler {
     /**
      * Called when the batch has failed.
      */
-    suspend fun onBatchFailed()
+    suspend fun onBatchFailed(event: BatchEvent.BatchFailedEvent)
 
     /**
      * Called when signing of the VTXO tree has started.

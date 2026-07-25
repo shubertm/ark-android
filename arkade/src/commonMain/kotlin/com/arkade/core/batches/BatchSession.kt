@@ -40,6 +40,8 @@ class BatchSession(
 
     private lateinit var serverInfo: ArkServerInfo
 
+    var isComplete = false
+
     /**
      * Fetches [serverInfo] from [client] and derives [sweepTapScript] from the batch's expiry
      * and the server's forfeit public key.
@@ -76,11 +78,7 @@ class BatchSession(
                     onBatchFinalization(event, connectors)
                 }
 
-                is BatchEvent.BatchFailedEvent -> {
-                    if (event.id == batchId) {
-                        throw UnsupportedOperationException("Batch failed: ${event.reason}")
-                    }
-                }
+                is BatchEvent.BatchFailedEvent -> onBatchFailed(event)
 
                 is BatchEvent.TreeSigningStartedEvent -> {
                     onTreeSigningStarted()
@@ -214,8 +212,11 @@ class BatchSession(
         }
     }
 
-    override suspend fun onBatchFailed() {
-        TODO("Not yet implemented")
+    override suspend fun onBatchFailed(event: BatchEvent.BatchFailedEvent) {
+        if (event.id == batchId) {
+            isComplete = true
+            throw UnsupportedOperationException("Batch failed: ${event.reason}")
+        }
     }
 
     override suspend fun onTreeSigningStarted() {
