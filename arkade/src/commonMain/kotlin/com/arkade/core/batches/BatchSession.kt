@@ -41,6 +41,7 @@ class BatchSession(
     private lateinit var serverInfo: ArkServerInfo
 
     var isComplete = false
+        private set
 
     /**
      * Fetches [serverInfo] from [client] and derives [sweepTapScript] from the batch's expiry
