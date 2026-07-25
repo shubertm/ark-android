@@ -21,7 +21,7 @@ class TreeSignerSession(
     private val rootSharedOutputAmount: Long,
 ) {
     private var nonces: Map<ByteVector32, Pair<SecretNonce, IndividualNonce>>? = null
-    private var aggregatedNonce: AggregatedNonce? = null
+    private val aggregatedNonces: MutableMap<ByteVector32, AggregatedNonce> = mutableMapOf()
 
     suspend fun generateNonces(): Map<ByteVector32, Pair<SecretNonce, IndividualNonce>> {
         if (nonces != null) {
@@ -127,6 +127,9 @@ class TreeSignerSession(
             throw UnsupportedOperationException("Missing my nonce")
         }
 
-        aggregatedNonce = IndividualNonce.aggregate(treeNonces).right
+        val aggregatedNonce =
+            IndividualNonce.aggregate(treeNonces).right
+                ?: throw UnsupportedOperationException("Failed to aggregate nonces")
+        aggregatedNonces[txId.value] = aggregatedNonce
     }
 }
