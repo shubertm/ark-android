@@ -5,7 +5,9 @@ import com.arkade.core.wallet.Wallet
 import fr.acinq.bitcoin.ByteVector32
 import fr.acinq.bitcoin.Script
 import fr.acinq.bitcoin.SigHash
+import fr.acinq.bitcoin.TxId
 import fr.acinq.bitcoin.TxOut
+import fr.acinq.bitcoin.crypto.musig2.AggregatedNonce
 import fr.acinq.bitcoin.crypto.musig2.IndividualNonce
 import fr.acinq.bitcoin.crypto.musig2.Musig2
 import fr.acinq.bitcoin.crypto.musig2.SecretNonce
@@ -19,6 +21,7 @@ class TreeSignerSession(
     private val rootSharedOutputAmount: Long,
 ) {
     private var nonces: Map<ByteVector32, Pair<SecretNonce, IndividualNonce>>? = null
+    private var aggregatedNonce: AggregatedNonce? = null
 
     suspend fun generateNonces(): Map<ByteVector32, Pair<SecretNonce, IndividualNonce>> {
         if (nonces != null) {
@@ -110,5 +113,20 @@ class TreeSignerSession(
         val parentOutput = parent.root.global.tx.txOut[parentInput.outPoint.index.toInt()]
 
         return TxOut(parentOutput.amount, scriptPubKey)
+    }
+
+    fun aggregateNonces(
+        treeNonces: List<IndividualNonce>,
+        txId: TxId,
+    ) {
+        val myNonce = nonces?.get(txId.value)
+        if (nonces == null || myNonce == null) {
+            throw UnsupportedOperationException("Missing private nonce")
+        }
+        if (!treeNonces.any { nonce -> nonce.data == myNonce.second.data }) {
+            throw UnsupportedOperationException("Missing my nonce")
+        }
+
+        aggregatedNonce = IndividualNonce.aggregate(treeNonces).right
     }
 }
