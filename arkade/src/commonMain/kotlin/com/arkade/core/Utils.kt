@@ -4,8 +4,12 @@ import com.arkade.core.bitcoin.Network
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import fr.acinq.bitcoin.ByteVector32
+import fr.acinq.bitcoin.Crypto
 import fr.acinq.bitcoin.DeterministicWallet
+import fr.acinq.bitcoin.OP_RETURN
 import fr.acinq.bitcoin.PublicKey
+import fr.acinq.bitcoin.Script
+import fr.acinq.bitcoin.TxOut
 import fr.acinq.bitcoin.XonlyPublicKey
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -99,4 +103,20 @@ object Json {
 fun checkSha256Hash(hash: String): Boolean {
     val regex = "^[0-9a-fA-F]{64}$".toRegex()
     return regex.matches(hash)
+}
+
+fun TxOut.isUnSpendable(): Boolean {
+    val scriptPubKey = Script.parse(publicKeyScript)
+    return scriptPubKey.isNotEmpty() && scriptPubKey[0] == OP_RETURN
+}
+
+fun taggedMessageHash(
+    tag: String,
+    vararg data: ByteArray,
+): ByteVector32 {
+    var combinedData = byteArrayOf()
+    data.forEach { bytes ->
+        combinedData += bytes
+    }
+    return Crypto.taggedHash(combinedData, tag)
 }

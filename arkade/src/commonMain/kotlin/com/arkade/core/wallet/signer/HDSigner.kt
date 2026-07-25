@@ -4,9 +4,13 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.encodePubKeyByNetwork
 import com.arkade.core.wallet.Wallet.Companion.getAccountKeyPath
 import com.arkade.core.wallet.Wallet.Companion.masterKeyFromSecret
+import fr.acinq.bitcoin.ByteVector32
 import fr.acinq.bitcoin.PrivateKey
+import fr.acinq.bitcoin.PublicKey
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.XonlyPublicKey
+import fr.acinq.bitcoin.crypto.musig2.IndividualNonce
+import fr.acinq.bitcoin.crypto.musig2.SecretNonce
 import fr.acinq.bitcoin.psbt.Psbt
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -103,6 +107,18 @@ class HDSigner private constructor(
         val accountDescriptor = "tr([$fingerprint/86'/$coinType'/0']$accountPublicKey/0/*)"
         return accountDescriptor
     }
+
+    override suspend fun generateNonce(
+        sessionId: ByteVector32,
+        descriptor: String,
+        pubKeys: List<PublicKey>,
+        message: ByteVector32?,
+        extraInput: ByteVector32?,
+    ): Pair<SecretNonce, IndividualNonce> =
+        mutex.withLock {
+            deriveChildPrivateKey(descriptor)
+            super.generateNonce(sessionId, descriptor, pubKeys, message, extraInput)
+        }
 
     /**
      * Derives the receiving private key for the index encoded in [descriptor]'s trailing

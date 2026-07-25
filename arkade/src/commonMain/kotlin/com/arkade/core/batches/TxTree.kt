@@ -95,6 +95,15 @@ class TxTree(
             }
         }
 
+    fun find(txId: TxId): TxTree? =
+        if (txId == root.global.tx.txid) {
+            this
+        } else {
+            children.values.firstNotNullOfOrNull { child ->
+                child.find(txId)
+            }
+        }
+
     companion object {
         /**
          * Assembles a [TxTree] from a flat list of [TxTreeNode]s received from the server.

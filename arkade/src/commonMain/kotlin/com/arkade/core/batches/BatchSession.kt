@@ -2,13 +2,25 @@ package com.arkade.core.batches
 
 import com.arkade.core.ArkServerInfo
 import com.arkade.core.ArkTransactionBuilder
+import com.arkade.core.assets.Extension
+import com.arkade.core.assets.Extension.Companion.isExtension
+import com.arkade.core.assets.Packet
 import com.arkade.core.coins.ArkCoin
 import com.arkade.core.csvSigScript
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.intents.RegisterIntentMessage
+import com.arkade.core.isUnSpendable
+import com.arkade.core.toXOnlyPubKey
 import com.arkade.core.wallet.Wallet
 import com.arkade.network.ArkadeClient
+import com.arkade.utils.Log
+import com.arkade.utils.info
+import fr.acinq.bitcoin.ByteVector32
 import fr.acinq.bitcoin.Transaction
+import fr.acinq.bitcoin.TxId
+import fr.acinq.bitcoin.TxOut
 import fr.acinq.bitcoin.psbt.Psbt
+import fr.acinq.bitcoin.utils.getOrDefault
 import fr.acinq.bitcoin.utils.getOrElse
 import kotlin.io.encoding.Base64
 
@@ -35,7 +47,11 @@ class BatchSession(
     private val batchStartedEvent: BatchEvent.BatchStartedEvent,
 ) : BatchEventHandler {
     private val batchId = batchStartedEvent.id
+    private val intentParameters = RegisterIntentMessage.fromString(intent.registerProofMessage)
+
+    private val signerDescriptor = intent.signerDescriptor
     private lateinit var sweepTapScript: ByteArray
+    private val vtxos: MutableList<TxTreeNode> = mutableListOf()
     private val connectors: MutableList<TxTreeNode> = mutableListOf()
 
     private lateinit var serverInfo: ArkServerInfo
@@ -82,7 +98,7 @@ class BatchSession(
                 is BatchEvent.BatchFailedEvent -> onBatchFailed(event)
 
                 is BatchEvent.TreeSigningStartedEvent -> {
-                    onTreeSigningStarted()
+                    onTreeSigningStarted(event)
                 }
 
                 is BatchEvent.TreeNoncesAggregatedEvent -> {
@@ -90,7 +106,7 @@ class BatchSession(
                 }
 
                 is BatchEvent.TreeTxEvent -> {
-                    onTreeTx()
+                    onTreeTx(event)
                 }
 
                 is BatchEvent.TreeSignatureEvent -> {
@@ -220,16 +236,65 @@ class BatchSession(
         }
     }
 
-    override suspend fun onTreeSigningStarted() {
-        TODO("Not yet implemented")
+    override suspend fun onTreeSigningStarted(event: BatchEvent.TreeSigningStartedEvent) {
+        val vtxoGraph = TxTree.create(vtxos)
+        val commitmentTx = Psbt.read(event.unsignedCommitmentTx.encodeToByteArray()).getOrDefault(null)
+        if (commitmentTx != null) {
+            TreeValidator.validateVtxoTxGraph(vtxoGraph, commitmentTx, ByteVector32(sweepTapScript))
+
+            validateIntentOutputs(vtxoGraph, commitmentTx)
+        }
+        val sharedOutput = commitmentTx?.global?.tx?.txOut[0]
+        if (sharedOutput?.amount == null) {
+            throw UnsupportedOperationException("Shared output not found in commitment transaction")
+        }
+
+        val signerSession =
+            TreeSignerSession(
+                wallet,
+                vtxoGraph,
+                signerDescriptor!!,
+                sweepTapScript,
+                sharedOutput.amount.sat,
+            )
+
+        val nonces =
+            signerSession.getNonces().entries.associate { entry ->
+                entry.key.toHex() to entry.value.data.toHex()
+            }
+
+        val signer = wallet.signer
+
+        val signerPubKey = signer.xOnlyPublicKey(signerDescriptor)
+
+        Log.info(
+            LOG_TAG,
+            "SubmitTreeNonces: using signerPubKey=$signerPubKey" +
+                " (descriptorPubKey would have been ${signerDescriptor.toXOnlyPubKey()})",
+        )
+
+        client.submitTreeNonces(
+            event.id,
+            signerPubKey.value.toHex(),
+            nonces,
+        )
     }
 
     override suspend fun onTreeNoncesAggregated() {
         TODO("Not yet implemented")
     }
 
-    override suspend fun onTreeTx() {
-        TODO("Not yet implemented")
+    override suspend fun onTreeTx(event: BatchEvent.TreeTxEvent) {
+        val children =
+            event.children.entries.associate { child ->
+                child.key.toLong() to TxId(child.value)
+            }
+        val psbt = Psbt.read(event.tx.encodeToByteArray()).getOrElse { throw IllegalStateException("Failed to read tx") }
+        val txNode = TxTreeNode(psbt, children)
+        when (event.batchIndex) {
+            0 -> vtxos.add(txNode)
+            1 -> connectors.add(txNode)
+        }
     }
 
     override suspend fun onTreeSignature() {
@@ -238,5 +303,121 @@ class BatchSession(
 
     override suspend fun onTreeNonces() {
         TODO("Not yet implemented")
+    }
+
+    private fun parseIntentOutputs(): List<TxOut> {
+        val registerProof =
+            Psbt
+                .read(intent.registerProof.encodeToByteArray())
+                .getOrElse { throw IllegalStateException("Failed to read intent register proof") }
+        return registerProof.global.tx.txOut
+    }
+
+    private fun validateIntentOutputs(
+        vtxoGraph: TxTree,
+        commitmentTx: Psbt,
+    ) {
+        val intentOutputs = parseIntentOutputs()
+        if (intentOutputs.isEmpty()) return
+
+        val onChainIndexes = intentParameters.onChainOutputsIndexes.toHashSet()
+        val vtxoLeaves = vtxoGraph.leaves()
+        val vtxoLeafOutputs =
+            vtxoLeaves.flatMap { leaf ->
+                leaf.global.tx.txOut.mapIndexed { _, output ->
+                    output
+                }
+            }
+
+        var intentAssetPacket: Packet? = null
+
+        intentOutputs.forEachIndexed { index, intentOutput ->
+            if (intentOutput.isUnSpendable()) {
+                val scriptPubKey = intentOutput.publicKeyScript.toByteArray()
+                if (isExtension(scriptPubKey)) {
+                    intentAssetPacket = Extension.fromScript(scriptPubKey).getAssetPacket()
+                }
+                return@forEachIndexed
+            }
+
+            val isOnChain = onChainIndexes.contains(index)
+
+            if (isOnChain) {
+                val isInCommitmentTx =
+                    commitmentTx.global.tx.txOut.any { output ->
+                        output.publicKeyScript == intentOutput.publicKeyScript &&
+                            output.amount == intentOutput.amount
+                    }
+                if (!isInCommitmentTx) {
+                    throw UnsupportedOperationException(
+                        "Onchain output $index not found in commitment transaction. Expected: ${intentOutput.amount} sats to ${intentOutput.publicKeyScript}",
+                    )
+                }
+            } else {
+                val isInVtxoLeaves =
+                    vtxoLeafOutputs.any { output ->
+                        output.publicKeyScript == intentOutput.publicKeyScript &&
+                            output.amount == intentOutput.amount
+                    }
+                if (!isInVtxoLeaves) {
+                    throw UnsupportedOperationException(
+                        "Offchain output $index not found in VTXO tree leaves. Expected: ${intentOutput.amount} sats to ${intentOutput.publicKeyScript}",
+                    )
+                }
+            }
+        }
+
+        if (intentAssetPacket != null) {
+            validateLeafAssetPacket(intentAssetPacket, vtxoLeaves)
+        }
+    }
+
+    private fun validateLeafAssetPacket(
+        intentPacket: Packet,
+        vtxoLeaves: Iterable<Psbt>,
+    ) {
+        vtxoLeaves.forEach { leaf ->
+            val leafTx = leaf.global.tx
+            leafTx.txOut.forEach { output ->
+                val scriptPubKey = output.publicKeyScript.toByteArray()
+                if (!output.isUnSpendable()) return@forEach
+                if (!isExtension(scriptPubKey)) return@forEach
+
+                val leafPacket =
+                    Extension.fromScript(scriptPubKey).getAssetPacket() ?: return@forEach
+                if (assetPacketOutputMatch(intentPacket, leafPacket)) return
+            }
+        }
+        throw UnsupportedOperationException("Intent asset packet not found in VTXO tree leaves")
+    }
+
+    private fun assetPacketOutputMatch(
+        intentPacket: Packet,
+        leafPacket: Packet,
+    ): Boolean {
+        if (intentPacket.groups.size != leafPacket.groups.size) return false
+
+        intentPacket.groups.forEachIndexed { index, intentAssetGroup ->
+            val leafAssetGroup = leafPacket.groups[index]
+
+            if (intentAssetGroup.assetId.toString() != leafAssetGroup.assetId.toString()) return false
+
+            if (intentAssetGroup.outputs.size != leafAssetGroup.outputs.size) return false
+
+            intentAssetGroup.outputs.forEachIndexed { index, intentAssetOutput ->
+                val leafAssetOutput = leafAssetGroup.outputs[index]
+                if (
+                    intentAssetOutput.vout != leafAssetOutput.vout ||
+                    intentAssetOutput.amount != leafAssetOutput.amount
+                ) {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+
+    companion object {
+        private const val LOG_TAG = "BatchSession"
     }
 }
