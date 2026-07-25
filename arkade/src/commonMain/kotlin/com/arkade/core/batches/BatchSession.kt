@@ -15,10 +15,12 @@ import com.arkade.core.wallet.Wallet
 import com.arkade.network.ArkadeClient
 import com.arkade.utils.Log
 import com.arkade.utils.info
+import fr.acinq.bitcoin.ByteVector
 import fr.acinq.bitcoin.ByteVector32
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.TxId
 import fr.acinq.bitcoin.TxOut
+import fr.acinq.bitcoin.crypto.musig2.IndividualNonce
 import fr.acinq.bitcoin.psbt.Psbt
 import fr.acinq.bitcoin.utils.getOrDefault
 import fr.acinq.bitcoin.utils.getOrElse
@@ -55,6 +57,8 @@ class BatchSession(
     private val connectors: MutableList<TxTreeNode> = mutableListOf()
 
     private lateinit var serverInfo: ArkServerInfo
+
+    private var signerSession: TreeSignerSession? = null
 
     var isComplete = false
         private set
@@ -98,7 +102,7 @@ class BatchSession(
                 is BatchEvent.BatchFailedEvent -> onBatchFailed(event)
 
                 is BatchEvent.TreeSigningStartedEvent -> {
-                    onTreeSigningStarted(event)
+                    signerSession = onTreeSigningStarted(event)
                 }
 
                 is BatchEvent.TreeNoncesAggregatedEvent -> {
@@ -114,7 +118,7 @@ class BatchSession(
                 }
 
                 is BatchEvent.TreeNoncesEvent -> {
-                    onTreeNonces()
+                    onTreeNonces(event)
                 }
 
                 is BatchEvent.HeartbeatEvent -> {}
@@ -236,7 +240,7 @@ class BatchSession(
         }
     }
 
-    override suspend fun onTreeSigningStarted(event: BatchEvent.TreeSigningStartedEvent) {
+    override suspend fun onTreeSigningStarted(event: BatchEvent.TreeSigningStartedEvent): TreeSignerSession {
         val vtxoGraph = TxTree.create(vtxos)
         val commitmentTx = Psbt.read(event.unsignedCommitmentTx.encodeToByteArray()).getOrDefault(null)
         if (commitmentTx != null) {
@@ -278,6 +282,7 @@ class BatchSession(
             signerPubKey.value.toHex(),
             nonces,
         )
+        return signerSession
     }
 
     override suspend fun onTreeNoncesAggregated() {
@@ -301,8 +306,15 @@ class BatchSession(
         TODO("Not yet implemented")
     }
 
-    override suspend fun onTreeNonces() {
-        TODO("Not yet implemented")
+    override suspend fun onTreeNonces(event: BatchEvent.TreeNoncesEvent) {
+        if (signerSession != null) {
+            val treeNonces =
+                event.treeNonces.map { nonce ->
+                    IndividualNonce(ByteVector.fromHex(nonce.value))
+                }
+            val txId = TxId(event.txId)
+            signerSession?.aggregateNonces(treeNonces, txId)
+        }
     }
 
     private fun parseIntentOutputs(): List<TxOut> {
