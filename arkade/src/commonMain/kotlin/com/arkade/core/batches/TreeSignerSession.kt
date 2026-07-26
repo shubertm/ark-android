@@ -122,7 +122,7 @@ class TreeSignerSession(
 
         val aggregatedNonce =
             IndividualNonce.aggregate(treeNonces).right
-                ?: throw UnsupportedOperationException("Failed to aggregate myNonces")
+                ?: throw UnsupportedOperationException("Failed to aggregate nonces")
         this.treeNonces[txId] = treeNonces
         aggregatedNonces[txId] = aggregatedNonce
     }
