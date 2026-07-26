@@ -1,5 +1,6 @@
 package com.arkade.core.batches
 
+import ark.v1.TreeNoncesAggregatedEvent
 import com.arkade.core.ArkServerInfo
 import com.arkade.core.ArkTransactionBuilder
 import com.arkade.core.assets.Extension
@@ -17,6 +18,7 @@ import com.arkade.utils.Log
 import com.arkade.utils.info
 import fr.acinq.bitcoin.ByteVector
 import fr.acinq.bitcoin.ByteVector32
+import fr.acinq.bitcoin.ScriptTree
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.TxId
 import fr.acinq.bitcoin.TxOut
@@ -53,6 +55,7 @@ class BatchSession(
 
     private val signerDescriptor = intent.signerDescriptor
     private lateinit var sweepTapScript: ByteArray
+    private lateinit var sweepTapTree: ScriptTree
     private val vtxos: MutableList<TxTreeNode> = mutableListOf()
     private val connectors: MutableList<TxTreeNode> = mutableListOf()
 
@@ -106,7 +109,7 @@ class BatchSession(
                 }
 
                 is BatchEvent.TreeNoncesAggregatedEvent -> {
-                    onTreeNoncesAggregated()
+                    onTreeNoncesAggregated(event)
                 }
 
                 is BatchEvent.TreeTxEvent -> {
@@ -258,7 +261,7 @@ class BatchSession(
                 wallet,
                 vtxoGraph,
                 signerDescriptor!!,
-                sweepTapScript,
+                sweepTapTree,
                 sharedOutput.amount.sat,
             )
 
@@ -285,8 +288,31 @@ class BatchSession(
         return signerSession
     }
 
-    override suspend fun onTreeNoncesAggregated() {
-        TODO("Not yet implemented")
+    override suspend fun onTreeNoncesAggregated(event: BatchEvent.TreeNoncesAggregatedEvent) {
+        if (signerSession != null && signerDescriptor != null) {
+            val treeNonces =
+                event.treeNonces.entries.associate { entry ->
+                    val pubNonce = IndividualNonce(ByteVector.fromHex(entry.value))
+                    val txId = ByteVector32.fromValidHex(entry.key)
+                    txId to pubNonce
+                }
+            signerSession?.verifyAggregatedNonces(treeNonces)
+
+            val signatures =
+                signerSession?.sign()?.entries?.associate { entry ->
+                    entry.key.toHex() to entry.value.toHex()
+                }!!
+
+            val signerPubKey =
+                wallet.signer
+                    .xOnlyPublicKey(signerDescriptor)
+                    .value
+                    .toHex()
+
+            Log.info(LOG_TAG, "SubmitTreeSignatures: using signerPubKey=$signerPubKey")
+
+            client.submitTreeSignatures(batchId, signerPubKey, signatures)
+        }
     }
 
     override suspend fun onTreeTx(event: BatchEvent.TreeTxEvent) {

@@ -3,7 +3,9 @@ package com.arkade.core.batches
 import com.arkade.core.getArkFieldsCosigners
 import com.arkade.core.wallet.Wallet
 import fr.acinq.bitcoin.ByteVector32
+import fr.acinq.bitcoin.PublicKey
 import fr.acinq.bitcoin.Script
+import fr.acinq.bitcoin.ScriptTree
 import fr.acinq.bitcoin.SigHash
 import fr.acinq.bitcoin.TxId
 import fr.acinq.bitcoin.TxOut
@@ -17,9 +19,10 @@ class TreeSignerSession(
     private val wallet: Wallet,
     private val graph: TxTree,
     private val descriptor: String,
-    private val tapScriptMerkleRoot: ByteArray?,
+    private val tapScriptTree: ScriptTree?,
     private val rootSharedOutputAmount: Long,
 ) {
+    private val tapScriptTreeRoot = tapScriptTree?.hash()
     private var nonces: Map<ByteVector32, Pair<SecretNonce, IndividualNonce>>? = null
     private val aggregatedNonces: MutableMap<ByteVector32, AggregatedNonce> = mutableMapOf()
 
@@ -48,13 +51,13 @@ class TreeSignerSession(
 
             val prevOut = getPrevOutput(node, graph)
 
-            if (tapScriptMerkleRoot != null) {
+            if (tapScriptTreeRoot != null) {
                 val sigHash =
                     tx.hashForSigningTaprootScriptPath(
                         0,
                         listOf(prevOut),
                         SigHash.SIGHASH_DEFAULT,
-                        ByteVector32(tapScriptMerkleRoot),
+                        tapScriptTreeRoot,
                     )
 
                 val nonce =
@@ -89,15 +92,13 @@ class TreeSignerSession(
 
         val aggregatedKey = Musig2.aggregateKeys(cosignerKeys)
 
-        if (tapScriptMerkleRoot == null) {
+        if (tapScriptTreeRoot == null) {
             throw UnsupportedOperationException("Script root not set")
         }
 
-        val merkleRoot = ByteVector32(tapScriptMerkleRoot)
-
         val txId = graph.root.global.tx.txid
 
-        val scriptPubKey = Script.pay2tr(aggregatedKey, merkleRoot)
+        val scriptPubKey = Script.pay2tr(aggregatedKey, tapScriptTreeRoot)
 
         if (txId == rootGraph.root.global.tx.txid) {
             return TxOut(rootSharedOutputAmount.sat(), scriptPubKey)
@@ -132,4 +133,74 @@ class TreeSignerSession(
                 ?: throw UnsupportedOperationException("Failed to aggregate nonces")
         aggregatedNonces[txId.value] = aggregatedNonce
     }
+
+    fun verifyAggregatedNonces(expected: Map<ByteVector32, IndividualNonce>) {
+        if (nonces == null) {
+            throw UnsupportedOperationException("Nonces not generated")
+        }
+        val isMatching =
+            expected.all { entry ->
+                val nonce =
+                    aggregatedNonces[entry.key]
+                        ?: throw UnsupportedOperationException("Aggregated nonce missing")
+                nonce.data == entry.value.data
+            }
+        if (!isMatching) {
+            throw UnsupportedOperationException("Aggregaed nonces do not match")
+        }
+    }
+
+    suspend fun sign(): Map<ByteVector32, ByteVector32> {
+        if (nonces == null) {
+            throw UnsupportedOperationException("Nonces not generated")
+        }
+
+        val signatures: MutableMap<ByteVector32, ByteVector32> = mutableMapOf()
+        graph.forEach { nodeTxTree ->
+            val txId = nodeTxTree.root.global.tx.txid.value
+            if (nonces?.containsKey(txId) == true) {
+                return@forEach
+            }
+            val signature = signPartial(nodeTxTree)
+            signatures[txId] = signature
+        }
+        return signatures
+    }
+
+    private suspend fun signPartial(nodeTxTree: TxTree): ByteVector32 {
+        if (nonces == null) {
+            throw UnsupportedOperationException("Session not properly initialized")
+        }
+
+        val tx = nodeTxTree.root.global.tx
+        val txId = tx.txid.value
+
+        val privNonce = nonces!![txId]?.first ?: throw UnsupportedOperationException("Missing private nonce")
+
+        val prevOut = getPrevOutput(nodeTxTree, graph)
+
+        val cosignerPubKeys = nodeTxTree.getCosignerPubKeys()
+
+        val pubNonces = nonces?.map { (_, nonce) -> nonce.second }!!
+
+        val partialSig =
+            wallet.signer.signMusig(
+                descriptor,
+                tx,
+                listOf(prevOut),
+                0,
+                privNonce,
+                cosignerPubKeys,
+                pubNonces,
+                tapScriptTree,
+            )
+
+        return partialSig
+    }
+
+    private fun TxTree.getCosignerPubKeys(): List<PublicKey> =
+        root.inputs[0]
+            .getArkFieldsCosigners()
+            .sortedBy { it.index }
+            .map { it.pubKey }
 }
