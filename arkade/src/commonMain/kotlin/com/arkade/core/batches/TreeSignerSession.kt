@@ -34,7 +34,7 @@ class TreeSignerSession(
         val signer = wallet.signer
         val myPubKey = signer.xOnlyPublicKey(descriptor)
 
-        val treeNonces: MutableMap<ByteVector32, Pair<SecretNonce, IndividualNonce>> = mutableMapOf()
+        val myNonces: MutableMap<ByteVector32, Pair<SecretNonce, IndividualNonce>> = mutableMapOf()
 
         graph.forEach { node ->
             val tx = node.root.global.tx
@@ -67,9 +67,9 @@ class TreeSignerSession(
                     cosignersKeys,
                     sigHash,
                 )
-            treeNonces[txId.value] = nonce
+            myNonces[txId.value] = nonce
         }
-        return treeNonces
+        return myNonces
     }
 
     suspend fun getNonces(): Map<ByteVector32, IndividualNonce> {
