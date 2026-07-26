@@ -5,7 +5,9 @@ import fr.acinq.bitcoin.Crypto
 import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.PrivateKey
 import fr.acinq.bitcoin.PublicKey
+import fr.acinq.bitcoin.ScriptTree
 import fr.acinq.bitcoin.Transaction
+import fr.acinq.bitcoin.TxOut
 import fr.acinq.bitcoin.XonlyPublicKey
 import fr.acinq.bitcoin.crypto.musig2.IndividualNonce
 import fr.acinq.bitcoin.crypto.musig2.Musig2
@@ -93,6 +95,17 @@ interface Signer {
         message: ByteVector32?,
         extraInput: ByteVector32? = null,
     ): Pair<SecretNonce, IndividualNonce>
+
+    suspend fun signMusig(
+        descriptor: String,
+        tx: Transaction,
+        inputs: List<TxOut>,
+        inputIndex: Int,
+        privNonce: SecretNonce,
+        pubKeys: List<PublicKey>,
+        pubNonces: List<IndividualNonce>,
+        scriptTree: ScriptTree?,
+    ): ByteVector32
 }
 
 /**
@@ -116,7 +129,7 @@ SignerImpl : Signer {
      *
      * @param descriptor The output descriptor identifying which key to sign with.
      * @param psbt The PSBT to sign.
-     * @param inputIndexes The indexes of the inputs to sign; if empty, all inputs are signed.
+     * @param inputIndices The indexes of the inputs to sign; if empty, all inputs are signed.
      * @return The fully signed [Transaction].
      * @throws IllegalStateException if signing any of the targeted inputs fails.
      */
@@ -214,6 +227,28 @@ SignerImpl : Signer {
         val signingKey = Either.Left(privateKey)
         return Musig2.generateNonce(sessionId, signingKey, pubKeys, message, extraInput)
     }
+
+    override suspend fun signMusig(
+        descriptor: String,
+        tx: Transaction,
+        inputs: List<TxOut>,
+        inputIndex: Int,
+        privNonce: SecretNonce,
+        pubKeys: List<PublicKey>,
+        pubNonces: List<IndividualNonce>,
+        scriptTree: ScriptTree?,
+    ): ByteVector32 =
+        Musig2
+            .signTaprootInput(
+                privateKey,
+                tx,
+                inputIndex,
+                inputs,
+                pubKeys,
+                privNonce,
+                pubNonces,
+                scriptTree,
+            ).getOrElse { throw it }
 
     /**
      * Signs each of [indices] on [psbt] with [privateKey], in order, folding the result of each

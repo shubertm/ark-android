@@ -36,7 +36,7 @@ interface BatchEventHandler {
     /**
      * Called when the VTXO tree signing nonces have been aggregated by the server.
      */
-    suspend fun onTreeNoncesAggregated()
+    suspend fun onTreeNoncesAggregated(event: BatchEvent.TreeNoncesAggregatedEvent)
 
     /**
      * Called when a VTXO tree transaction is received from the server.

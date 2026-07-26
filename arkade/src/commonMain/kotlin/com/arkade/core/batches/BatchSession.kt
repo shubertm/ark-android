@@ -1,10 +1,12 @@
 package com.arkade.core.batches
 
+import ark.v1.TreeNoncesAggregatedEvent
 import com.arkade.core.ArkServerInfo
 import com.arkade.core.ArkTransactionBuilder
 import com.arkade.core.assets.Extension
 import com.arkade.core.assets.Extension.Companion.isExtension
 import com.arkade.core.assets.Packet
+import com.arkade.core.buildScriptTree
 import com.arkade.core.coins.ArkCoin
 import com.arkade.core.csvSigScript
 import com.arkade.core.intents.ArkIntent
@@ -17,6 +19,7 @@ import com.arkade.utils.Log
 import com.arkade.utils.info
 import fr.acinq.bitcoin.ByteVector
 import fr.acinq.bitcoin.ByteVector32
+import fr.acinq.bitcoin.ScriptTree
 import fr.acinq.bitcoin.Transaction
 import fr.acinq.bitcoin.TxId
 import fr.acinq.bitcoin.TxOut
@@ -52,7 +55,7 @@ class BatchSession(
     private val intentParameters = RegisterIntentMessage.fromString(intent.registerProofMessage)
 
     private val signerDescriptor = intent.signerDescriptor
-    private lateinit var sweepTapScript: ByteArray
+    private lateinit var sweepTapTree: ScriptTree
     private val vtxos: MutableList<TxTreeNode> = mutableListOf()
     private val connectors: MutableList<TxTreeNode> = mutableListOf()
 
@@ -64,14 +67,15 @@ class BatchSession(
         private set
 
     /**
-     * Fetches [serverInfo] from [client] and derives [sweepTapScript] from the batch's expiry
+     * Fetches [serverInfo] from [client] and derives [sweepTapTree] from the batch's expiry
      * and the server's forfeit public key.
      *
      * Must be called before [processEvent] handles a [BatchEvent.BatchFinalizationEvent].
      */
     suspend fun init() {
         serverInfo = client.getInfo()
-        sweepTapScript = csvSigScript(batchStartedEvent.batchExpiry.inWholeSeconds, serverInfo.forfeitPubKey)
+        val unilateralExitScript = csvSigScript(batchStartedEvent.batchExpiry.inWholeSeconds, serverInfo.forfeitPubKey)
+        sweepTapTree = buildScriptTree(listOf(unilateralExitScript))
     }
 
     /**
@@ -106,7 +110,7 @@ class BatchSession(
                 }
 
                 is BatchEvent.TreeNoncesAggregatedEvent -> {
-                    onTreeNoncesAggregated()
+                    onTreeNoncesAggregated(event)
                 }
 
                 is BatchEvent.TreeTxEvent -> {
@@ -244,7 +248,7 @@ class BatchSession(
         val vtxoGraph = TxTree.create(vtxos)
         val commitmentTx = Psbt.read(event.unsignedCommitmentTx.encodeToByteArray()).getOrDefault(null)
         if (commitmentTx != null) {
-            TreeValidator.validateVtxoTxGraph(vtxoGraph, commitmentTx, ByteVector32(sweepTapScript))
+            TreeValidator.validateVtxoTxGraph(vtxoGraph, commitmentTx, sweepTapTree.hash())
 
             validateIntentOutputs(vtxoGraph, commitmentTx)
         }
@@ -258,7 +262,7 @@ class BatchSession(
                 wallet,
                 vtxoGraph,
                 signerDescriptor!!,
-                sweepTapScript,
+                sweepTapTree,
                 sharedOutput.amount.sat,
             )
 
@@ -285,8 +289,31 @@ class BatchSession(
         return signerSession
     }
 
-    override suspend fun onTreeNoncesAggregated() {
-        TODO("Not yet implemented")
+    override suspend fun onTreeNoncesAggregated(event: BatchEvent.TreeNoncesAggregatedEvent) {
+        if (signerSession != null && signerDescriptor != null) {
+            val treeNonces =
+                event.treeNonces.entries.associate { entry ->
+                    val pubNonce = IndividualNonce(ByteVector.fromHex(entry.value))
+                    val txId = ByteVector32.fromValidHex(entry.key)
+                    txId to pubNonce
+                }
+            signerSession?.verifyAggregatedNonces(treeNonces)
+
+            val signatures =
+                signerSession?.sign()?.entries?.associate { entry ->
+                    entry.key.toHex() to entry.value.toHex()
+                }!!
+
+            val signerPubKey =
+                wallet.signer
+                    .xOnlyPublicKey(signerDescriptor)
+                    .value
+                    .toHex()
+
+            Log.info(LOG_TAG, "SubmitTreeSignatures: using signerPubKey=$signerPubKey")
+
+            client.submitTreeSignatures(batchId, signerPubKey, signatures)
+        }
     }
 
     override suspend fun onTreeTx(event: BatchEvent.TreeTxEvent) {
