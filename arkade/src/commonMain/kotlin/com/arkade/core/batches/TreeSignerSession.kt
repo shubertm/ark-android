@@ -23,11 +23,12 @@ class TreeSignerSession(
     private val rootSharedOutputAmount: Long,
 ) {
     private val tapScriptTreeRoot = tapScriptTree.hash()
-    private var nonces: Map<ByteVector32, Pair<SecretNonce, IndividualNonce>>? = null
+    private var myNonces: Map<ByteVector32, Pair<SecretNonce, IndividualNonce>>? = null
+    private val treeNonces: MutableMap<ByteVector32, List<IndividualNonce>> = mutableMapOf()
     private val aggregatedNonces: MutableMap<ByteVector32, AggregatedNonce> = mutableMapOf()
 
     suspend fun generateNonces(): Map<ByteVector32, Pair<SecretNonce, IndividualNonce>> {
-        if (nonces != null) {
+        if (myNonces != null) {
             throw UnsupportedOperationException("Nonces already generated")
         }
         val signer = wallet.signer
@@ -72,10 +73,10 @@ class TreeSignerSession(
     }
 
     suspend fun getNonces(): Map<ByteVector32, IndividualNonce> {
-        if (nonces == null) {
-            nonces = generateNonces()
+        if (myNonces == null) {
+            myNonces = generateNonces()
         }
-        return nonces?.mapValues { it.value.second }!!
+        return myNonces?.mapValues { it.value.second }!!
     }
 
     private fun getPrevOutput(
@@ -110,8 +111,9 @@ class TreeSignerSession(
         treeNonces: List<IndividualNonce>,
         txId: TxId,
     ) {
-        val myNonce = nonces?.get(txId.value)
-        if (nonces == null || myNonce == null) {
+        val txId = txId.value
+        val myNonce = myNonces?.get(txId)
+        if (myNonces == null || myNonce == null) {
             throw UnsupportedOperationException("Missing private nonce")
         }
         if (!treeNonces.any { nonce -> nonce.data == myNonce.second.data }) {
@@ -120,12 +122,13 @@ class TreeSignerSession(
 
         val aggregatedNonce =
             IndividualNonce.aggregate(treeNonces).right
-                ?: throw UnsupportedOperationException("Failed to aggregate nonces")
-        aggregatedNonces[txId.value] = aggregatedNonce
+                ?: throw UnsupportedOperationException("Failed to aggregate myNonces")
+        this.treeNonces[txId] = treeNonces
+        aggregatedNonces[txId] = aggregatedNonce
     }
 
     fun verifyAggregatedNonces(expected: Map<ByteVector32, IndividualNonce>) {
-        if (nonces == null) {
+        if (myNonces == null) {
             throw UnsupportedOperationException("Nonces not generated")
         }
         val isMatching =
@@ -136,19 +139,19 @@ class TreeSignerSession(
                 nonce.data == entry.value.data
             }
         if (!isMatching) {
-            throw UnsupportedOperationException("Aggregated nonces do not match")
+            throw UnsupportedOperationException("Aggregated myNonces do not match")
         }
     }
 
     suspend fun sign(): Map<ByteVector32, ByteVector32> {
-        if (nonces == null) {
+        if (myNonces == null) {
             throw UnsupportedOperationException("Nonces not generated")
         }
 
         val signatures: MutableMap<ByteVector32, ByteVector32> = mutableMapOf()
         graph.forEach { nodeTxTree ->
             val txId = nodeTxTree.root.global.tx.txid.value
-            if (nonces?.containsKey(txId) == false) {
+            if (myNonces?.containsKey(txId) == false) {
                 return@forEach
             }
             val signature = signPartial(nodeTxTree)
@@ -158,20 +161,20 @@ class TreeSignerSession(
     }
 
     private suspend fun signPartial(nodeTxTree: TxTree): ByteVector32 {
-        if (nonces == null) {
+        if (myNonces == null) {
             throw UnsupportedOperationException("Session not properly initialized")
         }
 
         val tx = nodeTxTree.root.global.tx
         val txId = tx.txid.value
 
-        val privNonce = nonces!![txId]?.first ?: throw UnsupportedOperationException("Missing private nonce")
+        val privNonce = myNonces!![txId]?.first ?: throw UnsupportedOperationException("Missing private nonce")
 
         val prevOut = getPrevOutput(nodeTxTree, graph)
 
         val cosignerPubKeys = nodeTxTree.getCosignerPubKeys()
 
-        val pubNonces = nonces?.map { (_, nonce) -> nonce.second }!!
+        val pubNonces = treeNonces[txId] ?: throw UnsupportedOperationException("Missing tree nonces")
 
         val partialSig =
             wallet.signer.signMusig(
