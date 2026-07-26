@@ -40,11 +40,7 @@ class TreeSignerSession(
             val tx = node.root.global.tx
             val txId = tx.txid
 
-            val cosignersKeys =
-                node.root.inputs[0]
-                    .getArkFieldsCosigners()
-                    .sortedBy { it.index }
-                    .map { it.pubKey }
+            val cosignersKeys = node.getCosignerPubKeys()
 
             if (cosignersKeys.all { it.xOnly() != myPubKey }) {
                 return@forEach
