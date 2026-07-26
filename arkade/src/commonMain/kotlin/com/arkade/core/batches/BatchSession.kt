@@ -6,6 +6,7 @@ import com.arkade.core.ArkTransactionBuilder
 import com.arkade.core.assets.Extension
 import com.arkade.core.assets.Extension.Companion.isExtension
 import com.arkade.core.assets.Packet
+import com.arkade.core.buildScriptTree
 import com.arkade.core.coins.ArkCoin
 import com.arkade.core.csvSigScript
 import com.arkade.core.intents.ArkIntent
@@ -54,7 +55,6 @@ class BatchSession(
     private val intentParameters = RegisterIntentMessage.fromString(intent.registerProofMessage)
 
     private val signerDescriptor = intent.signerDescriptor
-    private lateinit var sweepTapScript: ByteArray
     private lateinit var sweepTapTree: ScriptTree
     private val vtxos: MutableList<TxTreeNode> = mutableListOf()
     private val connectors: MutableList<TxTreeNode> = mutableListOf()
@@ -67,14 +67,15 @@ class BatchSession(
         private set
 
     /**
-     * Fetches [serverInfo] from [client] and derives [sweepTapScript] from the batch's expiry
+     * Fetches [serverInfo] from [client] and derives [sweepTapTree] from the batch's expiry
      * and the server's forfeit public key.
      *
      * Must be called before [processEvent] handles a [BatchEvent.BatchFinalizationEvent].
      */
     suspend fun init() {
         serverInfo = client.getInfo()
-        sweepTapScript = csvSigScript(batchStartedEvent.batchExpiry.inWholeSeconds, serverInfo.forfeitPubKey)
+        val unilateralExitScript = csvSigScript(batchStartedEvent.batchExpiry.inWholeSeconds, serverInfo.forfeitPubKey)
+        sweepTapTree = buildScriptTree(listOf(unilateralExitScript))
     }
 
     /**
@@ -247,7 +248,7 @@ class BatchSession(
         val vtxoGraph = TxTree.create(vtxos)
         val commitmentTx = Psbt.read(event.unsignedCommitmentTx.encodeToByteArray()).getOrDefault(null)
         if (commitmentTx != null) {
-            TreeValidator.validateVtxoTxGraph(vtxoGraph, commitmentTx, ByteVector32(sweepTapScript))
+            TreeValidator.validateVtxoTxGraph(vtxoGraph, commitmentTx, sweepTapTree.hash())
 
             validateIntentOutputs(vtxoGraph, commitmentTx)
         }
