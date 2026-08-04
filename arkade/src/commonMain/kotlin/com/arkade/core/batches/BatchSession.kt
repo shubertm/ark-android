@@ -118,7 +118,7 @@ class BatchSession(
                 }
 
                 is BatchEvent.TreeSignatureEvent -> {
-                    onTreeSignature()
+                    onTreeSignature(event)
                 }
 
                 is BatchEvent.TreeNoncesEvent -> {
@@ -327,10 +327,6 @@ class BatchSession(
             0 -> vtxos.add(txNode)
             1 -> connectors.add(txNode)
         }
-    }
-
-    override suspend fun onTreeSignature() {
-        TODO("Not yet implemented")
     }
 
     override suspend fun onTreeNonces(event: BatchEvent.TreeNoncesEvent) {

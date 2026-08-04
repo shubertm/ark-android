@@ -46,7 +46,7 @@ interface BatchEventHandler {
     /**
      * Called when a VTXO tree signature is received from the server.
      */
-    suspend fun onTreeSignature()
+    suspend fun onTreeSignature(event: BatchEvent.TreeSignatureEvent) {}
 
     /**
      * Called when VTXO tree signing nonces are received from the server.
