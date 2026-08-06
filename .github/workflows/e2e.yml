@@ -9,6 +9,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v6
+        with:
+          submodules: true
 
       - name: Setup JDK 17
         uses: actions/setup-java@v5
@@ -22,17 +24,16 @@ jobs:
       - name: Run linter
         run: ./gradlew lint --no-daemon
 
-      - name: Run Nigiri
-        uses: vulpemventures/nigiri-github-action@v1
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          use_liquid: false
-          use_ln: false
+          node-version: '20'
 
-      - name: Build Docker Images
-        run: ./gradlew buildDocker --no-daemon
+      - name: Start RegTest Environment
+        run: node regtest/regtest.mjs start
 
       - name: Run E2E Tests
-        run: ./gradlew testE2EDocker --no-daemon
+        run: ./gradlew testE2E --no-daemon
 
       - name: Capture arkd logs
         if: failure()
@@ -42,4 +43,8 @@ jobs:
             echo "=== arkd logs ==="
             cat arkd.log
           fi
+
+      - name: Clean Up
+        if: always()
+        run: node regtest/regtest.mjs clean
 

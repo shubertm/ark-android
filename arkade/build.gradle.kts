@@ -156,19 +156,6 @@ dependencies {
     add("kspIosArm64", libs.androidx.room.compiler)
 }
 
-tasks.register<SetupTestTask>("testSetup") {
-    dependsOn("testUpDocker")
-}
-
-tasks.register<UpDockerTestTask>("testUpDocker")
-
-tasks.register<DownDockerTestTask>("testDownDocker")
-
-tasks.register<E2ETestTask>("testE2EDocker") {
-    dependsOn("testSetup")
-    finalizedBy("testDownDocker")
-}
-
-tasks.register<BuildDockerTestTask>("buildDocker")
+tasks.register<E2ETestTask>("testE2E")
 
 tasks.register<UnitTestTask>("testUnit")
