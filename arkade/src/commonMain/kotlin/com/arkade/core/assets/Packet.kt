@@ -47,7 +47,7 @@ class Packet(
         private fun fromBytesInput(input: ByteArrayInput): Packet {
             require(input.availableBytes > 0) { "Missing packet bytes" }
 
-            val count = input.readVarInt().toInt()
+            val count = input.readVarIntToInt()
             val groups: MutableList<AssetGroup> = mutableListOf()
             for (i in 0 until count) {
                 groups.add(AssetGroup.fromBytesInput(input))

@@ -61,13 +61,15 @@ class AssetGroup(
                 metadata = deserializeMetadataList(input)
             }
 
-            val inputCount = input.readVarInt().toInt()
+            val inputCount = input.readVarIntToInt()
+
             val inputs: MutableList<AssetInput> = mutableListOf()
             for (i in 0 until inputCount) {
                 inputs.add(AssetInput.fromBytesInput(input))
             }
 
-            val outputCount = input.readVarInt().toInt()
+            val outputCount = input.readVarIntToInt()
+
             val outputs: MutableList<AssetOutput> = mutableListOf()
             for (i in 0 until outputCount) {
                 outputs.add(AssetOutput.fromBytesInput(input))
@@ -79,7 +81,7 @@ class AssetGroup(
         }
 
         private fun deserializeMetadataList(input: ByteArrayInput): List<AssetMetadata> {
-            val count = input.readVarInt().toInt()
+            val count = input.readVarIntToInt()
             val metadata: MutableList<AssetMetadata> = mutableListOf()
             for (i in 0 until count) {
                 metadata.add(AssetMetadata.fromBytesInput(input))
