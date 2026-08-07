@@ -11,7 +11,7 @@ data class RegisterIntentMessage(
     val onChainOutputsIndexes: List<Int>,
     @SerialName("valid_at")
     val validAt: Long,
-    @SerialName("expires_at")
+    @SerialName("expire_at")
     val expiresAt: Long,
     @SerialName("cosigners_public_keys")
     val cosignersPublicKeys: List<String>,
@@ -24,7 +24,7 @@ data class RegisterIntentMessage(
 @Serializable
 data class DeleteIntentMessage(
     val type: String,
-    @SerialName("expires_at")
+    @SerialName("expire_at")
     val expiresAt: Long,
 ) {
     companion object {
