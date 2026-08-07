@@ -27,14 +27,18 @@ fun ByteArrayInput.readVarInt(): ULong {
 
 fun ByteArrayInput.readVarIntToInt(): Int {
     val varInt = readVarInt()
-    require(varInt <= Int.MAX_VALUE.toULong()) { "VarInt is too big" }
+    require(varInt <= Int.MAX_VALUE.toULong()) { "VarInt is too big, expected $varInt <= ${Int.MAX_VALUE}" }
     return varInt.toInt()
 }
 
+fun ByteArrayInput.readVarIntToLong(): Long {
+    val varInt = readVarInt()
+    require(varInt <= Long.MAX_VALUE.toULong()) { "VarInt is too big, expected $varInt <= ${Long.MAX_VALUE}" }
+    return varInt.toLong()
+}
+
 fun ByteArrayInput.readVarBytes(): ByteArray? {
-    val varIntSize = readVarInt()
-    require(varIntSize <= Int.MAX_VALUE.toULong()) { "VarInt is too big" }
-    val size = varIntSize.toInt()
+    val size = readVarIntToInt()
     require(size in 0..availableBytes) { "Invalid size for var bytes: $size" }
     return readNBytes(size)
 }

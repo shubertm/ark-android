@@ -28,7 +28,7 @@ class AssetOutput(
             require(type == Type.LOCAL.toByte()) { "invalid asset output type: $type" }
 
             val vout = input.readUInt16LE()
-            val amount = input.readVarInt().toLong()
+            val amount = input.readVarIntToLong()
             val output = AssetOutput(vout, amount)
             output.validate()
             return output

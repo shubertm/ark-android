@@ -31,13 +31,13 @@ class AssetInput(
             when (val type = Type.fromByte(input.read().toByte())) {
                 Type.LOCAL -> {
                     val vin = input.readUInt16LE()
-                    val amount = input.readVarInt().toLong()
+                    val amount = input.readVarIntToLong()
                     AssetInput(Type.LOCAL, vin, amount)
                 }
                 Type.INTENT -> {
                     val txId = input.readNBytes(TX_HASH_SIZE)
                     val vin = input.readUInt16LE()
-                    val amount = input.readVarInt().toLong()
+                    val amount = input.readVarIntToLong()
                     AssetInput(Type.INTENT, vin, amount, txId)
                 }
                 Type.UNSPECIFIED -> throw IllegalArgumentException("Asset input type unspecified")
