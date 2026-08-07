@@ -80,13 +80,9 @@ object TreeValidator {
 
         val batchOutputIndex = rootInput.outPoint.index
 
-        if (graph.root.outputs.size <= batchOutputIndex) {
+        if (roundTxPSBT.global.tx.txOut.size <= batchOutputIndex) {
             throw Errors.InvalidRoundTxOutputs()
         }
-
-        val batchOutputAmount =
-            roundTxPSBT.global.tx.txOut[batchOutputIndex.toInt()]
-                .amount.sat
 
         val leaves = graph.leaves()
         if (leaves.isEmpty()) {
