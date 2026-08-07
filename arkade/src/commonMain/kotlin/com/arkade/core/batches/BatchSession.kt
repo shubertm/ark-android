@@ -230,8 +230,14 @@ class BatchSession(
         val signedCommitmentTx = signedCommitmentPSBT?.global?.tx
 
         if (signedForfeitTxs.isNotEmpty() || signedCommitmentTx != null) {
-            val signedCommitmentTxBytes = Transaction.write(signedCommitmentTx!!)
-            val signedCommitmentTxBase64 = Base64.encode(signedCommitmentTxBytes)
+            val signedCommitmentTxBase64 =
+                if (signedCommitmentTx != null) {
+                    val signedCommitmentTxBytes = Transaction.write(signedCommitmentTx)
+                    Base64.encode(signedCommitmentTxBytes)
+                } else {
+                    null
+                }
+
             client.submitForfeitTxs(signedForfeitTxs, signedCommitmentTxBase64)
         }
     }
