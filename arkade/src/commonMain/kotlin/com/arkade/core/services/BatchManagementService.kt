@@ -8,11 +8,14 @@ import com.arkade.core.wallet.Wallet
 import com.arkade.network.ArkadeClient
 import com.arkade.repositories.contracts.ContractRepo
 import com.arkade.utils.Log
+import com.arkade.utils.debug
 import com.arkade.utils.error
 import com.arkade.utils.info
 import com.arkade.utils.warning
 import fr.acinq.bitcoin.Crypto.sha256
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -27,10 +30,18 @@ class BatchManagementService(
     private val batchIdToIntentIds = mutableMapOf<String, HashSet<String>>()
 
     suspend fun start() {
+        Log.debug(LOG_TAG, "Starting an event stream")
+
+        streamId = null
+        // Get all topics
+
         client
             .getBatchEventStream()
-            .catch { exception ->
-                Log.error(LOG_TAG, "Errors in batch stream: $exception")
+            .retryWhen { cause, _ ->
+                if (cause is CancellationException) throw cause
+                Log.error(LOG_TAG, "Error in batch event stream, restarting in 5 seconds")
+                delay(EVENT_STREAM_RETRY_DELAY)
+                true
             }.collect { event ->
                 processEvent(event)
             }
@@ -202,5 +213,6 @@ class BatchManagementService(
 
     companion object {
         private const val LOG_TAG = "BatchManagementService"
+        private const val EVENT_STREAM_RETRY_DELAY: Long = 5000
     }
 }

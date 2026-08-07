@@ -168,7 +168,7 @@ class ArkadeClientImpl(
     }
 
     override fun getBatchEventStream(): Flow<BatchEvent> {
-        val request = GetEventStreamRequest()
+        val request = GetEventStreamRequest() // Supply topics
         return channelFlow {
             val receiveChannel =
                 arkadeServiceClient.GetEventStream().bidirectionalStream(
