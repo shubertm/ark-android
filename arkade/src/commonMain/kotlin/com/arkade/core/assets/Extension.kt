@@ -21,7 +21,12 @@ class Extension(
         private val ArkadeMagic = byteArrayOf(0x41, 0x52, 0x4B)
 
         fun isExtension(script: ByteArray): Boolean {
-            val script = Script.parse(script)
+            val script =
+                try {
+                    Script.parse(script)
+                } catch (_: Exception) {
+                    return false
+                } // Safe to say any broken script is not an extension
             if (
                 script.isEmpty() ||
                 script.size < 2 ||

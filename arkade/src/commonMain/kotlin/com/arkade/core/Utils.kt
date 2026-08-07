@@ -106,7 +106,12 @@ fun checkSha256Hash(hash: String): Boolean {
 }
 
 fun TxOut.isUnSpendable(): Boolean {
-    val scriptPubKey = Script.parse(publicKeyScript)
+    val scriptPubKey =
+        try {
+            Script.parse(publicKeyScript)
+        } catch (e: Exception) {
+            throw e
+        } // Better to throw than blindly assume a broken script is a spendable output
     return scriptPubKey.isNotEmpty() && scriptPubKey[0] == OP_RETURN
 }
 
