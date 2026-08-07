@@ -29,13 +29,13 @@ interface Signer {
      *
      * @param descriptor The output descriptor identifying which key to sign with.
      * @param psbt The PSBT to sign.
-     * @param inputIndices The indexes of the inputs to sign; if empty, all inputs are signed.
+     * @param inputIndexes The indexes of the inputs to sign; if empty, all inputs are signed.
      * @return The fully signed [Transaction].
      */
     suspend fun sign(
         descriptor: String,
         psbt: Psbt,
-        inputIndices: Array<Int>,
+        inputIndexes: Array<Int>,
     ): Transaction
 
     /**
@@ -129,21 +129,21 @@ SignerImpl : Signer {
      *
      * @param descriptor The output descriptor identifying which key to sign with.
      * @param psbt The PSBT to sign.
-     * @param inputIndices The indexes of the inputs to sign; if empty, all inputs are signed.
+     * @param inputIndexes The indexes of the inputs to sign; if empty, all inputs are signed.
      * @return The fully signed [Transaction].
      * @throws IllegalStateException if signing any of the targeted inputs fails.
      */
     override suspend fun sign(
         descriptor: String,
         psbt: Psbt,
-        inputIndices: Array<Int>,
+        inputIndexes: Array<Int>,
     ): Transaction {
         var signedTx = psbt
         val indices =
-            if (inputIndices.isEmpty()) {
+            if (inputIndexes.isEmpty()) {
                 signedTx.inputs.indices
             } else {
-                inputIndices.asList()
+                inputIndexes.asList()
             }
 
         signedTx = signAll(signedTx, indices)

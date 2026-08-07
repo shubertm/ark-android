@@ -5,9 +5,12 @@ import com.arkade.core.encodePubKeyByNetwork
 import com.arkade.core.wallet.Wallet.Companion.getAccountKeyPath
 import com.arkade.core.wallet.Wallet.Companion.masterKeyFromSecret
 import fr.acinq.bitcoin.ByteVector32
+import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.PrivateKey
 import fr.acinq.bitcoin.PublicKey
+import fr.acinq.bitcoin.ScriptTree
 import fr.acinq.bitcoin.Transaction
+import fr.acinq.bitcoin.TxOut
 import fr.acinq.bitcoin.XonlyPublicKey
 import fr.acinq.bitcoin.crypto.musig2.IndividualNonce
 import fr.acinq.bitcoin.crypto.musig2.SecretNonce
@@ -51,11 +54,21 @@ class HDSigner private constructor(
     override suspend fun sign(
         descriptor: String,
         psbt: Psbt,
-        inputIndices: Array<Int>,
+        inputIndexes: Array<Int>,
     ): Transaction =
         mutex.withLock {
             deriveChildPrivateKey(descriptor)
-            super.sign(descriptor, psbt, inputIndices)
+            super.sign(descriptor, psbt, inputIndexes)
+        }
+
+    override suspend fun sign(
+        descriptor: String,
+        psbt: Psbt,
+        outpoints: Array<OutPoint>,
+    ): Transaction =
+        mutex.withLock {
+            deriveChildPrivateKey(descriptor)
+            super.sign(descriptor, psbt, outpoints)
         }
 
     /**
@@ -74,6 +87,30 @@ class HDSigner private constructor(
         mutex.withLock {
             deriveChildPrivateKey(descriptor)
             super.signMessage(descriptor, message, signatureType)
+        }
+
+    override suspend fun signMusig(
+        descriptor: String,
+        tx: Transaction,
+        inputs: List<TxOut>,
+        inputIndex: Int,
+        privNonce: SecretNonce,
+        pubKeys: List<PublicKey>,
+        pubNonces: List<IndividualNonce>,
+        scriptTree: ScriptTree?,
+    ): ByteVector32 =
+        mutex.withLock {
+            deriveChildPrivateKey(descriptor)
+            super.signMusig(
+                descriptor,
+                tx,
+                inputs,
+                inputIndex,
+                privNonce,
+                pubKeys,
+                pubNonces,
+                scriptTree,
+            )
         }
 
     override suspend fun signerSession(): SignerSession {
