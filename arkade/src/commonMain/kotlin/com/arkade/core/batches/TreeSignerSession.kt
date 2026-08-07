@@ -29,85 +29,11 @@ class TreeSignerSession(
     private val treeNonces: MutableMap<ByteVector32, List<IndividualNonce>> = mutableMapOf()
     private val aggregatedNonces: MutableMap<ByteVector32, AggregatedNonce> = mutableMapOf()
 
-    suspend fun generateNonces(): Map<ByteVector32, Pair<SecretNonce, IndividualNonce>> {
-        if (myNonces != null) {
-            throw UnsupportedOperationException("Nonces already generated")
-        }
-        val signer = wallet.signer
-        val myPubKey = signer.xOnlyPublicKey(descriptor)
-
-        val myNonces: MutableMap<ByteVector32, Pair<SecretNonce, IndividualNonce>> = mutableMapOf()
-
-        graph.forEach { node ->
-            val tx = node.root.global.tx
-            val txId = tx.txid
-
-            val cosignersKeys = node.getCosignerPubKeys()
-
-            if (cosignersKeys.all { it.xOnly() != myPubKey }) {
-                return@forEach
-            }
-
-            val prevOut = getPrevOutput(node, graph)
-            val tapLeaf = tapScriptTree.findScript(prevOut.publicKeyScript)?.hash()
-            if (tapLeaf == null) {
-                Log.warning(LOG_TAG, "Tap leaf not found")
-                return@forEach
-            }
-
-            val sigHash =
-                tx.hashForSigningTaprootScriptPath(
-                    0,
-                    listOf(prevOut),
-                    SigHash.SIGHASH_DEFAULT,
-                    tapLeaf,
-                )
-
-            val nonce =
-                signer.generateNonce(
-                    txId.value,
-                    descriptor,
-                    cosignersKeys,
-                    sigHash,
-                )
-            myNonces[txId.value] = nonce
-        }
-        return myNonces
-    }
-
     suspend fun getNonces(): Map<ByteVector32, IndividualNonce> {
         if (myNonces == null) {
             myNonces = generateNonces()
         }
         return myNonces?.mapValues { it.value.second }!!
-    }
-
-    private fun getPrevOutput(
-        graph: TxTree,
-        rootGraph: TxTree,
-    ): TxOut {
-        val cosignerKeys = graph.getCosignerPubKeys()
-
-        val aggregatedKey = Musig2.aggregateKeys(cosignerKeys)
-
-        val txId = graph.root.global.tx.txid
-
-        val scriptPubKey = Script.pay2tr(aggregatedKey, tapScriptTreeRoot)
-
-        if (txId == rootGraph.root.global.tx.txid) {
-            return TxOut(rootSharedOutputAmount.sat(), scriptPubKey)
-        }
-
-        val tx = graph.root.global.tx
-        val parentInput = tx.txIn[0]
-        val parentTxId = parentInput.outPoint.txid
-        val parent =
-            rootGraph.find(parentTxId)
-                ?: throw UnsupportedOperationException("Parent tx not found: $parentTxId")
-
-        val parentOutput = parent.root.global.tx.txOut[parentInput.outPoint.index.toInt()]
-
-        return TxOut(parentOutput.amount, scriptPubKey)
     }
 
     fun aggregateNonces(
@@ -161,6 +87,80 @@ class TreeSignerSession(
             signatures[txId] = signature
         }
         return signatures
+    }
+
+    private suspend fun generateNonces(): Map<ByteVector32, Pair<SecretNonce, IndividualNonce>> {
+        if (myNonces != null) {
+            throw UnsupportedOperationException("Nonces already generated")
+        }
+        val signer = wallet.signer
+        val myPubKey = signer.xOnlyPublicKey(descriptor)
+
+        val newNonces: MutableMap<ByteVector32, Pair<SecretNonce, IndividualNonce>> = mutableMapOf()
+
+        graph.forEach { node ->
+            val tx = node.root.global.tx
+            val txId = tx.txid
+
+            val cosignersKeys = node.getCosignerPubKeys()
+
+            if (cosignersKeys.all { it.xOnly() != myPubKey }) {
+                return@forEach
+            }
+
+            val prevOut = getPrevOutput(node, graph)
+            val tapLeaf = tapScriptTree.findScript(prevOut.publicKeyScript)?.hash()
+            if (tapLeaf == null) {
+                Log.warning(LOG_TAG, "Tap leaf not found")
+                return@forEach
+            }
+
+            val sigHash =
+                tx.hashForSigningTaprootScriptPath(
+                    0,
+                    listOf(prevOut),
+                    SigHash.SIGHASH_DEFAULT,
+                    tapLeaf,
+                )
+
+            val nonce =
+                signer.generateNonce(
+                    txId.value,
+                    descriptor,
+                    cosignersKeys,
+                    sigHash,
+                )
+            newNonces[txId.value] = nonce
+        }
+        return newNonces
+    }
+
+    private fun getPrevOutput(
+        graph: TxTree,
+        rootGraph: TxTree,
+    ): TxOut {
+        val cosignerKeys = graph.getCosignerPubKeys()
+
+        val aggregatedKey = Musig2.aggregateKeys(cosignerKeys)
+
+        val txId = graph.root.global.tx.txid
+
+        val scriptPubKey = Script.pay2tr(aggregatedKey, tapScriptTreeRoot)
+
+        if (txId == rootGraph.root.global.tx.txid) {
+            return TxOut(rootSharedOutputAmount.sat(), scriptPubKey)
+        }
+
+        val tx = graph.root.global.tx
+        val parentInput = tx.txIn[0]
+        val parentTxId = parentInput.outPoint.txid
+        val parent =
+            rootGraph.find(parentTxId)
+                ?: throw UnsupportedOperationException("Parent tx not found: $parentTxId")
+
+        val parentOutput = parent.root.global.tx.txOut[parentInput.outPoint.index.toInt()]
+
+        return TxOut(parentOutput.amount, scriptPubKey)
     }
 
     private suspend fun signPartial(nodeTxTree: TxTree): ByteVector32 {
