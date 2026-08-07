@@ -25,7 +25,6 @@ import fr.acinq.bitcoin.TxId
 import fr.acinq.bitcoin.TxOut
 import fr.acinq.bitcoin.crypto.musig2.IndividualNonce
 import fr.acinq.bitcoin.psbt.Psbt
-import fr.acinq.bitcoin.utils.getOrDefault
 import fr.acinq.bitcoin.utils.getOrElse
 import kotlin.io.encoding.Base64
 
@@ -246,16 +245,16 @@ class BatchSession(
 
     override suspend fun onTreeSigningStarted(event: BatchEvent.TreeSigningStartedEvent): TreeSignerSession {
         val vtxoGraph = TxTree.create(vtxos)
-        val commitmentTx = Psbt.read(event.unsignedCommitmentTx.encodeToByteArray()).getOrDefault(null)
-        if (commitmentTx != null) {
-            TreeValidator.validateVtxoTxGraph(vtxoGraph, commitmentTx, sweepTapTree.hash())
+        val commitmentTx =
+            Psbt.read(event.unsignedCommitmentTx.encodeToByteArray()).getOrElse {
+                throw UnsupportedOperationException("Failed to read commitment tx")
+            }
 
-            validateIntentOutputs(vtxoGraph, commitmentTx)
-        }
-        val sharedOutput = commitmentTx?.global?.tx?.txOut[0]
-        if (sharedOutput?.amount == null) {
-            throw UnsupportedOperationException("Shared output not found in commitment transaction")
-        }
+        TreeValidator.validateVtxoTxGraph(vtxoGraph, commitmentTx, sweepTapTree.hash())
+
+        validateIntentOutputs(vtxoGraph, commitmentTx)
+
+        val sharedOutput = commitmentTx.global.tx.txOut[0]
 
         val signerSession =
             TreeSignerSession(
