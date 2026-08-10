@@ -44,11 +44,11 @@ interface ContractDao {
         "SELECT * FROM contracts " +
             "WHERE " +
             "(:walletIds IS NULL OR walletId IN (:walletIds)) " +
-            "OR " +
+            "AND " +
             "(:scripts IS NULL OR scriptPubKey IN (:scripts)) " +
-            "OR " +
+            "AND " +
             "(:contractTypes IS NULL OR type IN (:contractTypes)) " +
-            "OR " +
+            "AND " +
             "(:state IS NULL OR state = :state)",
     )
     suspend fun getAll(

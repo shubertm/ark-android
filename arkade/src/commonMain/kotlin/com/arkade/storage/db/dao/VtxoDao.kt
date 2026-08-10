@@ -15,7 +15,7 @@ interface VtxoDao {
         "SELECT * FROM vtxos " +
             "WHERE " +
             "(:outpoints IS NULL OR outpoint IN (:outpoints)) " +
-            "OR " +
+            "AND " +
             "(:includeSpent IS NULL OR isSpent = :includeSpent)",
     )
     suspend fun getAll(
