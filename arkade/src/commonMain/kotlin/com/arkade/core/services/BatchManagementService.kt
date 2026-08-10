@@ -37,11 +37,12 @@ class BatchManagementService(
 
         client
             .getBatchEventStream()
-            .retryWhen { cause, _ ->
+            .retryWhen { cause, retries ->
                 if (cause is CancellationException) throw cause
+
                 Log.error(LOG_TAG, "Error in batch event stream, restarting in 5 seconds")
                 delay(EVENT_STREAM_RETRY_DELAY)
-                true
+                retries <= 7
             }.collect { event ->
                 processEvent(event)
             }
