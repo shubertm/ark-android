@@ -48,8 +48,10 @@ class Packet(
             require(input.availableBytes > 0) { "Missing packet bytes" }
 
             val count = input.readVarIntToInt()
+
             val groups: MutableList<AssetGroup> = mutableListOf()
             for (i in 0 until count) {
+                require(input.availableBytes > 0) { "Missing group bytes" }
                 groups.add(AssetGroup.fromBytesInput(input))
             }
 
