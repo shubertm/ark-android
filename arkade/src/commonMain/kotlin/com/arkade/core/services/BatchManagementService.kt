@@ -70,8 +70,8 @@ class BatchManagementService(
 
         val selectedIntents =
             try {
-                event.intentIdHashes.map { intentHash ->
-                    intentHashMap.getValue(intentHash)
+                event.intentIdHashes.mapNotNull { intentHash ->
+                    intentHashMap[intentHash]
                 }
             } catch (e: Exception) {
                 throw e
