@@ -78,7 +78,6 @@ class ContractRepoImpl(
                 contractTypes,
                 isActive,
             )
-        require(contractEntities.isNotEmpty()) { "No contracts found" }
         return contractEntities.map {
             contractParser.parse(it.additionalData, it.type, it.walletId)
         }
