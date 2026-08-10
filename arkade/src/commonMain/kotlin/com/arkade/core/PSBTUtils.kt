@@ -34,6 +34,8 @@ fun Input.getArkFieldsCosigners(): List<CosignerPublicKeyData> {
     return this.unknown
         .filter { (key, _) -> key.toByteArray().startsWith(cosignerPrefix) }
         .map { (key, value) ->
+            val keyBytes = key.toByteArray()
+            require(keyBytes.size > cosignerPrefix.size) { "Invalid cosigner key, missing index byte" }
             val index = key.toByteArray().last()
             CosignerPublicKeyData(index, PublicKey(value))
         }
