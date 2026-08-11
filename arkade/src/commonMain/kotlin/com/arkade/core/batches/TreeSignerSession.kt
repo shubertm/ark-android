@@ -2,8 +2,6 @@ package com.arkade.core.batches
 
 import com.arkade.core.getArkFieldsCosigners
 import com.arkade.core.wallet.Wallet
-import com.arkade.utils.Log
-import com.arkade.utils.warning
 import fr.acinq.bitcoin.ByteVector32
 import fr.acinq.bitcoin.PublicKey
 import fr.acinq.bitcoin.Script
@@ -109,18 +107,12 @@ class TreeSignerSession(
             }
 
             val prevOut = getPrevOutput(node, graph)
-            val tapLeaf = tapScriptTree.findScript(prevOut.publicKeyScript)?.hash()
-            if (tapLeaf == null) {
-                Log.warning(LOG_TAG, "Tap leaf not found")
-                return@forEach
-            }
 
             val sigHash =
-                tx.hashForSigningTaprootScriptPath(
+                tx.hashForSigningTaprootKeyPath(
                     0,
                     listOf(prevOut),
                     SigHash.SIGHASH_DEFAULT,
-                    tapLeaf,
                 )
 
             val nonce =
