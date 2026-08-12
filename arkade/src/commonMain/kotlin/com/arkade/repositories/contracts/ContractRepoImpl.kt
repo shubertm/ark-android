@@ -59,11 +59,10 @@ class ContractRepoImpl(
     }
 
     /**
-     * Fetches all [ContractEntity] rows for the given wallet and parses each back to an [ArkContract].
+     * Fetches all [ContractEntity] rows for the given wallets and parses each back to an [ArkContract].
      *
-     * @param walletId the identifier of the wallet whose contracts should be retrieved.
-     * @return a non-empty list of contracts for the given wallet.
-     * @throws IllegalArgumentException if no contracts are stored for [walletId].
+     * @param walletIds the identifiers of the wallets whose contracts should be retrieved.
+     * @return a non-empty list of contracts for the given wallets.
      */
     override suspend fun getAll(
         walletIds: Array<String>?,

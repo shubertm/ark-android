@@ -1,6 +1,5 @@
 package com.arkade.core.batches
 
-import ark.v1.TreeNoncesAggregatedEvent
 import com.arkade.core.ArkServerInfo
 import com.arkade.core.ArkTransactionBuilder
 import com.arkade.core.assets.Extension
