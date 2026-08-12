@@ -29,6 +29,8 @@ class BatchManagementService(
     private val activeBatchSessions: MutableMap<String, BatchSession> = mutableMapOf()
     private val batchIdToIntentIds = mutableMapOf<String, HashSet<String>>()
 
+    private val batchMutex = Mutex()
+
     suspend fun start() {
         Log.debug(LOG_TAG, "Starting an event stream")
 
@@ -165,13 +167,15 @@ class BatchManagementService(
 
             batchSession.init()
 
-            activeBatchSessions[intentId] = batchSession
+            val batchIntentIds =
+                batchIdToIntentIds.getOrPut(event.id) {
+                    hashSetOf()
+                }
 
-            val batchIntentIds = hashSetOf<String>()
-            Mutex().withLock {
+            batchMutex.withLock {
                 batchIntentIds.add(intentId)
+                activeBatchSessions[intentId] = batchSession
             }
-            batchIdToIntentIds[event.id] = batchIntentIds
 
             try {
                 client.confirmIntentRegistration(intentId)

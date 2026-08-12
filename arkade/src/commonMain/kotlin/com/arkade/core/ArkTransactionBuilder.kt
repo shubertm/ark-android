@@ -60,10 +60,9 @@ class ArkTransactionBuilder {
                     sequence = coin.sequence ?: 0,
                 )
             val connectorInput =
-                connector?.publicKeyScript?.let {
+                connector?.let {
                     TxIn(
                         outPoint = OutPoint(connectorTxId, 0),
-                        signatureScript = it,
                         sequence = 0,
                     )
                 }
