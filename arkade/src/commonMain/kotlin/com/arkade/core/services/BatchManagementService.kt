@@ -43,15 +43,8 @@ class BatchManagementService(
     private val activeBatchSessions: MutableMap<String, BatchSession> = mutableMapOf()
     private val batchIdToIntentIds = mutableMapOf<String, HashSet<String>>()
 
-    /**
-     * Subscribes to the server's batch event stream and dispatches every event to
-     * [processEvent] until cancelled.
-     *
-     * If the stream fails, it is resubscribed after a [EVENT_STREAM_RETRY_DELAY] delay, up to
-     * 8 attempts; a [CancellationException] is rethrown immediately without retrying. This
-     * function suspends for as long as the stream is being collected and does not return
-     * normally under regular operation.
-     */
+    private val batchMutex = Mutex()
+
     suspend fun start() {
         Log.debug(LOG_TAG, "Starting an event stream")
 
@@ -225,13 +218,15 @@ class BatchManagementService(
 
             batchSession.init()
 
-            activeBatchSessions[intentId] = batchSession
+            val batchIntentIds =
+                batchIdToIntentIds.getOrPut(event.id) {
+                    hashSetOf()
+                }
 
-            val batchIntentIds = hashSetOf<String>()
-            Mutex().withLock {
+            batchMutex.withLock {
                 batchIntentIds.add(intentId)
+                activeBatchSessions[intentId] = batchSession
             }
-            batchIdToIntentIds[event.id] = batchIntentIds
 
             try {
                 client.confirmIntentRegistration(intentId)

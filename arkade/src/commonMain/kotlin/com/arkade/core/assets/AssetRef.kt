@@ -64,11 +64,11 @@ class AssetRef(
             return when (type) {
                 Type.BY_ID -> {
                     val assetId = AssetId.fromBytesInput(input)
-                    AssetRef(Type.BY_ID, assetId = assetId, null)
+                    AssetRef(Type.BY_ID, assetId = assetId, groupIndex = null)
                 }
                 Type.BY_GROUP -> {
                     val groupIndex = input.readUInt16LE()
-                    AssetRef(Type.BY_GROUP, null, groupIndex = groupIndex)
+                    AssetRef(Type.BY_GROUP, assetId = null, groupIndex = groupIndex)
                 }
                 Type.UNSPECIFIED -> throw IllegalArgumentException("Asset ref type unspecified")
             }
