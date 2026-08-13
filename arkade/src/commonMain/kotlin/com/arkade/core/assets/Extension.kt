@@ -7,9 +7,17 @@ import fr.acinq.bitcoin.io.ByteArrayInput
 import fr.acinq.bitcoin.io.ByteArrayOutput
 import fr.acinq.bitcoin.io.readNBytes
 
+/**
+ * An Arkade protocol extension embedded in a transaction output's `OP_RETURN` script, carrying
+ * one or more [ExtensionPacket]s identified by the [ArkadeMagic] prefix.
+ *
+ * @property packets The packets carried by this extension, each with a unique
+ * [ExtensionPacket.type].
+ */
 class Extension(
     private val packets: List<ExtensionPacket>,
 ) {
+    /** Returns the asset [Packet] carried by this extension, or `null` if none is present. */
     fun getAssetPacket(): Packet? {
         packets.forEach { packet ->
             if (packet is Packet) return packet
@@ -20,6 +28,15 @@ class Extension(
     companion object {
         private val ArkadeMagic = byteArrayOf(0x41, 0x52, 0x4B)
 
+        /**
+         * Checks whether [script] looks like an Arkade extension script, i.e. an `OP_RETURN`
+         * followed by an `OP_PUSHDATA` whose data starts with [ArkadeMagic].
+         *
+         * @param script The raw output script to inspect.
+         * @return `true` if [script] parses and matches the expected prefix; `false` if it fails
+         * to parse, is too short, does not start with `OP_RETURN`, or its data does not start
+         * with [ArkadeMagic]. This function never throws.
+         */
         fun isExtension(script: ByteArray): Boolean {
             val script =
                 try {
@@ -41,6 +58,15 @@ class Extension(
             return data.take(ArkadeMagic.size).contentEquals(ArkadeMagic)
         }
 
+        /**
+         * Parses an [Extension] from a raw `OP_RETURN` output [script].
+         *
+         * @param script The raw output script, expected to start with `OP_RETURN`.
+         * @return The parsed [Extension].
+         * @throws IllegalArgumentException if [script] does not parse, is empty, or does not
+         * start with `OP_RETURN`, or if the concatenated `OP_PUSHDATA` payload is not a valid
+         * extension payload (see [fromPayload]).
+         */
         fun fromScript(script: ByteArray): Extension {
             val script = Script.parse(script)
             require(script.isNotEmpty()) { "Missing OP_RETURN" }
@@ -56,6 +82,17 @@ class Extension(
             return fromPayload(payload.toByteArray())
         }
 
+        /**
+         * Parses an [Extension] from a decoded `OP_RETURN` [payload]: the [ArkadeMagic] prefix
+         * followed by a sequence of packets, each encoded as a type byte and a var-length body
+         * (see [readVarBytes]).
+         *
+         * @param payload The raw payload bytes, excluding script opcodes.
+         * @return The parsed [Extension].
+         * @throws IllegalArgumentException if [payload] is shorter than [ArkadeMagic], does not
+         * start with [ArkadeMagic], contains a malformed packet, contains no packets, or contains
+         * two packets with the same [ExtensionPacket.type].
+         */
         private fun fromPayload(payload: ByteArray): Extension {
             val payloadInput = ByteArrayInput(payload)
 
@@ -93,6 +130,15 @@ class Extension(
             return Extension(packets)
         }
 
+        /**
+         * Dispatches a single packet's body to the appropriate [ExtensionPacket] implementation
+         * based on [packetType].
+         *
+         * @param packetType The packet's type byte.
+         * @param packetData The packet's raw body bytes.
+         * @return A [Packet] if [packetType] is [Packet.PACKET_TYPE], otherwise an
+         * [UnknownPacket] wrapping [packetType] and [packetData] unchanged.
+         */
         private fun parsePacket(
             packetType: Byte,
             packetData: ByteArray,

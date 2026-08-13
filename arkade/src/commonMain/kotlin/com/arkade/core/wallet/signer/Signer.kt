@@ -88,6 +88,22 @@ interface Signer {
      */
     fun accountDescriptor(): String
 
+    /**
+     * Generates a MuSig2 nonce pair for the key derived for [descriptor], to be used as this
+     * signer's contribution to a cooperative signing session.
+     *
+     * @param sessionId A value unique to this signing session, used to derive the nonce
+     * alongside the signing key; must not be reused across independent sessions for the same key.
+     * @param descriptor The output descriptor identifying which key to generate a nonce for.
+     * @param pubKeys The public keys of all participants in the signing session, including this
+     * signer's own public key.
+     * @param message The message (typically a sighash) that will be signed, if already known at
+     * nonce generation time; `null` if it will only be known later.
+     * @param extraInput Additional randomness to mix into nonce generation, if any.
+     * @return A pair of the secret nonce, which must be kept private and used only once for
+     * [signMusig], and the corresponding public nonce, which is shared with the other
+     * participants.
+     */
     suspend fun generateNonce(
         sessionId: ByteVector32,
         descriptor: String,
@@ -96,6 +112,29 @@ interface Signer {
         extraInput: ByteVector32? = null,
     ): Pair<SecretNonce, IndividualNonce>
 
+    /**
+     * Produces this signer's MuSig2 partial signature for input [inputIndex] of [tx], using the
+     * key derived for [descriptor].
+     *
+     * [tx], [inputs], [inputIndex], [pubKeys], and [pubNonces] must all be consistent with one
+     * another and with the values used to obtain [privNonce] from [generateNonce]: [inputs] must
+     * be the previous outputs spent by every input of [tx] (in order), [pubKeys] must be the same
+     * set of participant public keys used to generate [privNonce], and [pubNonces] must contain
+     * the aggregated/individual public nonces of all participants for this same session and
+     * input.
+     *
+     * @param descriptor The output descriptor identifying which key to sign with.
+     * @param tx The transaction being signed.
+     * @param inputs The previous outputs spent by each of [tx]'s inputs, in input order.
+     * @param inputIndex The index of the input to produce a partial signature for.
+     * @param privNonce This signer's secret nonce, as previously returned by [generateNonce];
+     * must be used for exactly one [signMusig] call.
+     * @param pubKeys The public keys of all participants in the signing session.
+     * @param pubNonces The public nonces of all participants for this input.
+     * @param scriptTree The Taproot script tree being spent from, if this is a script-path spend;
+     * `null` for a key-path spend.
+     * @return This signer's partial signature over the input.
+     */
     suspend fun signMusig(
         descriptor: String,
         tx: Transaction,
@@ -217,6 +256,21 @@ SignerImpl : Signer {
      */
     override suspend fun xOnlyPublicKey(descriptor: String): XonlyPublicKey = privateKey.xOnlyPublicKey()
 
+    /**
+     * Generates a MuSig2 nonce pair for [privateKey].
+     *
+     * @param sessionId A value unique to this signing session, used to derive the nonce
+     * alongside [privateKey]; must not be reused across independent sessions for the same key.
+     * @param descriptor The output descriptor identifying which key to generate a nonce for.
+     * @param pubKeys The public keys of all participants in the signing session, including this
+     * signer's own public key.
+     * @param message The message (typically a sighash) that will be signed, if already known at
+     * nonce generation time; `null` if it will only be known later.
+     * @param extraInput Additional randomness to mix into nonce generation, if any.
+     * @return A pair of the secret nonce, which must be kept private and used only once for
+     * [signMusig], and the corresponding public nonce, which is shared with the other
+     * participants.
+     */
     override suspend fun generateNonce(
         sessionId: ByteVector32,
         descriptor: String,
@@ -228,6 +282,30 @@ SignerImpl : Signer {
         return Musig2.generateNonce(sessionId, signingKey, pubKeys, message, extraInput)
     }
 
+    /**
+     * Produces a MuSig2 partial signature for input [inputIndex] of [tx] using [privateKey].
+     *
+     * [tx], [inputs], [inputIndex], [pubKeys], and [pubNonces] must all be consistent with one
+     * another and with the values used to obtain [privNonce] from [generateNonce]: [inputs] must
+     * be the previous outputs spent by every input of [tx] (in order), [pubKeys] must be the same
+     * set of participant public keys used to generate [privNonce], and [pubNonces] must contain
+     * the aggregated/individual public nonces of all participants for this same session and
+     * input.
+     *
+     * @param descriptor The output descriptor identifying which key to sign with.
+     * @param tx The transaction being signed.
+     * @param inputs The previous outputs spent by each of [tx]'s inputs, in input order.
+     * @param inputIndex The index of the input to produce a partial signature for.
+     * @param privNonce This signer's secret nonce, as previously returned by [generateNonce];
+     * must be used for exactly one [signMusig] call.
+     * @param pubKeys The public keys of all participants in the signing session.
+     * @param pubNonces The public nonces of all participants for this input.
+     * @param scriptTree The Taproot script tree being spent from, if this is a script-path spend;
+     * `null` for a key-path spend.
+     * @return This signer's partial signature over the input.
+     * @throws Throwable the underlying error thrown by [Musig2.signTaprootInput] if partial
+     * signature generation fails, e.g. due to inconsistent [inputs], [pubKeys], or [pubNonces].
+     */
     override suspend fun signMusig(
         descriptor: String,
         tx: Transaction,

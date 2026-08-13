@@ -2,11 +2,25 @@ package com.arkade.core.assets
 
 import fr.acinq.bitcoin.io.ByteArrayInput
 
+/**
+ * The Arkade asset [ExtensionPacket]: a list of [AssetGroup]s describing the asset issuances and
+ * transfers carried by a transaction.
+ *
+ * @property groups The asset groups carried by this packet; must be non-empty.
+ */
 class Packet(
     val groups: List<AssetGroup>,
 ) : ExtensionPacket {
     override val type: Byte = PACKET_TYPE
 
+    /**
+     * Validates this packet's fields.
+     *
+     * @throws IllegalArgumentException if [groups] is empty; if two groups share the same
+     * non-null [AssetGroup.assetId]; or if a group's [AssetGroup.controlAsset] is a
+     * [AssetRef.Type.BY_GROUP] reference whose [AssetRef.groupIndex] is out of range for
+     * [groups].
+     */
     fun validate() {
         require(groups.isNotEmpty()) { "Missing assets" }
 
@@ -32,18 +46,42 @@ class Packet(
         }
     }
 
+    /**
+     * Not yet implemented.
+     *
+     * @throws NotImplementedError always; there is currently no way to serialize a [Packet] back
+     * to its binary representation.
+     */
     override fun serializePacketData(): ByteArray {
         TODO("Not yet implemented")
     }
 
     companion object {
+        /** The [ExtensionPacket.type] byte identifying an asset [Packet]. */
         const val PACKET_TYPE: Byte = 0x00
 
+        /**
+         * Parses a [Packet] from its complete binary representation.
+         *
+         * @param bytes The packet's raw body bytes, as extracted from an [Extension] payload.
+         * @return The parsed and [validate]d [Packet].
+         * @throws IllegalArgumentException if [bytes] is empty, contains a malformed group, or
+         * has trailing bytes left over after parsing the declared number of groups; or if the
+         * parsed packet fails [validate].
+         */
         fun fromBytes(bytes: ByteArray): Packet {
             val input = ByteArrayInput(bytes)
             return fromBytesInput(input)
         }
 
+        /**
+         * Parses a [Packet] from [input]: a var-int group count followed by that many
+         * [AssetGroup]s, with no trailing bytes permitted afterward.
+         *
+         * @throws IllegalArgumentException if [input] is empty, a group is malformed or missing,
+         * or bytes remain in [input] after reading the declared number of groups; or if the
+         * parsed packet fails [validate].
+         */
         private fun fromBytesInput(input: ByteArrayInput): Packet {
             require(input.availableBytes > 0) { "Missing packet bytes" }
 

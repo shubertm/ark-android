@@ -19,6 +19,20 @@ import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/**
+ * Coordinates the lifecycle of batches on behalf of the wallet's registered intents.
+ *
+ * Consumes the server's batch event stream, matches each new batch to the currently
+ * [activeIntents] it concerns, and creates/derives one [BatchSession] per matched intent to
+ * finalize the batch and cooperatively sign the resulting VTXO tree.
+ *
+ * @property client Used to obtain the batch event stream and server info, and to confirm intent
+ * registrations.
+ * @property wallet Used to look up VTXOs/contracts for an intent's inputs and to sign
+ * transactions on behalf of [BatchSession]s.
+ * @property contractsRepo Used to resolve the [com.arkade.core.contracts.ArkContract] backing
+ * each VTXO referenced by an intent.
+ */
 class BatchManagementService(
     private val client: ArkadeClient,
     private val wallet: Wallet,
@@ -50,6 +64,14 @@ class BatchManagementService(
             }
     }
 
+    /**
+     * Routes [event] to the appropriate handler based on its type.
+     *
+     * [BatchEvent.StreamStartedEvent] records the current [streamId]. A
+     * [BatchEvent.BatchStartedEvent] is matched against [activeIntents] to set up new
+     * [BatchSession]s. Every other event is forwarded to the sessions already associated with
+     * its batch id via [handleBatchEvent].
+     */
     private suspend fun processEvent(event: BatchEvent) {
         when (event) {
             is BatchEvent.StreamStartedEvent -> {
@@ -65,6 +87,17 @@ class BatchManagementService(
         }
     }
 
+    /**
+     * Selects the [activeIntents] concerned by [event] and creates a [BatchSession] for each.
+     *
+     * An intent is selected when the SHA-256 hash of its id is present in
+     * [BatchEvent.BatchStartedEvent.intentIdHashes]. Intents that already have a session in
+     * [activeBatchSessions] are skipped. For each remaining intent, [setupBatchSession] is
+     * called; failures are logged and do not prevent other intents from being set up.
+     *
+     * @param event The batch-started event carrying the hashed ids of the intents included in
+     * the new batch.
+     */
     private suspend fun handleBatchStartedForAllIntents(event: BatchEvent.BatchStartedEvent) {
         val intentHashMap =
             activeIntents.mapKeys { entry ->
@@ -106,6 +139,24 @@ class BatchManagementService(
         }
     }
 
+    /**
+     * Builds and starts a [BatchSession] for [intent]'s VTXOs, then confirms the intent's
+     * registration with the server.
+     *
+     * Loads [intent]'s VTXOs (including already-spent ones, so unrolled/swept coins are still
+     * resolvable) and their backing contracts, converts each to an [com.arkade.core.coins.ArkCoin],
+     * and creates and [BatchSession.init]-ializes a session for them. The session is registered
+     * in [activeBatchSessions] and its batch id is associated with [intent]'s id in
+     * [batchIdToIntentIds] before the registration is confirmed via
+     * [ArkadeClient.confirmIntentRegistration] and the intent is persisted via
+     * [Wallet.saveIntent].
+     *
+     * @param intent The intent whose inputs are being registered in this batch.
+     * @param serverInfo The server info used to resolve each VTXO's script to its contract.
+     * @param event The batch-started event that triggered this session.
+     * @throws IllegalArgumentException if a VTXO or its backing contract cannot be found in
+     * storage.
+     */
     private suspend fun setupBatchSession(
         intent: ArkIntent,
         serverInfo: ArkServerInfo,
@@ -190,6 +241,14 @@ class BatchManagementService(
         }
     }
 
+    /**
+     * Dispatches a non-startup [event] to the [BatchSession]s registered for its batch, via
+     * [BatchEvent.getBatchId] and [batchIdToIntentIds].
+     *
+     * If no intent ids are known for the event's batch id, the event is logged and dropped.
+     *
+     * @param event The batch event to forward to its associated session(s).
+     */
     private suspend fun handleBatchEvent(event: BatchEvent) {
         val batchId = event.getBatchId()
         val intentIds = batchIdToIntentIds[batchId]
@@ -203,6 +262,10 @@ class BatchManagementService(
         }
     }
 
+    /**
+     * Extracts the batch id carried by this event, or `null` for event types not tied to a
+     * specific batch (e.g. [BatchEvent.StreamStartedEvent], [BatchEvent.HeartbeatEvent]).
+     */
     private fun BatchEvent.getBatchId(): String? =
         when (this) {
             is BatchEvent.BatchFinalizedEvent -> id
