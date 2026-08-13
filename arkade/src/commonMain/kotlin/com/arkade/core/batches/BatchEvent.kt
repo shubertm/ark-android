@@ -4,7 +4,7 @@ import kotlin.time.Duration
 
 /**
  * A single event emitted by the server's batch event stream, describing one step of a batch's
- * lifecycle from creation through finalization and VTXO tree signing.
+ * lifecycle from creation through finalization and VTXO tree signing or the event-stream lifecycle.
  *
  * Consumers typically process these in order: [BatchStartedEvent] selects the intents included
  * in a batch, [BatchFinalizationEvent] requests forfeit/commitment signing,
@@ -18,7 +18,7 @@ sealed interface BatchEvent {
      * Emitted when a new batch starts.
      *
      * @property id The id of the batch.
-     * @property batchExpiry The unilateral-exit delay applied to VTXOs produced by this batch.
+     * @property batchExpiry The expiration time applied to VTXOs produced by this batch.
      * @property intentIdHashes The SHA-256 hashes (hex-encoded) of the ids of the intents
      * included in this batch.
      */
@@ -119,6 +119,7 @@ sealed interface BatchEvent {
      */
     class TreeSignatureEvent(
         val id: String,
+        val signature: String,
         val batchIndex: Int,
         val txId: String,
         val topic: List<String>,

@@ -260,6 +260,7 @@ internal fun GetEventStreamResponse.getBatchEvent(): BatchEvent? =
         tree_signature != null ->
             BatchEvent.TreeSignatureEvent(
                 tree_signature.id,
+                tree_signature.signature,
                 tree_signature.batch_index,
                 tree_signature.txid,
                 tree_signature.topic,
