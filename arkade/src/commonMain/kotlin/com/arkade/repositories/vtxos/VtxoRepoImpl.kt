@@ -1,7 +1,7 @@
-package com.arkade.repositories
+package com.arkade.repositories.vtxos
 
 import androidx.room.RoomDatabase
-import com.arkade.core.Vtxo
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.di.ArkadeDI
 import com.arkade.storage.VtxoStorage
 import com.arkade.storage.db.Database
@@ -19,8 +19,15 @@ class VtxoRepoImpl(
         vtxoStorage.save(vtxoEntity)
     }
 
-    override suspend fun getAll(): List<Vtxo.Data> {
-        val vtxoEntities = vtxoStorage.getAll()
+    override suspend fun getAll(
+        outpoints: Array<OutPoint>?,
+        includeSpent: Boolean?,
+    ): List<Vtxo.Data> {
+        val vtxoEntities =
+            vtxoStorage.getAll(
+                outpoints?.map { it.toString() }?.toTypedArray(),
+                includeSpent,
+            )
         return vtxoEntities.map { it.toVtxo() }
     }
 

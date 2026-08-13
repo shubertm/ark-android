@@ -24,7 +24,10 @@ interface ArkContractParser {
      * @return the parsed [ArkContract] instance.
      * @throws IllegalArgumentException if required keys are missing or data is invalid.
      */
-    fun parse(data: Map<String, String>): ArkContract
+    fun parse(
+        data: Map<String, String>,
+        walletId: String,
+    ): ArkContract
 
     companion object {
         /**

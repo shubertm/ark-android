@@ -19,17 +19,18 @@ import com.arkade.core.ArkServerInfo
 import com.arkade.core.Error
 import com.arkade.core.LockedVTXOException
 import com.arkade.core.SpentVTXOException
-import com.arkade.core.Vtxo
 import com.arkade.core.assets.Asset
 import com.arkade.core.batches.BatchEvent
 import com.arkade.core.bitcoin.Address
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.fees.FeeInfo
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.toBlockHeight
 import com.arkade.core.txs.ArkTransaction
 import com.arkade.core.txs.Notification
 import com.arkade.core.txs.Transaction
 import com.arkade.core.txs.TxEvent
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.network.ArkadeClient
 import com.arkade.network.Config
 import com.ionspin.kotlin.bignum.decimal.BigDecimal
@@ -167,7 +168,7 @@ class ArkadeClientImpl(
     }
 
     override fun getBatchEventStream(): Flow<BatchEvent> {
-        val request = GetEventStreamRequest()
+        val request = GetEventStreamRequest() // Supply topics
         return channelFlow {
             val receiveChannel =
                 arkadeServiceClient.GetEventStream().bidirectionalStream(
@@ -259,6 +260,7 @@ internal fun GetEventStreamResponse.getBatchEvent(): BatchEvent? =
         tree_signature != null ->
             BatchEvent.TreeSignatureEvent(
                 tree_signature.id,
+                tree_signature.signature,
                 tree_signature.batch_index,
                 tree_signature.txid,
                 tree_signature.topic,
@@ -350,6 +352,7 @@ internal fun ark.v1.Vtxo.getVtxoData(): Vtxo.Data {
         script,
         created_at,
         expires_at,
+        expires_at.toBlockHeight(),
         is_preconfirmed,
         is_swept,
         is_unrolled,

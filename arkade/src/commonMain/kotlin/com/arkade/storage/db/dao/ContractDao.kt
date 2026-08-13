@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.arkade.core.contracts.ContractState
 import com.arkade.storage.db.entities.ContractEntity
 
 /**
@@ -39,8 +40,23 @@ interface ContractDao {
      * @param walletId the wallet identifier to filter by.
      * @return a list of [ContractEntity] instances for the given wallet, or an empty list.
      */
-    @Query("SELECT * FROM contracts WHERE walletId = :walletId")
-    suspend fun getAll(walletId: String): List<ContractEntity>
+    @Query(
+        "SELECT * FROM contracts " +
+            "WHERE " +
+            "(:walletIds IS NULL OR walletId IN (:walletIds)) " +
+            "AND " +
+            "(:scripts IS NULL OR scriptPubKey IN (:scripts)) " +
+            "AND " +
+            "(:contractTypes IS NULL OR type IN (:contractTypes)) " +
+            "AND " +
+            "(:state IS NULL OR state = :state)",
+    )
+    suspend fun getAll(
+        walletIds: Array<String>?,
+        scripts: Array<String>?,
+        contractTypes: Array<String>?,
+        state: ContractState?,
+    ): List<ContractEntity>
 
     /**
      * Deletes all rows from the `contracts` table belonging to [walletId].
@@ -49,4 +65,7 @@ interface ContractDao {
      */
     @Query("DELETE FROM contracts WHERE walletId = :walletId")
     suspend fun deleteAll(walletId: String)
+
+    @Query("DELETE FROM contracts")
+    suspend fun deleteAll()
 }

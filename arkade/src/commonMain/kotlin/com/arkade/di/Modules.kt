@@ -2,14 +2,14 @@ package com.arkade.di
 
 import androidx.room.RoomDatabase
 import com.arkade.core.contracts.ArkContractParserImpl
-import com.arkade.repositories.ContractRepo
-import com.arkade.repositories.ContractRepoImpl
-import com.arkade.repositories.VtxoRepo
-import com.arkade.repositories.VtxoRepoImpl
-import com.arkade.repositories.WalletRepo
-import com.arkade.repositories.WalletRepoImpl
+import com.arkade.repositories.contracts.ContractRepo
+import com.arkade.repositories.contracts.ContractRepoImpl
 import com.arkade.repositories.intents.IntentRepo
 import com.arkade.repositories.intents.IntentRepoImpl
+import com.arkade.repositories.vtxos.VtxoRepo
+import com.arkade.repositories.vtxos.VtxoRepoImpl
+import com.arkade.repositories.wallet.WalletRepo
+import com.arkade.repositories.wallet.WalletRepoImpl
 import com.arkade.storage.ContractStorage
 import com.arkade.storage.ContractStorageImpl
 import com.arkade.storage.IntentStorage

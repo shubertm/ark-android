@@ -4,9 +4,16 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.encodePubKeyByNetwork
 import com.arkade.core.wallet.Wallet.Companion.getAccountKeyPath
 import com.arkade.core.wallet.Wallet.Companion.masterKeyFromSecret
+import fr.acinq.bitcoin.ByteVector32
+import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.PrivateKey
+import fr.acinq.bitcoin.PublicKey
+import fr.acinq.bitcoin.ScriptTree
 import fr.acinq.bitcoin.Transaction
+import fr.acinq.bitcoin.TxOut
 import fr.acinq.bitcoin.XonlyPublicKey
+import fr.acinq.bitcoin.crypto.musig2.IndividualNonce
+import fr.acinq.bitcoin.crypto.musig2.SecretNonce
 import fr.acinq.bitcoin.psbt.Psbt
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -47,11 +54,21 @@ class HDSigner private constructor(
     override suspend fun sign(
         descriptor: String,
         psbt: Psbt,
-        inputIndices: Array<Int>,
+        inputIndexes: Array<Int>,
     ): Transaction =
         mutex.withLock {
             deriveChildPrivateKey(descriptor)
-            super.sign(descriptor, psbt, inputIndices)
+            super.sign(descriptor, psbt, inputIndexes)
+        }
+
+    override suspend fun sign(
+        descriptor: String,
+        psbt: Psbt,
+        outpoints: Array<OutPoint>,
+    ): Transaction =
+        mutex.withLock {
+            deriveChildPrivateKey(descriptor)
+            super.sign(descriptor, psbt, outpoints)
         }
 
     /**
@@ -72,6 +89,30 @@ class HDSigner private constructor(
             super.signMessage(descriptor, message, signatureType)
         }
 
+    override suspend fun signMusig(
+        descriptor: String,
+        tx: Transaction,
+        inputs: List<TxOut>,
+        inputIndex: Int,
+        privNonce: SecretNonce,
+        pubKeys: List<PublicKey>,
+        pubNonces: List<IndividualNonce>,
+        scriptTree: ScriptTree?,
+    ): ByteVector32 =
+        mutex.withLock {
+            deriveChildPrivateKey(descriptor)
+            super.signMusig(
+                descriptor,
+                tx,
+                inputs,
+                inputIndex,
+                privNonce,
+                pubKeys,
+                pubNonces,
+                scriptTree,
+            )
+        }
+
     override suspend fun signerSession(): SignerSession {
         TODO("Not yet implemented")
     }
@@ -82,10 +123,11 @@ class HDSigner private constructor(
      * @param descriptor The output descriptor whose trailing index identifies the child key.
      * @return The corresponding [XonlyPublicKey].
      */
-    override fun xOnlyPublicKey(descriptor: String): XonlyPublicKey {
-        deriveChildPrivateKey(descriptor)
-        return super.xOnlyPublicKey(descriptor)
-    }
+    override suspend fun xOnlyPublicKey(descriptor: String): XonlyPublicKey =
+        mutex.withLock {
+            deriveChildPrivateKey(descriptor)
+            super.xOnlyPublicKey(descriptor)
+        }
 
     /**
      * Builds this wallet's account-level Taproot output descriptor.
@@ -102,6 +144,18 @@ class HDSigner private constructor(
         val accountDescriptor = "tr([$fingerprint/86'/$coinType'/0']$accountPublicKey/0/*)"
         return accountDescriptor
     }
+
+    override suspend fun generateNonce(
+        sessionId: ByteVector32,
+        descriptor: String,
+        pubKeys: List<PublicKey>,
+        message: ByteVector32?,
+        extraInput: ByteVector32?,
+    ): Pair<SecretNonce, IndividualNonce> =
+        mutex.withLock {
+            deriveChildPrivateKey(descriptor)
+            super.generateNonce(sessionId, descriptor, pubKeys, message, extraInput)
+        }
 
     /**
      * Derives the receiving private key for the index encoded in [descriptor]'s trailing

@@ -2,9 +2,9 @@ package com.arkade.storage.db.entities
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.arkade.core.Vtxo
 import com.arkade.core.assets.Asset
 import com.arkade.core.toBlockHeight
+import com.arkade.core.vtxos.Vtxo
 import com.ionspin.kotlin.bignum.decimal.toBigDecimal
 import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.TxId
@@ -42,6 +42,7 @@ data class VtxoEntity(
             script = script,
             createdAt = createdAt,
             expiresAt = expiresAt,
+            expiresAtHeight = expiresAtHeight,
             isPreConfirmed = isPreConfirmed,
             isSwept = isSwept,
             isUnrolled = isUnrolled,

@@ -3,15 +3,15 @@ package com.arkade.core.wallet
 import androidx.room.RoomDatabase
 import com.arkade.core.ArkAddress
 import com.arkade.core.ArkServerInfo
-import com.arkade.core.Vtxo
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.encodePubKeyByNetwork
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.core.wallet.signer.WalletSignerManager
 import com.arkade.di.ArkadeDI
-import com.arkade.repositories.WalletRepo
+import com.arkade.repositories.wallet.WalletRepo
 import com.arkade.storage.db.Database
 import com.arkade.storage.db.entities.WalletEntity
 import fr.acinq.bitcoin.Bech32
@@ -19,6 +19,7 @@ import fr.acinq.bitcoin.Crypto
 import fr.acinq.bitcoin.DeterministicWallet
 import fr.acinq.bitcoin.KeyPath
 import fr.acinq.bitcoin.MnemonicCode
+import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.PrivateKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -63,7 +64,7 @@ interface Wallet : WalletSignerManager {
      *
      * @param index The new last-used address index (must be greater than or equal to 0).
      */
-    suspend fun updateLastUsedIndex(index: Int)
+    suspend fun updateLastUsedIndex(index: Int): Boolean
 
     /**
      * Converts this wallet into a Room persistence entity.
@@ -104,7 +105,10 @@ interface Wallet : WalletSignerManager {
 
     suspend fun saveVtxo(vtxo: Vtxo.Data)
 
-    suspend fun getVtxos(): List<Vtxo.Data>
+    suspend fun getVtxos(
+        outpoints: Array<OutPoint>? = null,
+        includeSpent: Boolean? = null,
+    ): List<Vtxo.Data>
 
     suspend fun deleteVtxos()
 
@@ -126,7 +130,12 @@ interface Wallet : WalletSignerManager {
      *
      * @return a list of all contracts associated with this wallet's identifier.
      */
-    suspend fun getContracts(): List<ArkContract>
+    suspend fun getContracts(
+        walletIds: Array<String>? = null,
+        scripts: Array<String>? = null,
+        contractTypes: Array<String>? = null,
+        isActive: Boolean? = null,
+    ): List<ArkContract>
 
     /**
      * Deletes all [ArkContract] instances stored for this wallet.

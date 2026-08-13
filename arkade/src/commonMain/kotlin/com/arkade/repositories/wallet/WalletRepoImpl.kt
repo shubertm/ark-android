@@ -1,16 +1,19 @@
-package com.arkade.repositories
+package com.arkade.repositories.wallet
 
 import androidx.room.RoomDatabase
-import com.arkade.core.Vtxo
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.core.wallet.Wallet
 import com.arkade.di.ArkadeDI
+import com.arkade.repositories.contracts.ContractRepo
 import com.arkade.repositories.intents.IntentRepo
+import com.arkade.repositories.vtxos.VtxoRepo
 import com.arkade.storage.WalletStorage
 import com.arkade.storage.db.Database
+import fr.acinq.bitcoin.OutPoint
 import org.koin.core.parameter.parametersOf
 
 internal class WalletRepoImpl(
@@ -19,6 +22,7 @@ internal class WalletRepoImpl(
     private val storage: WalletStorage = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
     override val vtxoRepo: VtxoRepo = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
     override val contractRepo: ContractRepo = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
+
     override val intentRepo: IntentRepo = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
 
     /**
@@ -80,7 +84,21 @@ internal class WalletRepoImpl(
 
     override suspend fun saveVtxo(vtxo: Vtxo.Data) = vtxoRepo.save(vtxo)
 
-    override suspend fun getVtxos(): List<Vtxo.Data> = vtxoRepo.getAll()
+    override suspend fun saveVtxos(
+        address: String,
+        vtxos: List<Vtxo>,
+    ) {
+        TODO("Not yet implemented")
+    }
+
+    override suspend fun getVtxos(
+        outpoints: Array<OutPoint>?,
+        includeSpent: Boolean?,
+    ): List<Vtxo.Data> =
+        vtxoRepo.getAll(
+            outpoints,
+            includeSpent,
+        )
 
     override suspend fun deleteVtxos() = vtxoRepo.deleteAll()
 
@@ -114,7 +132,18 @@ internal class WalletRepoImpl(
      * @param walletId the identifier of the wallet whose contracts should be retrieved.
      * @return a list of [ArkContract] instances for the given [walletId].
      */
-    override suspend fun getContracts(walletId: String): List<ArkContract> = contractRepo.getAll(walletId)
+    override suspend fun getContracts(
+        walletIds: Array<String>?,
+        scripts: Array<String>?,
+        contractTypes: Array<String>?,
+        isActive: Boolean?,
+    ): List<ArkContract> =
+        contractRepo.getAll(
+            walletIds,
+            scripts,
+            contractTypes,
+            isActive,
+        )
 
     /**
      * Deletes all contracts belonging to the specified wallet.
@@ -122,6 +151,8 @@ internal class WalletRepoImpl(
      * @param walletId the identifier of the wallet whose contracts should be deleted.
      */
     override suspend fun deleteContracts(walletId: String) = contractRepo.deleteAll(walletId)
+
+    override suspend fun deleteContracts() = contractRepo.deleteAll()
 
     override suspend fun saveIntent(intent: ArkIntent) = intentRepo.save(intent)
 

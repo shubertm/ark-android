@@ -34,7 +34,12 @@ interface ContractStorage {
      * @param walletId the identifier of the wallet whose contracts should be retrieved.
      * @return a list of persisted contract entities for [walletId], or an empty list if none exist.
      */
-    suspend fun getAll(walletId: String): List<ContractEntity>
+    suspend fun getAll(
+        walletIds: Array<String>? = null,
+        scripts: Array<String>? = null,
+        contractTypes: Array<String>? = null,
+        isActive: Boolean? = null,
+    ): List<ContractEntity>
 
     /**
      * Deletes all stored [ContractEntity] rows for the given wallet.
@@ -42,4 +47,6 @@ interface ContractStorage {
      * @param walletId the identifier of the wallet whose contracts should be deleted.
      */
     suspend fun deleteAll(walletId: String)
+
+    suspend fun deleteAll()
 }

@@ -4,10 +4,12 @@ import com.arkade.core.ArkAddress
 import com.arkade.core.UNSPENDABLE_PUBKEY
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.buildScriptTree
+import com.arkade.core.coins.ArkCoin
 import com.arkade.core.taproot.Parity
 import com.arkade.core.taproot.TaprootSpendingInfo
 import com.arkade.core.taproot.pubKeyFromTaprootDescriptor
 import com.arkade.core.toXOnlyPubKey
+import com.arkade.core.vtxos.Vtxo
 
 /**
  * Abstract base class for all Arkade contracts.
@@ -25,6 +27,7 @@ import com.arkade.core.toXOnlyPubKey
  * @param serverDescriptor a Taproot descriptor (e.g. `tr(<xOnlyPubKeyHex>)`) for the Arkade server's public key.
  */
 abstract class ArkContract(
+    val walletId: String,
     protected val serverDescriptor: String,
 ) {
     /**
@@ -128,4 +131,6 @@ abstract class ArkContract(
      * @return a map of contract-specific key/value pairs.
      */
     abstract fun getAdditionalData(): Map<String, String>
+
+    abstract suspend fun toArkCoin(vtxo: Vtxo.Data): ArkCoin
 }

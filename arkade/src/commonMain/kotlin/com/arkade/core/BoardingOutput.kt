@@ -6,6 +6,7 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.bitcoin.Utxo
 import com.arkade.core.taproot.Parity
 import com.arkade.core.taproot.TaprootSpendingInfo
+import com.arkade.core.vtxos.ScriptSpendingPath
 import fr.acinq.bitcoin.ByteVector
 import fr.acinq.bitcoin.OutPoint
 import fr.acinq.bitcoin.Script
@@ -79,7 +80,7 @@ data class BoardingOutput(
     }
 
     /**
-     * @return the script and control block for spending this `UTXO` collaboratively encapsulated in [ScriptSpendingPath]
+     * @return the script and control block for spending this `UTXO` collaboratively encapsulated in [com.arkade.core.vtxos.ScriptSpendingPath]
      */
     fun getForfeitSpendingInfo(): ScriptSpendingPath {
         val script = tapScripts[0].copyOf()

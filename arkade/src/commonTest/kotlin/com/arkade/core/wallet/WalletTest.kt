@@ -2,7 +2,6 @@ package com.arkade.core.wallet
 
 import androidx.room.RoomDatabase
 import com.arkade.core.ArkServerInfo
-import com.arkade.core.Vtxo
 import com.arkade.core.assets.Asset
 import com.arkade.core.bitcoin.Address
 import com.arkade.core.bitcoin.Hrp
@@ -13,11 +12,13 @@ import com.arkade.core.contracts.ArkContractParserImpl
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.intents.ArkIntent
 import com.arkade.core.intents.IntentState
+import com.arkade.core.toBlockHeight
 import com.arkade.core.toXOnlyPubKey
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.core.wallet.Wallet.Companion.masterKeyFromSecret
 import com.arkade.di.ArkadeDI
 import com.arkade.readJsonFile
-import com.arkade.repositories.WalletRepo
+import com.arkade.repositories.wallet.WalletRepo
 import com.arkade.storage.db.Database
 import com.arkade.utils.Log
 import com.arkade.utils.success
@@ -205,10 +206,12 @@ class SingleKeyWalletTest : WalletTest() {
 
             val contractsJson = assertNotNull(validContractsJsonArray, "Missing valid test contracts")
 
-            wallet.deleteContracts()
+            // Clear the database first
+            val db: Database = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
+            db.contractDao().deleteAll()
 
             contractsJson.forEachIndexed { index, contractJson ->
-                val (contract, state) = contractFromJson(contractJson)
+                val (contract, state) = contractFromJson(contractJson, wallet.id)
                 wallet.saveContract(contract, state, Network.TESTNET)
                 val contracts = wallet.getContracts()
                 assertEquals(index + 1, contracts.size)
@@ -267,14 +270,14 @@ class SingleKeyWalletTest : WalletTest() {
             val contractsJson =
                 assertNotNull(invalidContractsJsonArray, "Missing valid test contracts")
 
-            contractsJson.forEachIndexed { index, contractJson ->
+            contractsJson.forEachIndexed { _, contractJson ->
                 val comment =
                     contractJson.jsonObject["comment"]
                         ?.jsonPrimitive
                         .toString()
                         .removeSurrounding("\"")
                 assertFailsWith<IllegalArgumentException> {
-                    contractFromJson(contractJson)
+                    contractFromJson(contractJson, "test-wallet")
                     println(contractJson)
                 }
                 Log.success(LOG_TAG, comment)
@@ -435,10 +438,12 @@ class HDWalletTest : WalletTest() {
             val contractsJson =
                 assertNotNull(validContractsJsonArray, "Missing valid test contracts")
 
-            wallet.deleteContracts()
+            // Clear the database first
+            val db: Database = ArkadeDI.arkadeKoin.get { parametersOf(dbBuilder) }
+            db.contractDao().deleteAll()
 
             contractsJson.forEachIndexed { index, contractJson ->
-                val (contract, state) = contractFromJson(contractJson)
+                val (contract, state) = contractFromJson(contractJson, wallet.id)
                 wallet.saveContract(contract, state, Network.TESTNET)
                 val contracts = wallet.getContracts()
                 assertEquals(index + 1, contracts.size)
@@ -538,6 +543,7 @@ private fun vtxoFromJson(json: JsonElement): Pair<Vtxo.Data, String> {
         script,
         createdAt,
         expiresAt,
+        expiresAt.toBlockHeight(),
         isPreConfirmed,
         isSwept,
         isUnrolled,
@@ -550,7 +556,10 @@ private fun vtxoFromJson(json: JsonElement): Pair<Vtxo.Data, String> {
     ) to comment
 }
 
-private fun contractFromJson(json: JsonElement): Pair<ArkContract, ContractState> {
+private fun contractFromJson(
+    json: JsonElement,
+    walletId: String,
+): Pair<ArkContract, ContractState> {
     val type = json.jsonObject["type"]?.jsonPrimitive?.content!!
     val state =
         when (json.jsonObject["state"]?.jsonPrimitive?.content!!) {
@@ -565,7 +574,7 @@ private fun contractFromJson(json: JsonElement): Pair<ArkContract, ContractState
             val value = entry.value
             key to value.jsonPrimitive.content
         }
-    return ArkContractParserImpl().parse(data, type) to state
+    return ArkContractParserImpl().parse(data, type, walletId) to state
 }
 
 private fun intentFromJson(

@@ -15,16 +15,17 @@ import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
 class ArkBoardingContractTest {
-    val serverPubKeyDescriptor = parseTaprootDescriptor("03a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c")
-    val ownerPubKeyDescriptor = parseTaprootDescriptor("0315fbe13a8cf7e4d0c81b0caf4040f37666933d97080abb04f908964bb14588a8")
-    val diffOwnerPubKeyDescriptor = parseTaprootDescriptor("2f9c3daffa6d41e380e036433e9eea09b82bbbc5d9c772286655aa1c5b9ab3f0")
-
-    val exitDelay = 144L
+    private val serverPubKeyDescriptor = parseTaprootDescriptor("03a19310a999207dbd9a03d20f649e37c7a578a07d75e6fa19aa3f33fc6b15622c")
+    private val ownerPubKeyDescriptor = parseTaprootDescriptor("0315fbe13a8cf7e4d0c81b0caf4040f37666933d97080abb04f908964bb14588a8")
+    private val diffOwnerPubKeyDescriptor = parseTaprootDescriptor("2f9c3daffa6d41e380e036433e9eea09b82bbbc5d9c772286655aa1c5b9ab3f0")
+    private val testWalletId = "test-wallet"
+    private val exitDelay = 144L
 
     @Test
     fun should_generate_tap_script_tree_correctly() {
         val contract =
             ArkBoardingContract(
+                testWalletId,
                 serverPubKeyDescriptor,
                 ownerPubKeyDescriptor,
                 exitDelay,
@@ -46,12 +47,14 @@ class ArkBoardingContractTest {
     fun should_produce_deterministic_address() {
         val contract =
             ArkBoardingContract(
+                testWalletId,
                 serverPubKeyDescriptor,
                 ownerPubKeyDescriptor,
                 exitDelay,
             )
         val contract1 =
             ArkBoardingContract(
+                testWalletId,
                 serverPubKeyDescriptor,
                 ownerPubKeyDescriptor,
                 exitDelay,
@@ -71,12 +74,14 @@ class ArkBoardingContractTest {
     fun should_produce_different_addresses_for_different_keys() {
         val contract =
             ArkBoardingContract(
+                testWalletId,
                 serverPubKeyDescriptor,
                 ownerPubKeyDescriptor,
                 exitDelay,
             )
         val contract1 =
             ArkBoardingContract(
+                testWalletId,
                 serverPubKeyDescriptor,
                 diffOwnerPubKeyDescriptor,
                 exitDelay,
@@ -94,9 +99,9 @@ class ArkBoardingContractTest {
 
     @Test
     fun parse_round_trip() {
-        val contract = ArkBoardingContract(serverPubKeyDescriptor, ownerPubKeyDescriptor, exitDelay)
-        val contractEntity = ContractEntity.fromContract(contract, walletId = "test-wallet", network = Network.MAINNET)
-        val decoded = ArkBoardingContract.parse(contractEntity.additionalData) as ArkBoardingContract
+        val contract = ArkBoardingContract(testWalletId, serverPubKeyDescriptor, ownerPubKeyDescriptor, exitDelay)
+        val contractEntity = ContractEntity.fromContract(contract, network = Network.MAINNET)
+        val decoded = ArkBoardingContract.parse(contractEntity.additionalData, testWalletId) as ArkBoardingContract
 
         assertEquals(contract.type, decoded.type)
         assertEquals(contract.getScriptPubKey(Network.MAINNET), decoded.getScriptPubKey(Network.MAINNET))
@@ -107,7 +112,7 @@ class ArkBoardingContractTest {
 
     @Test
     fun should_throw_on_get_ark_address() {
-        val contract = ArkBoardingContract(serverPubKeyDescriptor, ownerPubKeyDescriptor, exitDelay)
+        val contract = ArkBoardingContract(testWalletId, serverPubKeyDescriptor, ownerPubKeyDescriptor, exitDelay)
         assertFailsWith<UnsupportedOperationException>("") {
             contract.getArkAddress(Network.MAINNET)
         }
@@ -115,7 +120,7 @@ class ArkBoardingContractTest {
 
     @Test
     fun should_return_bech32m_encoded_on_chain_address() {
-        val contract = ArkBoardingContract(serverPubKeyDescriptor, ownerPubKeyDescriptor, exitDelay)
+        val contract = ArkBoardingContract(testWalletId, serverPubKeyDescriptor, ownerPubKeyDescriptor, exitDelay)
         val testnetAddress = contract.getOnChainAddress(Network.TESTNET)
         val regtestAddress = contract.getOnChainAddress(Network.REGTEST)
         val signetAddress = contract.getOnChainAddress(Network.SIGNET)
@@ -129,7 +134,7 @@ class ArkBoardingContractTest {
 
     @Test
     fun should_always_create_a_contract_of_type_boarding() {
-        val contract = ArkBoardingContract(serverPubKeyDescriptor, ownerPubKeyDescriptor, exitDelay)
+        val contract = ArkBoardingContract(testWalletId, serverPubKeyDescriptor, ownerPubKeyDescriptor, exitDelay)
         assertEquals(ArkBoardingContract.TYPE, contract.type)
     }
 }

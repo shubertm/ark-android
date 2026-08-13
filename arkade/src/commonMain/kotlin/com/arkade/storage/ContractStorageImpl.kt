@@ -1,6 +1,7 @@
 package com.arkade.storage
 
 import androidx.room.RoomDatabase
+import com.arkade.core.contracts.ContractState
 import com.arkade.di.ArkadeDI
 import com.arkade.storage.db.Database
 import com.arkade.storage.db.entities.ContractEntity
@@ -24,7 +25,20 @@ class ContractStorageImpl(
 
     override suspend fun get(scriptPubKey: String): ContractEntity? = contractDao.get(scriptPubKey)
 
-    override suspend fun getAll(walletId: String): List<ContractEntity> = contractDao.getAll(walletId)
+    override suspend fun getAll(
+        walletIds: Array<String>?,
+        scripts: Array<String>?,
+        contractTypes: Array<String>?,
+        isActive: Boolean?,
+    ): List<ContractEntity> =
+        contractDao.getAll(
+            walletIds,
+            scripts,
+            contractTypes,
+            if (isActive == true) ContractState.ACTIVE else null,
+        )
 
     override suspend fun deleteAll(walletId: String) = contractDao.deleteAll(walletId)
+
+    override suspend fun deleteAll() = contractDao.deleteAll()
 }

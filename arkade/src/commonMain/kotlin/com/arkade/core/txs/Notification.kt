@@ -1,6 +1,6 @@
 package com.arkade.core.txs
 
-import com.arkade.core.Vtxo
+import com.arkade.core.vtxos.Vtxo
 import fr.acinq.bitcoin.OutPoint
 
 /**

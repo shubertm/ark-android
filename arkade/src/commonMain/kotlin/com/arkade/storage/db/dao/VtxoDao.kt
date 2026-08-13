@@ -11,8 +11,17 @@ interface VtxoDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun save(vtxo: VtxoEntity)
 
-    @Query("SELECT * FROM vtxos")
-    suspend fun getAll(): List<VtxoEntity>
+    @Query(
+        "SELECT * FROM vtxos " +
+            "WHERE " +
+            "(:outpoints IS NULL OR outpoint IN (:outpoints)) " +
+            "AND " +
+            "(:includeSpent IS NULL OR isSpent = :includeSpent)",
+    )
+    suspend fun getAll(
+        outpoints: Array<String>? = null,
+        includeSpent: Boolean? = null,
+    ): List<VtxoEntity>
 
     @Query("SELECT * FROM vtxos WHERE outpoint = :outpoint")
     suspend fun getByOutPoint(outpoint: String): List<VtxoEntity>

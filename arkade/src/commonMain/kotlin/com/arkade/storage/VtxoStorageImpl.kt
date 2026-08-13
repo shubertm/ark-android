@@ -14,7 +14,14 @@ class VtxoStorageImpl(
 
     override suspend fun save(vtxo: VtxoEntity) = vtxoDao.save(vtxo)
 
-    override suspend fun getAll(): List<VtxoEntity> = vtxoDao.getAll()
+    override suspend fun getAll(
+        outpoints: Array<String>?,
+        includeSpent: Boolean?,
+    ): List<VtxoEntity> =
+        vtxoDao.getAll(
+            outpoints,
+            includeSpent,
+        )
 
     override suspend fun getByOutPoint(outPoint: String): List<VtxoEntity> = vtxoDao.getByOutPoint(outPoint)
 

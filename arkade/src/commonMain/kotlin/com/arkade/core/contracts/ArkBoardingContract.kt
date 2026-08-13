@@ -3,12 +3,17 @@ package com.arkade.core.contracts
 import com.arkade.core.ArkAddress
 import com.arkade.core.bitcoin.Address
 import com.arkade.core.bitcoin.Network
+import com.arkade.core.coins.ArkCoin
 import com.arkade.core.csvSigScript
 import com.arkade.core.multisigScript
 import com.arkade.core.taproot.getTaprootScriptPubKey
 import com.arkade.core.taproot.parseTaprootDescriptor
 import com.arkade.core.taproot.pubKeyFromTaprootDescriptor
 import com.arkade.core.toXOnlyPubKey
+import com.arkade.core.vtxos.ScriptSpendingPath
+import com.arkade.core.vtxos.Vtxo
+import fr.acinq.bitcoin.ByteVector
+import fr.acinq.bitcoin.Script
 
 /**
  * An Arkade boarding contract that allows a user to move on-chain Bitcoin funds into the Arkade protocol.
@@ -27,10 +32,11 @@ import com.arkade.core.toXOnlyPubKey
  * @param exitDelay the CSV lock time (in blocks) for the unilateral exit path.
  */
 class ArkBoardingContract(
+    walletId: String,
     serverDescriptor: String,
     private val userDescriptor: String,
     private val exitDelay: Long,
-) : ArkContract(serverDescriptor) {
+) : ArkContract(walletId, serverDescriptor) {
     override val type: String = TYPE
 
     /**
@@ -77,9 +83,9 @@ class ArkBoardingContract(
     override fun getTapLeafScripts(): List<ByteArray> {
         val serverPubKey = pubKeyFromTaprootDescriptor(serverDescriptor).toXOnlyPubKey()
         val userPubKey = pubKeyFromTaprootDescriptor(userDescriptor).toXOnlyPubKey()
-        val collaborativeExitScript = multisigScript(serverPubKey, userPubKey)
-        val unilateralExitScript = csvSigScript(exitDelay, userPubKey)
-        return listOf(collaborativeExitScript, unilateralExitScript)
+        val collaborativeScript = multisigScript(serverPubKey, userPubKey)
+        val unilateralScript = csvSigScript(exitDelay, userPubKey)
+        return listOf(collaborativeScript, unilateralScript)
     }
 
     /**
@@ -96,6 +102,60 @@ class ArkBoardingContract(
             "user" to userDescriptor,
             "exit_delay" to exitDelay.toString(),
         )
+
+    override suspend fun toArkCoin(vtxo: Vtxo.Data): ArkCoin =
+        ArkCoin(
+            walletId,
+            contract = this,
+            createdAt = vtxo.createdAt,
+            expiresAt = vtxo.expiresAt,
+            expiresAtHeight = vtxo.expiresAtHeight,
+            outpoint = vtxo.outpoint,
+            txOut = vtxo.txOut,
+            signerDescriptor = userDescriptor,
+            spendingScriptPath = collaborativePath(),
+            spendingConditionWitness = null,
+            lockTime = null,
+            sequence = null,
+            isSpent = vtxo.isSpent,
+            isSwept = vtxo.isSwept,
+            isUnrolled = vtxo.isUnrolled,
+            assets = vtxo.assets,
+        )
+
+    private fun collaborativePath(): ScriptSpendingPath {
+        val scripts = getTapLeafScripts()
+        val collaborativeScript = scripts[0]
+        val controlBlock = getControlBlock(collaborativeScript)
+        return ScriptSpendingPath(
+            collaborativeScript,
+            controlBlock,
+        )
+    }
+
+    private fun unilateralPath(): ScriptSpendingPath {
+        val scripts = getTapLeafScripts()
+        val unilateralScript = scripts[1]
+        val controlBlock = getControlBlock(unilateralScript)
+        return ScriptSpendingPath(
+            unilateralScript,
+            controlBlock,
+        )
+    }
+
+    private fun getControlBlock(script: ByteArray): ByteArray {
+        val spendingInfo = getTaprootSpendingInfo()
+        val spendingLeaf =
+            spendingInfo.merkleScriptTree.findScript(ByteVector(script))
+                ?: throw IllegalArgumentException("Invalid leaf script")
+
+        return Script.ControlBlock
+            .build(
+                spendingInfo.internalKey,
+                spendingInfo.merkleScriptTree,
+                spendingLeaf,
+            ).toByteArray()
+    }
 
     companion object {
         /** The contract type identifier for boarding contracts. */
@@ -114,7 +174,10 @@ class ArkBoardingContract(
          * @throws IllegalArgumentException if `server` or `user` keys are missing or blank,
          * or if `exit_delay` is a negative number.
          */
-        fun parse(data: Map<String, String>): ArkContract {
+        fun parse(
+            data: Map<String, String>,
+            walletId: String,
+        ): ArkContract {
             val serverPubKeyDescriptor = data["server"]
             val userPubKeyDescriptor = data["user"]
             val exitDelay = data["exit_delay"]?.toLong()
@@ -126,6 +189,7 @@ class ArkBoardingContract(
             require(serverPubKeyDescriptor.isNotBlank()) { "Invalid server public key" }
             require(userPubKeyDescriptor.isNotBlank()) { "Invalid user public key" }
             return ArkBoardingContract(
+                walletId,
                 parseTaprootDescriptor(serverPubKeyDescriptor),
                 parseTaprootDescriptor(userPubKeyDescriptor),
                 exitDelay ?: 0,

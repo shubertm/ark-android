@@ -39,11 +39,12 @@ class ArkContractParserImpl {
     fun parse(
         contractData: Map<String, String>,
         type: String,
+        walletId: String,
     ): ArkContract {
         val parser =
             parsers.find { it.type == type }
                 ?: throw IllegalArgumentException("Unknown contract type: $type")
-        return parser.parse(contractData)
+        return parser.parse(contractData, walletId)
     }
 
     /**
@@ -57,14 +58,17 @@ class ArkContractParserImpl {
      * @throws IllegalArgumentException if the string does not start with `arkcontract=`,
      *   the `arkcontract` type key is missing, or no parser is registered for the type.
      */
-    fun parse(contract: String): ArkContract {
+    fun parse(
+        contract: String,
+        walletId: String,
+    ): ArkContract {
         require(contract.startsWith(ARK_CONTRACT)) {
             "Invalid contract format: $contract. Must start with '$ARK_CONTRACT'"
         }
         val data = getAdditionalData(contract)
         val type = data[ARK_CONTRACT]
         requireNotNull(type) { "Contract type not found in additional data" }
-        return parse(data, type)
+        return parse(data, type, walletId)
     }
 
     /**

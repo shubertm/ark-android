@@ -57,7 +57,6 @@ data class ContractEntity(
         fun fromContract(
             contract: ArkContract,
             state: ContractState = ContractState.ACTIVE,
-            walletId: String,
             network: Network,
         ): ContractEntity =
             ContractEntity(
@@ -65,7 +64,7 @@ data class ContractEntity(
                 contract.type,
                 state,
                 contract.getAdditionalData(),
-                walletId,
+                contract.walletId,
                 Clock.System.now().epochSeconds,
             )
     }

@@ -1,11 +1,14 @@
-package com.arkade.repositories
+package com.arkade.repositories.wallet
 
-import com.arkade.core.Vtxo
 import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
+import com.arkade.core.vtxos.Vtxo
 import com.arkade.core.wallet.Wallet
 import com.arkade.core.wallet.WalletIntentManager
+import com.arkade.repositories.contracts.ContractRepo
+import com.arkade.repositories.vtxos.VtxoRepo
+import fr.acinq.bitcoin.OutPoint
 
 interface WalletRepo : WalletIntentManager {
     val vtxoRepo: VtxoRepo
@@ -61,7 +64,15 @@ interface WalletRepo : WalletIntentManager {
 
     suspend fun saveVtxo(vtxo: Vtxo.Data)
 
-    suspend fun getVtxos(): List<Vtxo.Data>
+    suspend fun getVtxos(
+        outpoints: Array<OutPoint>? = null,
+        includeSpent: Boolean? = null,
+    ): List<Vtxo.Data>
+
+    suspend fun saveVtxos(
+        address: String,
+        vtxos: List<Vtxo>,
+    )
 
     suspend fun deleteVtxos()
 
@@ -95,7 +106,12 @@ interface WalletRepo : WalletIntentManager {
      * @param walletId the identifier of the wallet whose contracts should be retrieved.
      * @return a list of contracts associated with the given [walletId].
      */
-    suspend fun getContracts(walletId: String): List<ArkContract>
+    suspend fun getContracts(
+        walletIds: Array<String>? = null,
+        scripts: Array<String>? = null,
+        contractTypes: Array<String>? = null,
+        isActive: Boolean? = null,
+    ): List<ArkContract>
 
     /**
      * Deletes all [ArkContract] instances belonging to the specified wallet.
@@ -103,4 +119,6 @@ interface WalletRepo : WalletIntentManager {
      * @param walletId the identifier of the wallet whose contracts should be deleted.
      */
     suspend fun deleteContracts(walletId: String)
+
+    suspend fun deleteContracts()
 }

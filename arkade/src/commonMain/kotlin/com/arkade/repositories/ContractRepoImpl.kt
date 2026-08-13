@@ -41,7 +41,7 @@ class ContractRepoImpl(
         walletId: String,
         network: Network,
     ) {
-        val contractEntity = ContractEntity.fromContract(contract, state, walletId, network)
+        val contractEntity = ContractEntity.fromContract(contract, state, network)
         storage.save(contractEntity)
     }
 
@@ -55,7 +55,7 @@ class ContractRepoImpl(
     override suspend fun get(scriptPubKey: String): ArkContract {
         val contractEntity = storage.get(scriptPubKey)
         requireNotNull(contractEntity) { "Contract not found" }
-        return contractParser.parse(contractEntity.additionalData, contractEntity.type)
+        return contractParser.parse(contractEntity.additionalData, contractEntity.type, contractEntity.walletId)
     }
 
     /**
@@ -66,10 +66,10 @@ class ContractRepoImpl(
      * @throws IllegalArgumentException if no contracts are stored for [walletId].
      */
     override suspend fun getAll(walletId: String): List<ArkContract> {
-        val contractEntities = storage.getAll(walletId)
+        val contractEntities = storage.getAll(arrayOf(walletId))
         require(contractEntities.isNotEmpty()) { "No contracts found" }
         return contractEntities.map {
-            contractParser.parse(it.additionalData, it.type)
+            contractParser.parse(it.additionalData, it.type, walletId)
         }
     }
 
