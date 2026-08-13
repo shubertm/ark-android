@@ -23,7 +23,7 @@ import kotlinx.coroutines.sync.withLock
  * Coordinates the lifecycle of batches on behalf of the wallet's registered intents.
  *
  * Consumes the server's batch event stream, matches each new batch to the currently
- * [activeIntents] it concerns, and creates/drives one [BatchSession] per matched intent to
+ * [activeIntents] it concerns, and creates/derives one [BatchSession] per matched intent to
  * finalize the batch and cooperatively sign the resulting VTXO tree.
  *
  * @property client Used to obtain the batch event stream and server info, and to confirm intent
