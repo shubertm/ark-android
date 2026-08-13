@@ -131,7 +131,6 @@ interface Wallet : WalletSignerManager {
      * @return a list of all contracts associated with this wallet's identifier.
      */
     suspend fun getContracts(
-        walletIds: Array<String>? = null,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
         isActive: Boolean? = null,

@@ -31,11 +31,24 @@ interface ContractStorage {
     /**
      * Retrieves all stored [ContractEntity] rows for the given wallet.
      *
+     * @param walletIds the identifiers of the wallets whose contracts should be retrieved.
+     * @return a list of persisted contract entities for [walletIds], or an empty list if none exist.
+     */
+    suspend fun getAll(
+        walletIds: Array<String>? = null,
+        scripts: Array<String>? = null,
+        contractTypes: Array<String>? = null,
+        isActive: Boolean? = null,
+    ): List<ContractEntity>
+
+    /**
+     * Retrieves all stored [ContractEntity] rows for the given wallet.
+     *
      * @param walletId the identifier of the wallet whose contracts should be retrieved.
      * @return a list of persisted contract entities for [walletId], or an empty list if none exist.
      */
     suspend fun getAll(
-        walletIds: Array<String>? = null,
+        walletId: String? = null,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
         isActive: Boolean? = null,

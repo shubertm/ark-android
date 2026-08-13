@@ -131,12 +131,11 @@ class WalletImpl(
      * @return a list of [ArkContract] instances associated with this wallet's [id].
      */
     override suspend fun getContracts(
-        walletIds: Array<String>?,
         scripts: Array<String>?,
         contractTypes: Array<String>?,
         isActive: Boolean?,
     ) = repo.getContracts(
-        walletIds,
+        id,
         scripts,
         contractTypes,
         isActive,

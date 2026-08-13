@@ -35,10 +35,10 @@ interface ContractDao {
     suspend fun get(scriptPubKey: String): ContractEntity?
 
     /**
-     * Returns all [ContractEntity] rows in the `contracts` table belonging to [walletId].
+     * Returns all [ContractEntity] rows in the `contracts` table belonging to [walletIds].
      *
-     * @param walletId the wallet identifier to filter by.
-     * @return a list of [ContractEntity] instances for the given wallet, or an empty list.
+     * @param walletIds the wallet identifiers to filter by.
+     * @return a list of [ContractEntity] instances for the given wallets, or an empty list.
      */
     @Query(
         "SELECT * FROM contracts " +
@@ -53,6 +53,30 @@ interface ContractDao {
     )
     suspend fun getAll(
         walletIds: Array<String>?,
+        scripts: Array<String>?,
+        contractTypes: Array<String>?,
+        state: ContractState?,
+    ): List<ContractEntity>
+
+    /**
+     * Returns all [ContractEntity] rows in the `contracts` table belonging to [walletId].
+     *
+     * @param walletId the wallet identifier to filter by.
+     * @return a list of [ContractEntity] instances for the given wallet, or an empty list.
+     */
+    @Query(
+        "SELECT * FROM contracts " +
+            "WHERE " +
+            "(:walletId IS NULL OR walletId = :walletId) " +
+            "AND " +
+            "(:scripts IS NULL OR scriptPubKey IN (:scripts)) " +
+            "AND " +
+            "(:contractTypes IS NULL OR type IN (:contractTypes)) " +
+            "AND " +
+            "(:state IS NULL OR state = :state)",
+    )
+    suspend fun getAll(
+        walletId: String?,
         scripts: Array<String>?,
         contractTypes: Array<String>?,
         state: ContractState?,

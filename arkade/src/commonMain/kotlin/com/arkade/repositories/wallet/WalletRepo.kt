@@ -101,13 +101,26 @@ interface WalletRepo : WalletIntentManager {
     suspend fun getContract(scriptPubKey: String): ArkContract
 
     /**
+     * Retrieves all [ArkContract] instances belonging to the specified wallets.
+     *
+     * @param walletIds the identifiers of the wallets whose contracts should be retrieved.
+     * @return a list of contracts associated with the given [walletIds].
+     */
+    suspend fun getContracts(
+        walletIds: Array<String>? = null,
+        scripts: Array<String>? = null,
+        contractTypes: Array<String>? = null,
+        isActive: Boolean? = null,
+    ): List<ArkContract>
+
+    /**
      * Retrieves all [ArkContract] instances belonging to the specified wallet.
      *
      * @param walletId the identifier of the wallet whose contracts should be retrieved.
      * @return a list of contracts associated with the given [walletId].
      */
     suspend fun getContracts(
-        walletIds: Array<String>? = null,
+        walletId: String? = null,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
         isActive: Boolean? = null,
