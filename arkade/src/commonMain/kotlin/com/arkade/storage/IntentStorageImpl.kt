@@ -1,6 +1,7 @@
 package com.arkade.storage
 
 import androidx.room.RoomDatabase
+import com.arkade.core.intents.IntentState
 import com.arkade.di.ArkadeDI
 import com.arkade.storage.db.Database
 import com.arkade.storage.db.entities.IntentEntity
@@ -15,6 +16,11 @@ class IntentStorageImpl(
     override suspend fun save(intent: IntentEntity) = intentDao.save(intent)
 
     override suspend fun getAll(walletId: String): List<IntentEntity> = intentDao.getAll(walletId)
+
+    override suspend fun getAll(
+        walletId: String,
+        states: Array<IntentState>,
+    ): List<IntentEntity> = intentDao.getAll(walletId, states)
 
     override suspend fun deleteAll(walletId: String) = intentDao.deleteAll(walletId)
 }

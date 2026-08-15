@@ -2,6 +2,7 @@ package com.arkade.repositories.intents
 
 import androidx.room.RoomDatabase
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.intents.IntentState
 import com.arkade.di.ArkadeDI
 import com.arkade.storage.IntentStorage
 import com.arkade.storage.db.Database
@@ -20,6 +21,14 @@ class IntentRepoImpl(
 
     override suspend fun getAll(walletId: String): List<ArkIntent> {
         val intentEntities = storage.getAll(walletId)
+        return intentEntities.map { it.toIntent() }
+    }
+
+    override suspend fun getAll(
+        walletId: String,
+        states: Array<IntentState>,
+    ): List<ArkIntent> {
+        val intentEntities = storage.getAll(walletId, states)
         return intentEntities.map { it.toIntent() }
     }
 

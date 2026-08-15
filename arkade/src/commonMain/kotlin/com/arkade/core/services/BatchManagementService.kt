@@ -4,9 +4,11 @@ import com.arkade.core.ArkServerInfo
 import com.arkade.core.batches.BatchEvent
 import com.arkade.core.batches.BatchSession
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.intents.IntentState
 import com.arkade.core.wallet.Wallet
 import com.arkade.network.ArkadeClient
 import com.arkade.repositories.contracts.ContractRepo
+import com.arkade.repositories.intents.IntentRepo
 import com.arkade.utils.Log
 import com.arkade.utils.debug
 import com.arkade.utils.error
@@ -18,6 +20,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.time.Clock
 
 /**
  * Coordinates the lifecycle of batches on behalf of the wallet's registered intents.
@@ -37,6 +40,7 @@ class BatchManagementService(
     private val client: ArkadeClient,
     private val wallet: Wallet,
     private val contractsRepo: ContractRepo,
+    private val intentsRepo: IntentRepo,
 ) {
     private var streamId: String? = null
     private val activeIntents: MutableMap<String, ArkIntent> = mutableMapOf()
@@ -46,6 +50,8 @@ class BatchManagementService(
     private val batchMutex = Mutex()
 
     suspend fun start() {
+        loadActiveIntents()
+
         Log.debug(LOG_TAG, "Starting an event stream")
 
         streamId = null
@@ -278,6 +284,97 @@ class BatchManagementService(
             is BatchEvent.TreeSigningStartedEvent -> id
             else -> null
         }
+
+    private suspend fun loadActiveIntents(isFirstRun: Boolean = true) {
+        val activeIntentStates = arrayOf(IntentState.WAITING_TO_SUBMIT, IntentState.WAITING_FOR_BATCH, IntentState.BATCH_IN_PROGRESS)
+        var allActiveIntents = wallet.getIntents(activeIntentStates)
+
+        val vtxoToIntents: MutableMap<String, MutableList<ArkIntent>> = mutableMapOf()
+
+        allActiveIntents.forEach { intent ->
+            intent.vtxos.forEach { vtxo ->
+                val key = "${vtxo.hash.value.toHex()}:${vtxo.index}"
+                if (!vtxoToIntents.containsKey(key)) {
+                    vtxoToIntents[key] = emptyList<ArkIntent>().toMutableList()
+                }
+                vtxoToIntents[key]?.add(intent)
+            }
+        }
+
+        val duplicateVtxos = vtxoToIntents.filter { entry -> entry.value.size > 1 }
+
+        if (duplicateVtxos.any()) {
+            Log.warning(LOG_TAG, "Found ${duplicateVtxos.size} VTXOs with multiple intents - cleaning up duplicates")
+
+            val intentsToCancel: HashSet<String> =
+                duplicateVtxos
+                    .flatMap { (_, intents) ->
+                        val latestIntent = intents.maxBy { intent -> intent.updatedAt }
+                        intents.filter { intent -> intent != latestIntent }.map { intent -> intent.txId }
+                    }.toHashSet()
+
+            intentsToCancel.forEach { intentTxId ->
+                val intent = allActiveIntents.first { intent -> intent.txId == intentTxId }
+                Log.warning(
+                    LOG_TAG,
+                    "Cancelling duplicate intent $intentTxId (Intent: ${intent.id}) - VTXO already claimed by another intent",
+                )
+
+                val cancelledIntent =
+                    intent.copy(
+                        state = IntentState.CANCELLED,
+                        cancellationReason = "Duplicate intent for same VTXO -cleaned up on startup",
+                        updatedAt = Clock.System.now().toEpochMilliseconds(),
+                    )
+
+                intentsRepo.save(cancelledIntent)
+            }
+
+            allActiveIntents =
+                allActiveIntents.filter { intent ->
+                    !intentsToCancel.contains(intent.txId)
+                }
+        }
+
+        allActiveIntents.forEach { intent ->
+            if (intent.id == null) {
+                Log.debug(LOG_TAG, "Skipping intent with null IntentId (IntentTxId: ${intent.txId})")
+                return@forEach
+            }
+
+            if (isFirstRun && intent.state == IntentState.BATCH_IN_PROGRESS) {
+                if (intent.commitmentTxId != null) {
+                    Log.info(
+                        LOG_TAG,
+                        "Orphaned BatchInProgress intent ${intent.id} has commitment tx ${intent.commitmentTxId} - marking as succeeded",
+                    )
+                    val succeededIntent =
+                        intent.copy(
+                            state = IntentState.BATCH_SUCCEEDED,
+                            cancellationReason = null,
+                            updatedAt = Clock.System.now().toEpochMilliseconds(),
+                        )
+                    intentsRepo.save(succeededIntent)
+                    return@forEach
+                }
+
+                Log.warning(LOG_TAG, "Cancelling orphaned BatchInProgress intent ${intent.id} on startup (no active batch session)")
+
+                val cancelledIntent =
+                    intent.copy(
+                        state = IntentState.CANCELLED,
+                        cancellationReason = "Orphaned BatchInProgress intent - no active batch session after restart",
+                        updatedAt = Clock.System.now().toEpochMilliseconds(),
+                    )
+                intentsRepo.save(cancelledIntent)
+                return@forEach
+            }
+
+            Log.debug(LOG_TAG, "Loaded active intent ${intent.id} in state ${intent.state}")
+
+            activeIntents[intent.id] = intent
+        }
+    }
 
     companion object {
         private const val LOG_TAG = "BatchManagementService"

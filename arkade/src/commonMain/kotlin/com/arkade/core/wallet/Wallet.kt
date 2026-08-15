@@ -8,6 +8,7 @@ import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.encodePubKeyByNetwork
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.intents.IntentState
 import com.arkade.core.vtxos.Vtxo
 import com.arkade.core.wallet.signer.WalletSignerManager
 import com.arkade.di.ArkadeDI
@@ -145,6 +146,8 @@ interface Wallet : WalletSignerManager {
     suspend fun saveIntent(intent: ArkIntent)
 
     suspend fun getIntents(): List<ArkIntent>
+
+    suspend fun getIntents(states: Array<IntentState>): List<ArkIntent>
 
     suspend fun deleteIntents()
 
