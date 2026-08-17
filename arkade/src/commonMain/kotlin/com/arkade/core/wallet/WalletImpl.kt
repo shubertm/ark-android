@@ -133,12 +133,12 @@ class WalletImpl(
     override suspend fun getContracts(
         scripts: Array<String>?,
         contractTypes: Array<String>?,
-        isActive: Boolean?,
+        state: ContractState?,
     ) = repo.getContracts(
         id,
         scripts,
         contractTypes,
-        isActive,
+        state,
     )
 
     /**

@@ -69,14 +69,14 @@ class ContractRepoImpl(
         walletIds: Array<String>?,
         scripts: Array<String>?,
         contractTypes: Array<String>?,
-        isActive: Boolean?,
+        state: ContractState?,
     ): List<ArkContract> {
         val contractEntities =
             storage.getAll(
                 walletIds,
                 scripts,
                 contractTypes,
-                isActive,
+                state,
             )
         return contractEntities.map {
             contractParser.parse(it.additionalData, it.type, it.walletId)
@@ -94,14 +94,14 @@ class ContractRepoImpl(
         walletId: String?,
         scripts: Array<String>?,
         contractTypes: Array<String>?,
-        isActive: Boolean?,
+        state: ContractState?,
     ): List<ArkContract> {
         val contractEntities =
             storage.getAll(
                 walletId,
                 scripts,
                 contractTypes,
-                isActive,
+                state,
             )
         return contractEntities.map {
             contractParser.parse(it.additionalData, it.type, it.walletId)

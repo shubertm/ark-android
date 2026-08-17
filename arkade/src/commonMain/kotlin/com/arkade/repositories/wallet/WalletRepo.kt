@@ -110,7 +110,7 @@ interface WalletRepo : WalletIntentManager {
         walletIds: Array<String>? = null,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
-        isActive: Boolean? = null,
+        state: ContractState? = null,
     ): List<ArkContract>
 
     /**
@@ -123,7 +123,7 @@ interface WalletRepo : WalletIntentManager {
         walletId: String? = null,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
-        isActive: Boolean? = null,
+        state: ContractState? = null,
     ): List<ArkContract>
 
     /**

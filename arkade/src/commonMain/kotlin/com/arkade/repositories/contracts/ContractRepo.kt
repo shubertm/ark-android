@@ -52,7 +52,7 @@ interface ContractRepo {
         walletIds: Array<String>? = null,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
-        isActive: Boolean? = null,
+        state: ContractState? = null,
     ): List<ArkContract>
 
     /**
@@ -66,7 +66,7 @@ interface ContractRepo {
         walletId: String? = null,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
-        isActive: Boolean? = null,
+        state: ContractState? = null,
     ): List<ArkContract>
 
     /**

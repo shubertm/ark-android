@@ -133,7 +133,7 @@ interface Wallet : WalletSignerManager {
     suspend fun getContracts(
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
-        isActive: Boolean? = null,
+        state: ContractState? = null,
     ): List<ArkContract>
 
     /**

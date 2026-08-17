@@ -1,5 +1,6 @@
 package com.arkade.storage
 
+import com.arkade.core.contracts.ContractState
 import com.arkade.storage.db.entities.ContractEntity
 
 /**
@@ -38,7 +39,7 @@ interface ContractStorage {
         walletIds: Array<String>? = null,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
-        isActive: Boolean? = null,
+        state: ContractState? = null,
     ): List<ContractEntity>
 
     /**
@@ -51,7 +52,7 @@ interface ContractStorage {
         walletId: String? = null,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
-        isActive: Boolean? = null,
+        state: ContractState? = null,
     ): List<ContractEntity>
 
     /**
