@@ -42,6 +42,20 @@ interface ContractRepo {
     suspend fun get(scriptPubKey: String): ArkContract
 
     /**
+     * Retrieves all persisted [ArkContract] instances belonging to the specified wallets.
+     *
+     * @param walletIds the identifiers of the wallets whose contracts should be retrieved.
+     * @return a list of all stored contracts for the given wallet, or throws if none are found.
+     * @throws IllegalArgumentException if the database contains no contracts for [walletIds].
+     */
+    suspend fun getAll(
+        walletIds: Array<String>? = null,
+        scripts: Array<String>? = null,
+        contractTypes: Array<String>? = null,
+        state: ContractState? = null,
+    ): List<ArkContract>
+
+    /**
      * Retrieves all persisted [ArkContract] instances belonging to the specified wallet.
      *
      * @param walletId the identifier of the wallet whose contracts should be retrieved.
@@ -49,10 +63,10 @@ interface ContractRepo {
      * @throws IllegalArgumentException if the database contains no contracts for [walletId].
      */
     suspend fun getAll(
-        walletIds: Array<String>? = null,
+        walletId: String,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
-        isActive: Boolean? = null,
+        state: ContractState? = null,
     ): List<ArkContract>
 
     /**

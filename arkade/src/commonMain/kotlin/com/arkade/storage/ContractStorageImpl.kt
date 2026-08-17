@@ -29,13 +29,26 @@ class ContractStorageImpl(
         walletIds: Array<String>?,
         scripts: Array<String>?,
         contractTypes: Array<String>?,
-        isActive: Boolean?,
+        state: ContractState?,
     ): List<ContractEntity> =
         contractDao.getAll(
             walletIds,
             scripts,
             contractTypes,
-            if (isActive == true) ContractState.ACTIVE else null,
+            state,
+        )
+
+    override suspend fun getAll(
+        walletId: String,
+        scripts: Array<String>?,
+        contractTypes: Array<String>?,
+        state: ContractState?,
+    ): List<ContractEntity> =
+        contractDao.getAll(
+            walletId,
+            scripts,
+            contractTypes,
+            state,
         )
 
     override suspend fun deleteAll(walletId: String) = contractDao.deleteAll(walletId)
