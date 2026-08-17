@@ -39,7 +39,7 @@ class ContractStorageImpl(
         )
 
     override suspend fun getAll(
-        walletId: String?,
+        walletId: String,
         scripts: Array<String>?,
         contractTypes: Array<String>?,
         state: ContractState?,

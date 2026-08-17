@@ -152,7 +152,7 @@ internal class WalletRepoImpl(
      * @return a list of [ArkContract] instances for the given [walletId].
      */
     override suspend fun getContracts(
-        walletId: String?,
+        walletId: String,
         scripts: Array<String>?,
         contractTypes: Array<String>?,
         state: ContractState?,

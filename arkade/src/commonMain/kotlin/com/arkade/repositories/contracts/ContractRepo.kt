@@ -63,7 +63,7 @@ interface ContractRepo {
      * @throws IllegalArgumentException if the database contains no contracts for [walletId].
      */
     suspend fun getAll(
-        walletId: String? = null,
+        walletId: String,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
         state: ContractState? = null,

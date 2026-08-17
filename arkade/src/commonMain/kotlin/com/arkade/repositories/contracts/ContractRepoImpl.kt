@@ -91,7 +91,7 @@ class ContractRepoImpl(
      * @throws IllegalArgumentException if no contracts are stored for [walletId].
      */
     override suspend fun getAll(
-        walletId: String?,
+        walletId: String,
         scripts: Array<String>?,
         contractTypes: Array<String>?,
         state: ContractState?,

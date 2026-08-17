@@ -76,7 +76,7 @@ interface ContractDao {
             "(:state IS NULL OR state = :state)",
     )
     suspend fun getAll(
-        walletId: String?,
+        walletId: String,
         scripts: Array<String>?,
         contractTypes: Array<String>?,
         state: ContractState?,

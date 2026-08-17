@@ -49,7 +49,7 @@ interface ContractStorage {
      * @return a list of persisted contract entities for [walletId], or an empty list if none exist.
      */
     suspend fun getAll(
-        walletId: String? = null,
+        walletId: String,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
         state: ContractState? = null,

@@ -120,7 +120,7 @@ interface WalletRepo : WalletIntentManager {
      * @return a list of contracts associated with the given [walletId].
      */
     suspend fun getContracts(
-        walletId: String? = null,
+        walletId: String,
         scripts: Array<String>? = null,
         contractTypes: Array<String>? = null,
         state: ContractState? = null,
