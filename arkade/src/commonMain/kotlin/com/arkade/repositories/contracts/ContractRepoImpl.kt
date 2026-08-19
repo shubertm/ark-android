@@ -61,22 +61,47 @@ class ContractRepoImpl(
     /**
      * Fetches all [ContractEntity] rows for the given wallet and parses each back to an [ArkContract].
      *
-     * @param walletId the identifier of the wallet whose contracts should be retrieved.
+     * @param walletIds the identifiers of the wallets whose contracts should be retrieved.
      * @return a non-empty list of contracts for the given wallet.
-     * @throws IllegalArgumentException if no contracts are stored for [walletId].
+     * @throws IllegalArgumentException if no contracts are stored for [walletIds].
      */
     override suspend fun getAll(
         walletIds: Array<String>?,
         scripts: Array<String>?,
         contractTypes: Array<String>?,
-        isActive: Boolean?,
+        state: ContractState?,
     ): List<ArkContract> {
         val contractEntities =
             storage.getAll(
                 walletIds,
                 scripts,
                 contractTypes,
-                isActive,
+                state,
+            )
+        return contractEntities.map {
+            contractParser.parse(it.additionalData, it.type, it.walletId)
+        }
+    }
+
+    /**
+     * Fetches all [ContractEntity] rows for the given wallet and parses each back to an [ArkContract].
+     *
+     * @param walletId the identifier of the wallet whose contracts should be retrieved.
+     * @return a non-empty list of contracts for the given wallet.
+     * @throws IllegalArgumentException if no contracts are stored for [walletId].
+     */
+    override suspend fun getAll(
+        walletId: String,
+        scripts: Array<String>?,
+        contractTypes: Array<String>?,
+        state: ContractState?,
+    ): List<ArkContract> {
+        val contractEntities =
+            storage.getAll(
+                walletId,
+                scripts,
+                contractTypes,
+                state,
             )
         return contractEntities.map {
             contractParser.parse(it.additionalData, it.type, it.walletId)

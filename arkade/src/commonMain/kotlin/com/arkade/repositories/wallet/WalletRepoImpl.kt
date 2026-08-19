@@ -128,22 +128,41 @@ internal class WalletRepoImpl(
     override suspend fun getContract(scriptPubKey: String): ArkContract = contractRepo.get(scriptPubKey)
 
     /**
+     * Retrieves all contracts belonging to the specified wallets.
+     *
+     * @param walletIds the identifiers of the wallets whose contracts should be retrieved.
+     * @return a list of [ArkContract] instances for the given [walletIds].
+     */
+    override suspend fun getContracts(
+        walletIds: Array<String>?,
+        scripts: Array<String>?,
+        contractTypes: Array<String>?,
+        state: ContractState?,
+    ): List<ArkContract> =
+        contractRepo.getAll(
+            walletIds,
+            scripts,
+            contractTypes,
+            state,
+        )
+
+    /**
      * Retrieves all contracts belonging to the specified wallet.
      *
      * @param walletId the identifier of the wallet whose contracts should be retrieved.
      * @return a list of [ArkContract] instances for the given [walletId].
      */
     override suspend fun getContracts(
-        walletIds: Array<String>?,
+        walletId: String,
         scripts: Array<String>?,
         contractTypes: Array<String>?,
-        isActive: Boolean?,
+        state: ContractState?,
     ): List<ArkContract> =
         contractRepo.getAll(
-            walletIds,
+            walletId,
             scripts,
             contractTypes,
-            isActive,
+            state,
         )
 
     /**

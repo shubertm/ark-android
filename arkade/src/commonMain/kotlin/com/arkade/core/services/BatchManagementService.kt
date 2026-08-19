@@ -170,7 +170,6 @@ class BatchManagementService(
     ) {
         val intentId = requireNotNull(intent.id)
         try {
-            val walletIds = arrayOf(intent.walletId)
             val vtxos =
                 wallet.getVtxos(
                     outpoints = intent.vtxos.toTypedArray(),
@@ -186,7 +185,7 @@ class BatchManagementService(
 
             val contracts =
                 contractsRepo.getAll(
-                    walletIds,
+                    intent.walletId,
                     vtxosScripts,
                 )
 
