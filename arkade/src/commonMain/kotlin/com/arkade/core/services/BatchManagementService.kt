@@ -309,8 +309,7 @@ class BatchManagementService(
                 duplicateVtxos.values
                     .map { intents ->
                         intents.maxBy { intent -> intent.updatedAt }
-                    }.toHashSet()
-                    .sortedByDescending { intent -> intent.updatedAt }
+                    }.sortedByDescending { intent -> intent.updatedAt }
 
             val intentsToKeep: HashSet<ArkIntent> = hashSetOf()
 
