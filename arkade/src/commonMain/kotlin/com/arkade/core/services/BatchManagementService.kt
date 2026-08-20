@@ -305,12 +305,26 @@ class BatchManagementService(
         if (duplicateVtxos.any()) {
             Log.warning(LOG_TAG, "Found ${duplicateVtxos.size} VTXOs with multiple intents - cleaning up duplicates")
 
-            val intentsToCancel: HashSet<String> =
-                duplicateVtxos
-                    .flatMap { (_, intents) ->
-                        val latestIntent = intents.maxBy { intent -> intent.updatedAt }
-                        intents.filter { intent -> intent != latestIntent }.map { intent -> intent.txId }
+            val allLatestIntents =
+                duplicateVtxos.values
+                    .map { intents ->
+                        intents.maxBy { intent -> intent.updatedAt }
                     }.toHashSet()
+
+            val intentsToKeep: HashSet<ArkIntent> = hashSetOf()
+
+            allLatestIntents.forEach { intent ->
+                if (intentsToKeep.isNotEmpty()) {
+                    val isAlreadyKept =
+                        intentsToKeep.any { keptIntent ->
+                            keptIntent.vtxos.size >= intent.vtxos.size && keptIntent.vtxos.containsAll(intent.vtxos)
+                        }
+                    if (isAlreadyKept) return@forEach
+                }
+                intentsToKeep.add(intent)
+            }
+
+            val intentsToCancel = (duplicateVtxos.values.flatten().toHashSet() - intentsToKeep).map { intent -> intent.txId }.toHashSet()
 
             intentsToCancel.forEach { intentTxId ->
                 val intent = allActiveIntents.first { intent -> intent.txId == intentTxId }
