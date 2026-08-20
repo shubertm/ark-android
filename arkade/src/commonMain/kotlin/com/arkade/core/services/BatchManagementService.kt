@@ -310,15 +310,14 @@ class BatchManagementService(
                     .map { intents ->
                         intents.maxBy { intent -> intent.updatedAt }
                     }.toHashSet()
+                    .sortedByDescending { intent -> intent.updatedAt }
 
             val intentsToKeep: HashSet<ArkIntent> = hashSetOf()
 
             allLatestIntents.forEach { intent ->
                 if (intentsToKeep.isNotEmpty()) {
                     val isAlreadyKept =
-                        intentsToKeep.any { keptIntent ->
-                            keptIntent.vtxos.size >= intent.vtxos.size && keptIntent.vtxos.containsAll(intent.vtxos)
-                        }
+                        intentsToKeep.any { keptIntent -> intent.vtxos.any { vtxo -> keptIntent.vtxos.contains(vtxo) } }
                     if (isAlreadyKept) return@forEach
                 }
                 intentsToKeep.add(intent)
