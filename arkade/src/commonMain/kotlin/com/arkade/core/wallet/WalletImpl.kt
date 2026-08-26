@@ -4,6 +4,7 @@ import com.arkade.core.bitcoin.Network
 import com.arkade.core.contracts.ArkContract
 import com.arkade.core.contracts.ContractState
 import com.arkade.core.intents.ArkIntent
+import com.arkade.core.intents.IntentState
 import com.arkade.core.vtxos.Vtxo
 import com.arkade.core.wallet.addresses.AddressProvider
 import com.arkade.core.wallet.addresses.HDAddressProvider
@@ -152,6 +153,8 @@ class WalletImpl(
     }
 
     override suspend fun getIntents(): List<ArkIntent> = repo.getIntents(id)
+
+    override suspend fun getIntents(states: Array<IntentState>): List<ArkIntent> = repo.getIntents(id, states)
 
     override suspend fun deleteIntents() = repo.deleteIntents(id)
 

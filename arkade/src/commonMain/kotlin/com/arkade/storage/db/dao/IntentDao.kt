@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.arkade.core.intents.IntentState
 import com.arkade.storage.db.entities.IntentEntity
 
 @Dao
@@ -13,6 +14,12 @@ interface IntentDao {
 
     @Query("SELECT * FROM intents WHERE walletId = :walletId")
     suspend fun getAll(walletId: String): List<IntentEntity>
+
+    @Query("SELECT * FROM intents WHERE walletId = :walletId AND state IN (:states)")
+    suspend fun getAll(
+        walletId: String,
+        states: Array<IntentState>,
+    ): List<IntentEntity>
 
     @Query("DELETE FROM intents WHERE walletId = :walletId")
     suspend fun deleteAll(walletId: String)
