@@ -4,6 +4,8 @@ import com.arkade.core.intents.ArkIntent
 import com.arkade.core.intents.IntentState
 
 interface IntentRepo {
+    var intentChanged: suspend (intent: ArkIntent) -> Unit
+
     suspend fun save(intent: ArkIntent)
 
     suspend fun getAll(walletId: String): List<ArkIntent>

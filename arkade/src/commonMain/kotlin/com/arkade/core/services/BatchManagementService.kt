@@ -5,6 +5,9 @@ import com.arkade.core.batches.BatchEvent
 import com.arkade.core.batches.BatchSession
 import com.arkade.core.intents.ArkIntent
 import com.arkade.core.intents.IntentState
+import com.arkade.core.intents.RegisterIntentMessage
+import com.arkade.core.tryPut
+import com.arkade.core.tryRemove
 import com.arkade.core.wallet.Wallet
 import com.arkade.network.ArkadeClient
 import com.arkade.repositories.contracts.ContractRepo
@@ -68,7 +71,59 @@ class BatchManagementService(
             }.collect { event ->
                 processEvent(event)
             }
+
+        intentsRepo.intentChanged = ::onIntentChanged
     }
+
+    private suspend fun onIntentChanged(intent: ArkIntent) {
+        if (intent.id != null) {
+            when (intent.state) {
+                IntentState.WAITING_FOR_BATCH -> {
+                    if (activeIntents.tryPut(intent.id, intent)) {
+                        val topics = getTopicsForIntent(intent)
+                        updateTopics(addTopics = topics)
+                    }
+                }
+                IntentState.CANCELLED, IntentState.BATCH_FAILED, IntentState.BATCH_SUCCEEDED -> {
+                    if (activeIntents.tryRemove(intent.id)) {
+                        val topics = getTopicsForIntent(intent)
+                        updateTopics(removeTopics = topics)
+                    }
+                }
+                else -> {}
+            }
+        }
+    }
+
+    private suspend fun updateTopics(
+        addTopics: List<String> = emptyList(),
+        removeTopics: List<String> = emptyList(),
+    ) {
+        // Should be locked
+        try {
+            if (streamId == null) {
+                Log.debug(LOG_TAG, "Stream not yet started, skipping topic update")
+                return
+            }
+            client.updateStreamTopics(streamId!!, addTopics, removeTopics)
+        } catch (e: Exception) {
+            Log.warning(LOG_TAG, "Failed to update stream topics: $e")
+        }
+    }
+
+    private fun getTopicsForIntent(intent: ArkIntent): List<String> {
+        val vtxoTopics = intent.vtxos.map { "${it.hash.value.toHex()}:${it.index}" }
+        val cosignerTopics = extractCosignerKeys(intent.registerProofMessage)
+        return vtxoTopics + cosignerTopics
+    }
+
+    private fun extractCosignerKeys(registerProofMessage: String): List<String> =
+        try {
+            val message = RegisterIntentMessage.fromString(registerProofMessage)
+            message.cosignersPublicKeys
+        } catch (_: Exception) {
+            emptyList()
+        }
 
     /**
      * Routes [event] to the appropriate handler based on its type.
