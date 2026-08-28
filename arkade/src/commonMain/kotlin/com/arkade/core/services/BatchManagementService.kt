@@ -22,7 +22,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlin.time.Clock
 
 /**
@@ -51,6 +53,7 @@ class BatchManagementService(
     private val batchIdToIntentIds = mutableMapOf<String, HashSet<String>>()
 
     private val batchMutex = Mutex()
+    private val topicUpdateSemaphore = Semaphore(1)
 
     private val disposed: Boolean = false
 
@@ -61,6 +64,8 @@ class BatchManagementService(
 
         streamId = null
         // Get all topics
+
+        intentsRepo.intentChanged = ::onIntentChanged
 
         client
             .getBatchEventStream()
@@ -73,8 +78,6 @@ class BatchManagementService(
             }.collect { event ->
                 processEvent(event)
             }
-
-        intentsRepo.intentChanged = ::onIntentChanged
     }
 
     fun dispose() {
@@ -106,15 +109,16 @@ class BatchManagementService(
         addTopics: List<String> = emptyList(),
         removeTopics: List<String> = emptyList(),
     ) {
-        // Should be locked
-        try {
-            if (streamId == null) {
-                Log.debug(LOG_TAG, "Stream not yet started, skipping topic update")
-                return
+        topicUpdateSemaphore.withPermit {
+            try {
+                if (streamId == null) {
+                    Log.debug(LOG_TAG, "Stream not yet started, skipping topic update")
+                    return
+                }
+                client.updateStreamTopics(streamId!!, addTopics, removeTopics)
+            } catch (e: Exception) {
+                Log.warning(LOG_TAG, "Failed to update stream topics: $e")
             }
-            client.updateStreamTopics(streamId!!, addTopics, removeTopics)
-        } catch (e: Exception) {
-            Log.warning(LOG_TAG, "Failed to update stream topics: $e")
         }
     }
 
