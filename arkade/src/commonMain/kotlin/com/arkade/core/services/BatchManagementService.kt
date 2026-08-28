@@ -52,6 +52,8 @@ class BatchManagementService(
 
     private val batchMutex = Mutex()
 
+    private val disposed: Boolean = false
+
     suspend fun start() {
         loadActiveIntents()
 
@@ -73,6 +75,11 @@ class BatchManagementService(
             }
 
         intentsRepo.intentChanged = ::onIntentChanged
+    }
+
+    fun dispose() {
+        if (disposed) return
+        intentsRepo.disposeOnIntentChanged()
     }
 
     private suspend fun onIntentChanged(intent: ArkIntent) {

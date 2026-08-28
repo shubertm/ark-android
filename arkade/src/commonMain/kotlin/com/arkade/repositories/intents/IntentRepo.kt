@@ -4,7 +4,7 @@ import com.arkade.core.intents.ArkIntent
 import com.arkade.core.intents.IntentState
 
 interface IntentRepo {
-    var intentChanged: suspend (intent: ArkIntent) -> Unit
+    var intentChanged: (suspend (intent: ArkIntent) -> Unit)?
 
     suspend fun save(intent: ArkIntent)
 
@@ -16,4 +16,8 @@ interface IntentRepo {
     ): List<ArkIntent>
 
     suspend fun deleteAll(walletId: String)
+
+    fun disposeOnIntentChanged() {
+        intentChanged = null
+    }
 }
