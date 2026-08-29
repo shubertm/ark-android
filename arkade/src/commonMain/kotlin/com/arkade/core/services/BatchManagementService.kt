@@ -110,13 +110,14 @@ class BatchManagementService(
         removeTopics: List<String> = emptyList(),
     ) {
         topicUpdateSemaphore.withPermit {
-            try {
+            runCatching {
                 if (streamId == null) {
                     Log.debug(LOG_TAG, "Stream not yet started, skipping topic update")
                     return
                 }
                 client.updateStreamTopics(streamId!!, addTopics, removeTopics)
-            } catch (e: Exception) {
+            }.onFailure { e ->
+                if (e is CancellationException) throw e
                 Log.warning(LOG_TAG, "Failed to update stream topics: $e")
             }
         }
