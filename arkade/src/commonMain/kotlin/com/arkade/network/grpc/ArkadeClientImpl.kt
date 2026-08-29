@@ -10,11 +10,13 @@ import ark.v1.GetPendingTxRequest
 import ark.v1.GetTransactionsStreamRequest
 import ark.v1.GetTransactionsStreamResponse
 import ark.v1.GrpcArkServiceClient
+import ark.v1.ModifyTopics
 import ark.v1.RegisterIntentRequest
 import ark.v1.SubmitSignedForfeitTxsRequest
 import ark.v1.SubmitTreeNoncesRequest
 import ark.v1.SubmitTreeSignaturesRequest
 import ark.v1.TxNotification
+import ark.v1.UpdateStreamTopicsRequest
 import com.arkade.core.ArkServerInfo
 import com.arkade.core.Error
 import com.arkade.core.LockedVTXOException
@@ -207,6 +209,16 @@ class ArkadeClientImpl(
                 pendingTx.signed_checkpoint_txs,
             )
         }
+    }
+
+    override suspend fun updateStreamTopics(
+        streamId: String,
+        addTopics: List<String>,
+        removeTopics: List<String>,
+    ) {
+        val modifyTopics = ModifyTopics(addTopics, removeTopics)
+        val request = UpdateStreamTopicsRequest(streamId, modifyTopics)
+        arkadeServiceClient.UpdateStreamTopics().execute(request)
     }
 }
 

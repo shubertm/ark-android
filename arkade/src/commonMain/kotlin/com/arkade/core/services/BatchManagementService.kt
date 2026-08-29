@@ -5,6 +5,9 @@ import com.arkade.core.batches.BatchEvent
 import com.arkade.core.batches.BatchSession
 import com.arkade.core.intents.ArkIntent
 import com.arkade.core.intents.IntentState
+import com.arkade.core.intents.RegisterIntentMessage
+import com.arkade.core.tryPut
+import com.arkade.core.tryRemove
 import com.arkade.core.wallet.Wallet
 import com.arkade.network.ArkadeClient
 import com.arkade.repositories.contracts.ContractRepo
@@ -19,7 +22,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.sync.withPermit
 import kotlin.time.Clock
 
 /**
@@ -48,6 +53,9 @@ class BatchManagementService(
     private val batchIdToIntentIds = mutableMapOf<String, HashSet<String>>()
 
     private val batchMutex = Mutex()
+    private val topicUpdateSemaphore = Semaphore(1)
+
+    private val disposed: Boolean = false
 
     suspend fun start() {
         loadActiveIntents()
@@ -56,6 +64,8 @@ class BatchManagementService(
 
         streamId = null
         // Get all topics
+
+        intentsRepo.intentChanged = ::onIntentChanged
 
         client
             .getBatchEventStream()
@@ -69,6 +79,63 @@ class BatchManagementService(
                 processEvent(event)
             }
     }
+
+    fun dispose() {
+        if (disposed) return
+        intentsRepo.disposeOnIntentChanged()
+    }
+
+    private suspend fun onIntentChanged(intent: ArkIntent) {
+        if (intent.id != null) {
+            when (intent.state) {
+                IntentState.WAITING_FOR_BATCH -> {
+                    if (activeIntents.tryPut(intent.id, intent)) {
+                        val topics = getTopicsForIntent(intent)
+                        updateTopics(addTopics = topics)
+                    }
+                }
+                IntentState.CANCELLED, IntentState.BATCH_FAILED, IntentState.BATCH_SUCCEEDED -> {
+                    if (activeIntents.tryRemove(intent.id)) {
+                        val topics = getTopicsForIntent(intent)
+                        updateTopics(removeTopics = topics)
+                    }
+                }
+                else -> {}
+            }
+        }
+    }
+
+    private suspend fun updateTopics(
+        addTopics: List<String> = emptyList(),
+        removeTopics: List<String> = emptyList(),
+    ) {
+        topicUpdateSemaphore.withPermit {
+            runCatching {
+                if (streamId == null) {
+                    Log.debug(LOG_TAG, "Stream not yet started, skipping topic update")
+                    return
+                }
+                client.updateStreamTopics(streamId!!, addTopics, removeTopics)
+            }.onFailure { e ->
+                if (e is CancellationException) throw e
+                Log.warning(LOG_TAG, "Failed to update stream topics: $e")
+            }
+        }
+    }
+
+    private fun getTopicsForIntent(intent: ArkIntent): List<String> {
+        val vtxoTopics = intent.vtxos.map { "${it.hash.value.toHex()}:${it.index}" }
+        val cosignerTopics = extractCosignerKeys(intent.registerProofMessage)
+        return vtxoTopics + cosignerTopics
+    }
+
+    private fun extractCosignerKeys(registerProofMessage: String): List<String> =
+        try {
+            val message = RegisterIntentMessage.fromString(registerProofMessage)
+            message.cosignersPublicKeys
+        } catch (_: Exception) {
+            emptyList()
+        }
 
     /**
      * Routes [event] to the appropriate handler based on its type.

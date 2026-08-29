@@ -104,4 +104,10 @@ interface ArkadeClient {
      * Streams transaction events from the Ark server
      */
     fun getTransactionsStream(): Flow<TxEvent>
+
+    suspend fun updateStreamTopics(
+        streamId: String,
+        addTopics: List<String> = emptyList(),
+        removeTopics: List<String> = emptyList(),
+    )
 }

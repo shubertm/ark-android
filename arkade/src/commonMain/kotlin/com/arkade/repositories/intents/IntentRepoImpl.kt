@@ -14,9 +14,12 @@ class IntentRepoImpl(
 ) : IntentRepo {
     private val storage: IntentStorage = ArkadeDI.arkadeKoin.get { parametersOf(databaseBuilder) }
 
+    override var intentChanged: (suspend (ArkIntent) -> Unit)? = null
+
     override suspend fun save(intent: ArkIntent) {
         val intentEntity = IntentEntity.fromIntent(intent)
         storage.save(intentEntity)
+        intentChanged?.invoke(intent)
     }
 
     override suspend fun getAll(walletId: String): List<ArkIntent> {

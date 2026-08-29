@@ -125,3 +125,18 @@ fun taggedMessageHash(
     }
     return Crypto.taggedHash(combinedData, tag)
 }
+
+fun <K, V> MutableMap<K, V>.tryPut(
+    key: K,
+    value: V,
+): Boolean {
+    if (this.containsKey(key)) return false
+    this[key] = value
+    return true
+}
+
+fun <K, V> MutableMap<K, V>.tryRemove(key: K): Boolean {
+    if (!this.containsKey(key)) return false
+    remove(key)
+    return true
+}
