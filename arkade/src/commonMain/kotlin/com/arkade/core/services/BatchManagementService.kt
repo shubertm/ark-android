@@ -53,6 +53,7 @@ class BatchManagementService(
     private val batchIdToIntentIds = mutableMapOf<String, HashSet<String>>()
 
     private val batchMutex = Mutex()
+    private val batchCleanUpMutex = Mutex()
     private val topicUpdateSemaphore = Semaphore(1)
 
     private val disposed: Boolean = false
@@ -329,8 +330,13 @@ class BatchManagementService(
             return
         }
         for (id in intentIds) {
-            val batchSession = activeBatchSessions[id]
-            batchSession?.processEvent(event)
+            val batchSession = activeBatchSessions[id] ?: continue
+            if (activeIntents[id] == null) continue
+
+            val isComplete = batchSession.processEvent(event)
+            if (isComplete) {
+                cleanUpBatchSession(id, batchId!!)
+            }
         }
     }
 
@@ -451,6 +457,23 @@ class BatchManagementService(
             Log.debug(LOG_TAG, "Loaded active intent ${intent.id} in state ${intent.state}")
 
             activeIntents[intent.id] = intent
+        }
+    }
+
+    private suspend fun cleanUpBatchSession(
+        intentId: String,
+        batchId: String,
+    ) {
+        activeBatchSessions.tryRemove(intentId)
+        val intentIds = batchIdToIntentIds[batchId]
+        if (!intentIds.isNullOrEmpty()) {
+            batchCleanUpMutex.withLock {
+                intentIds.remove(intentId)
+
+                if (intentIds.isEmpty()) {
+                    batchIdToIntentIds.tryRemove(batchId)
+                }
+            }
         }
     }
 
