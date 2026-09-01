@@ -80,7 +80,7 @@ class BatchSession(
      * Dispatches [event] to the corresponding [BatchEventHandler] callback.
      *
      * @param event The batch event to process.
-     * @return `true` if the batch has been finalized under a different id than [batchId] and
+     * @return `true` if the batch has been finalized under the same id as [batchId] and
      * this session should stop processing further events; `false` otherwise.
      * @throws UnsupportedOperationException if the batch fails with id [batchId].
      */
