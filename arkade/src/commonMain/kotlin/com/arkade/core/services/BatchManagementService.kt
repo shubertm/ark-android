@@ -53,7 +53,6 @@ class BatchManagementService(
     private val batchIdToIntentIds = mutableMapOf<String, HashSet<String>>()
 
     private val batchMutex = Mutex()
-    private val batchCleanUpMutex = Mutex()
     private val topicUpdateSemaphore = Semaphore(1)
 
     private val disposed: Boolean = false
@@ -291,12 +290,11 @@ class BatchManagementService(
 
             batchSession.init()
 
-            val batchIntentIds =
-                batchIdToIntentIds.getOrPut(event.id) {
-                    hashSetOf()
-                }
-
             batchMutex.withLock {
+                val batchIntentIds =
+                    batchIdToIntentIds.getOrPut(event.id) {
+                        hashSetOf()
+                    }
                 batchIntentIds.add(intentId)
                 activeBatchSessions[intentId] = batchSession
             }
@@ -323,19 +321,21 @@ class BatchManagementService(
      * @param event The batch event to forward to its associated session(s).
      */
     private suspend fun handleBatchEvent(event: BatchEvent) {
-        val batchId = event.getBatchId()
-        val intentIds = batchIdToIntentIds[batchId]?.toSet()
-        if (intentIds == null) {
-            Log.warning(LOG_TAG, "No intent ids found for batch $batchId")
-            return
-        }
-        for (id in intentIds) {
-            val batchSession = activeBatchSessions[id] ?: continue
-            if (activeIntents[id] == null) continue
+        batchMutex.withLock {
+            val batchId = event.getBatchId()
+            val intentIds = batchIdToIntentIds[batchId]?.toSet()
+            if (intentIds == null) {
+                Log.warning(LOG_TAG, "No intent ids found for batch $batchId")
+                return
+            }
+            for (id in intentIds) {
+                val batchSession = activeBatchSessions[id] ?: continue
+                if (activeIntents[id] == null) continue
 
-            val isComplete = batchSession.processEvent(event)
-            if (isComplete) {
-                cleanUpBatchSession(id, batchId!!)
+                val isComplete = batchSession.processEvent(event)
+                if (isComplete) {
+                    cleanUpBatchSession(id, batchId!!)
+                }
             }
         }
     }
@@ -479,7 +479,7 @@ class BatchManagementService(
         intentId: String,
         batchId: String,
     ) {
-        batchCleanUpMutex.withLock {
+        batchMutex.withLock {
             activeBatchSessions.tryRemove(intentId)
             val intentIds = batchIdToIntentIds[batchId]
             if (!intentIds.isNullOrEmpty()) {
