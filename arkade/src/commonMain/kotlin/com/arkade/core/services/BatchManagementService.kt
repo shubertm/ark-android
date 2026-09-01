@@ -321,21 +321,22 @@ class BatchManagementService(
      * @param event The batch event to forward to its associated session(s).
      */
     private suspend fun handleBatchEvent(event: BatchEvent) {
-        batchMutex.withLock {
-            val batchId = event.getBatchId()
-            val intentIds = batchIdToIntentIds[batchId]?.toSet()
-            if (intentIds == null) {
-                Log.warning(LOG_TAG, "No intent ids found for batch $batchId")
-                return
+        val batchId = event.getBatchId()
+        val intentIds =
+            batchMutex.withLock {
+                batchIdToIntentIds[batchId]?.toSet()
             }
-            for (id in intentIds) {
-                val batchSession = activeBatchSessions[id] ?: continue
-                if (activeIntents[id] == null) continue
+        if (intentIds == null) {
+            Log.warning(LOG_TAG, "No intent ids found for batch $batchId")
+            return
+        }
+        for (id in intentIds) {
+            val batchSession = batchMutex.withLock { activeBatchSessions[id] } ?: continue
+            if (activeIntents[id] == null) continue
 
-                val isComplete = batchSession.processEvent(event)
-                if (isComplete) {
-                    cleanUpBatchSession(id, batchId!!)
-                }
+            val isComplete = batchSession.processEvent(event)
+            if (isComplete) {
+                cleanUpBatchSession(id, batchId!!)
             }
         }
     }
