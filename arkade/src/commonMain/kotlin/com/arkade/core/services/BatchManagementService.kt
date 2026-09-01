@@ -465,9 +465,9 @@ class BatchManagementService(
         batchId: String,
     ) {
         activeBatchSessions.tryRemove(intentId)
-        val intentIds = batchIdToIntentIds[batchId]
-        if (!intentIds.isNullOrEmpty()) {
-            batchCleanUpMutex.withLock {
+        batchCleanUpMutex.withLock {
+            val intentIds = batchIdToIntentIds[batchId]
+            if (!intentIds.isNullOrEmpty()) {
                 intentIds.remove(intentId)
 
                 if (intentIds.isEmpty()) {
