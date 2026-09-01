@@ -324,7 +324,7 @@ class BatchManagementService(
      */
     private suspend fun handleBatchEvent(event: BatchEvent) {
         val batchId = event.getBatchId()
-        val intentIds = batchIdToIntentIds[batchId]
+        val intentIds = batchIdToIntentIds[batchId]?.toSet()
         if (intentIds == null) {
             Log.warning(LOG_TAG, "No intent ids found for batch $batchId")
             return
@@ -464,8 +464,8 @@ class BatchManagementService(
         intentId: String,
         batchId: String,
     ) {
-        activeBatchSessions.tryRemove(intentId)
         batchCleanUpMutex.withLock {
+            activeBatchSessions.tryRemove(intentId)
             val intentIds = batchIdToIntentIds[batchId]
             if (!intentIds.isNullOrEmpty()) {
                 intentIds.remove(intentId)
