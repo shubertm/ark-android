@@ -85,6 +85,7 @@ class BatchSession(
      * @throws UnsupportedOperationException if the batch fails with id [batchId].
      */
     suspend fun processEvent(event: BatchEvent): Boolean {
+        if (isComplete) return true
         try {
             when (event) {
                 is BatchEvent.StreamStartedEvent -> {}
@@ -92,7 +93,8 @@ class BatchSession(
                 is BatchEvent.BatchStartedEvent -> {}
 
                 is BatchEvent.BatchFinalizedEvent -> {
-                    if (event.id != batchId) {
+                    if (event.id == batchId) {
+                        isComplete = true
                         return true
                     }
                 }
