@@ -53,6 +53,7 @@ class BatchManagementService(
     private val batchIdToIntentIds = mutableMapOf<String, HashSet<String>>()
 
     private val batchMutex = Mutex()
+    private val batchCleanUpMutex = Mutex()
     private val topicUpdateSemaphore = Semaphore(1)
 
     private val disposed: Boolean = false
@@ -323,14 +324,19 @@ class BatchManagementService(
      */
     private suspend fun handleBatchEvent(event: BatchEvent) {
         val batchId = event.getBatchId()
-        val intentIds = batchIdToIntentIds[batchId]
+        val intentIds = batchIdToIntentIds[batchId]?.toSet()
         if (intentIds == null) {
             Log.warning(LOG_TAG, "No intent ids found for batch $batchId")
             return
         }
         for (id in intentIds) {
-            val batchSession = activeBatchSessions[id]
-            batchSession?.processEvent(event)
+            val batchSession = activeBatchSessions[id] ?: continue
+            if (activeIntents[id] == null) continue
+
+            val isComplete = batchSession.processEvent(event)
+            if (isComplete) {
+                cleanUpBatchSession(id, batchId!!)
+            }
         }
     }
 
@@ -351,6 +357,15 @@ class BatchManagementService(
             else -> null
         }
 
+    /**
+     * Loads intents that may require active batch processing and restores the in-memory intent state.
+     *
+     * Duplicate VTXO claims are resolved by retaining the newest non-overlapping intents and
+     * cancelling the others. On the first run, orphaned batch-in-progress intents are marked as
+     * succeeded when they have a commitment transaction or cancelled when they do not.
+     *
+     * @param isFirstRun Whether to perform startup recovery for orphaned batch-in-progress intents.
+     */
     private suspend fun loadActiveIntents(isFirstRun: Boolean = true) {
         val activeIntentStates = arrayOf(IntentState.WAITING_TO_SUBMIT, IntentState.WAITING_FOR_BATCH, IntentState.BATCH_IN_PROGRESS)
         var allActiveIntents = wallet.getIntents(activeIntentStates)
@@ -451,6 +466,29 @@ class BatchManagementService(
             Log.debug(LOG_TAG, "Loaded active intent ${intent.id} in state ${intent.state}")
 
             activeIntents[intent.id] = intent
+        }
+    }
+
+    /**
+     * Removes a completed intent session and updates its batch association.
+     *
+     * @param intentId The identifier of the intent whose session is being removed.
+     * @param batchId The identifier of the batch associated with the intent.
+     */
+    private suspend fun cleanUpBatchSession(
+        intentId: String,
+        batchId: String,
+    ) {
+        batchCleanUpMutex.withLock {
+            activeBatchSessions.tryRemove(intentId)
+            val intentIds = batchIdToIntentIds[batchId]
+            if (!intentIds.isNullOrEmpty()) {
+                intentIds.remove(intentId)
+
+                if (intentIds.isEmpty()) {
+                    batchIdToIntentIds.tryRemove(batchId)
+                }
+            }
         }
     }
 

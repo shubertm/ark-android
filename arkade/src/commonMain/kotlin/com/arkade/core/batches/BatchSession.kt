@@ -77,14 +77,14 @@ class BatchSession(
     }
 
     /**
-     * Dispatches [event] to the corresponding [BatchEventHandler] callback.
+     * Processes a batch event and tracks whether this session has completed.
      *
      * @param event The batch event to process.
-     * @return `true` if the batch has been finalized under a different id than [batchId] and
-     * this session should stop processing further events; `false` otherwise.
-     * @throws UnsupportedOperationException if the batch fails with id [batchId].
+     * @return `true` if the session is already complete or the event finalizes this batch, `false` otherwise.
+     * @throws UnsupportedOperationException if the batch fails.
      */
     suspend fun processEvent(event: BatchEvent): Boolean {
+        if (isComplete) return true
         try {
             when (event) {
                 is BatchEvent.StreamStartedEvent -> {}
@@ -92,7 +92,8 @@ class BatchSession(
                 is BatchEvent.BatchStartedEvent -> {}
 
                 is BatchEvent.BatchFinalizedEvent -> {
-                    if (event.id != batchId) {
+                    if (event.id == batchId) {
+                        isComplete = true
                         return true
                     }
                 }
