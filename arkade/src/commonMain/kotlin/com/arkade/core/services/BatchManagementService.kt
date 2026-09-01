@@ -357,6 +357,15 @@ class BatchManagementService(
             else -> null
         }
 
+    /**
+     * Loads intents that may require active batch processing and restores the in-memory intent state.
+     *
+     * Duplicate VTXO claims are resolved by retaining the newest non-overlapping intents and
+     * cancelling the others. On the first run, orphaned batch-in-progress intents are marked as
+     * succeeded when they have a commitment transaction or cancelled when they do not.
+     *
+     * @param isFirstRun Whether to perform startup recovery for orphaned batch-in-progress intents.
+     */
     private suspend fun loadActiveIntents(isFirstRun: Boolean = true) {
         val activeIntentStates = arrayOf(IntentState.WAITING_TO_SUBMIT, IntentState.WAITING_FOR_BATCH, IntentState.BATCH_IN_PROGRESS)
         var allActiveIntents = wallet.getIntents(activeIntentStates)
@@ -460,6 +469,12 @@ class BatchManagementService(
         }
     }
 
+    /**
+     * Removes a completed intent session and updates its batch association.
+     *
+     * @param intentId The identifier of the intent whose session is being removed.
+     * @param batchId The identifier of the batch associated with the intent.
+     */
     private suspend fun cleanUpBatchSession(
         intentId: String,
         batchId: String,
