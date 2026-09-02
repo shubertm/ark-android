@@ -331,10 +331,14 @@ class BatchManagementService(
             return
         }
         for (id in intentIds) {
-            val batchSession = batchMutex.withLock { activeBatchSessions[id] } ?: continue
+            var isComplete = false
+            batchMutex.withLock {
+                val batchSession = activeBatchSessions[id] ?: continue
+                isComplete = batchSession.processEvent(event)
+            }
+
             if (activeIntents[id] == null) continue
 
-            val isComplete = batchSession.processEvent(event)
             if (isComplete) {
                 cleanUpBatchSession(id, batchId!!)
             }
