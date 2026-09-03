@@ -59,6 +59,11 @@ class BatchManagementService(
 
     private var initialTopics: List<String> = emptyList()
 
+    /**
+     * Starts the batch event stream and processes incoming events.
+     *
+     * Loads active intents, subscribes to intent changes, and retries recoverable stream failures up to eight times.
+     */
     suspend fun start() {
         loadActiveIntents()
 
@@ -132,7 +137,13 @@ class BatchManagementService(
         return vtxoTopics + cosignerTopics
     }
 
-    private fun extractCosignerKeys(registerProofMessage: String): List<String> =
+    /**
+         * Extracts cosigner public keys from a registration proof message.
+         *
+         * @param registerProofMessage The serialized registration proof message.
+         * @return The cosigner public keys, or an empty list if the message cannot be parsed.
+         */
+        private fun extractCosignerKeys(registerProofMessage: String): List<String> =
         try {
             val message = RegisterIntentMessage.fromString(registerProofMessage)
             message.cosignersPublicKeys
@@ -140,19 +151,23 @@ class BatchManagementService(
             emptyList()
         }
 
-    private fun getAllTopics(): List<String> =
+    /**
+             * Collects the distinct event-stream topics for all active intents.
+             *
+             * @return The unique topics associated with active intents.
+             */
+            private fun getAllTopics(): List<String> =
         activeIntents.values
             .flatMap { intent ->
                 getTopicsForIntent(intent)
             }.distinct()
 
     /**
-     * Routes [event] to the appropriate handler based on its type.
+     * Processes a batch stream event and updates session state or stream subscriptions as needed.
      *
-     * [BatchEvent.StreamStartedEvent] records the current [streamId]. A
-     * [BatchEvent.BatchStartedEvent] is matched against [activeIntents] to set up new
-     * [BatchSession]s. Every other event is forwarded to the sessions already associated with
-     * its batch id via [handleBatchEvent].
+     * Stream-start events record the stream ID and reconcile subscribed topics with the active intents.
+     * Batch-start events initialize sessions for matching intents. Other events are forwarded to their
+     * associated batch sessions.
      */
     private suspend fun processEvent(event: BatchEvent) {
         when (event) {

@@ -96,8 +96,11 @@ interface ArkadeClient {
     suspend fun getPendingTxs(intent: ArkIntent): List<ArkTransaction>
 
     /**
-     * Streams batch events from the Ark server
-     */
+ * Streams batch events matching the specified topics from the Ark server.
+ *
+ * @param topics The topics used to filter batch events.
+ * @return A stream of matching batch events.
+ */
     fun getBatchEventStream(topics: List<String>): Flow<BatchEvent>
 
     /**
