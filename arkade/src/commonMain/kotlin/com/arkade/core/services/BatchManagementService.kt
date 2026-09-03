@@ -57,6 +57,8 @@ class BatchManagementService(
 
     private val disposed: Boolean = false
 
+    private var initialTopics: List<String> = emptyList()
+
     suspend fun start() {
         loadActiveIntents()
 
@@ -64,12 +66,12 @@ class BatchManagementService(
 
         streamId = null
 
-        val topics = getAllTopics()
+        initialTopics = getAllTopics()
 
         intentsRepo.intentChanged = ::onIntentChanged
 
         client
-            .getBatchEventStream(topics)
+            .getBatchEventStream(initialTopics)
             .retryWhen { cause, retries ->
                 if (cause is CancellationException) throw cause
 
@@ -158,9 +160,13 @@ class BatchManagementService(
                 streamId = event.id
                 Log.info(LOG_TAG, "Batch stream started with id: $streamId")
 
-                val reconcileTopics = getAllTopics()
-                if (reconcileTopics.isNotEmpty()) {
-                    updateTopics(addTopics = reconcileTopics)
+                val reconciledAddedTopics = getAllTopics()
+                val reconciledRemovedTopics =
+                    initialTopics.filter { topic ->
+                        !reconciledAddedTopics.contains(topic)
+                    }
+                if (reconciledAddedTopics.isNotEmpty() || reconciledRemovedTopics.isNotEmpty()) {
+                    updateTopics(reconciledAddedTopics, reconciledRemovedTopics)
                 }
             }
             is BatchEvent.BatchStartedEvent -> {
