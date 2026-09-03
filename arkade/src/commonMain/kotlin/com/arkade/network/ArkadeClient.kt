@@ -79,9 +79,10 @@ interface ArkadeClient {
     )
 
     /**
-     * Submits forfeit transactions to the Ark server
-     * @param signedForfeitTxs is the list of signed forfeit transactions
-     * @param signedCommitmentTx is the signed commitment transaction
+     * Submits signed forfeit transactions and an optional signed commitment transaction.
+     *
+     * @param signedForfeitTxs The signed forfeit transactions to submit.
+     * @param signedCommitmentTx The optional signed commitment transaction.
      */
     suspend fun submitForfeitTxs(
         signedForfeitTxs: List<String>,
@@ -96,11 +97,11 @@ interface ArkadeClient {
     suspend fun getPendingTxs(intent: ArkIntent): List<ArkTransaction>
 
     /**
- * Streams batch events matching the specified topics from the Ark server.
- *
- * @param topics The topics used to filter batch events.
- * @return A stream of matching batch events.
- */
+     * Opens a stream of batch events filtered by the specified topics.
+     *
+     * @param topics The topics used to filter batch events.
+     * @return A flow of recognized batch events.
+     */
     fun getBatchEventStream(topics: List<String>): Flow<BatchEvent>
 
     /**
@@ -108,6 +109,12 @@ interface ArkadeClient {
      */
     fun getTransactionsStream(): Flow<TxEvent>
 
+    /**
+     * Updates the stream topics for the specified stream ID.
+     * @param streamId The ID of the stream to update.
+     * @param addTopics The topics to add to the stream.
+     * @param removeTopics The topics to remove from the stream.
+     */
     suspend fun updateStreamTopics(
         streamId: String,
         addTopics: List<String> = emptyList(),

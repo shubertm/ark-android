@@ -158,12 +158,6 @@ class ArkadeClientImpl(
         arkadeServiceClient.SubmitTreeSignatures().execute(request)
     }
 
-    /**
-     * Submits signed forfeit transactions and an optional signed commitment transaction.
-     *
-     * @param signedForfeitTxs The signed forfeit transactions to submit.
-     * @param signedCommitmentTx The optional signed commitment transaction.
-     */
     override suspend fun submitForfeitTxs(
         signedForfeitTxs: List<String>,
         signedCommitmentTx: String?,
@@ -175,12 +169,6 @@ class ArkadeClientImpl(
         arkadeServiceClient.SubmitSignedForfeitTxs().execute(request)
     }
 
-    /**
-     * Opens a stream of batch events filtered by the specified topics.
-     *
-     * @param topics The topics used to filter batch events.
-     * @return A flow of recognized batch events.
-     */
     override fun getBatchEventStream(topics: List<String>): Flow<BatchEvent> {
         val request = GetEventStreamRequest(topics)
         return channelFlow {

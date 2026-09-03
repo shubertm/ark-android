@@ -93,6 +93,10 @@ class BatchManagementService(
         intentsRepo.disposeOnIntentChanged()
     }
 
+    /**
+     * Called when an intent's state changes.
+     * @param intent The intent whose state has changed.
+     */
     private suspend fun onIntentChanged(intent: ArkIntent) {
         if (intent.id != null) {
             when (intent.state) {
@@ -113,6 +117,11 @@ class BatchManagementService(
         }
     }
 
+    /**
+     * Updates the stream's topic subscription.
+     * @param addTopics The topics to add to the subscription.
+     * @param removeTopics The topics to remove from the subscription.
+     */
     private suspend fun updateTopics(
         addTopics: List<String> = emptyList(),
         removeTopics: List<String> = emptyList(),
@@ -131,6 +140,11 @@ class BatchManagementService(
         }
     }
 
+    /**
+     * Generates a list of topics associated with an intent's VTXOs.
+     * @param intent the intent for which to generate topics.
+     * @return a list of topics.
+     */
     private fun getTopicsForIntent(intent: ArkIntent): List<String> {
         val vtxoTopics = intent.vtxos.map { "${it.hash.value.toHex()}:${it.index}" }
         val cosignerTopics = extractCosignerKeys(intent.registerProofMessage)
@@ -138,12 +152,12 @@ class BatchManagementService(
     }
 
     /**
-         * Extracts cosigner public keys from a registration proof message.
-         *
-         * @param registerProofMessage The serialized registration proof message.
-         * @return The cosigner public keys, or an empty list if the message cannot be parsed.
-         */
-        private fun extractCosignerKeys(registerProofMessage: String): List<String> =
+     * Extracts cosigner public keys from a registration proof message.
+     *
+     * @param registerProofMessage The serialized registration proof message.
+     * @return The cosigner public keys, or an empty list if the message cannot be parsed.
+     */
+    private fun extractCosignerKeys(registerProofMessage: String): List<String> =
         try {
             val message = RegisterIntentMessage.fromString(registerProofMessage)
             message.cosignersPublicKeys
@@ -152,11 +166,11 @@ class BatchManagementService(
         }
 
     /**
-             * Collects the distinct event-stream topics for all active intents.
-             *
-             * @return The unique topics associated with active intents.
-             */
-            private fun getAllTopics(): List<String> =
+     * Collects the distinct event-stream topics for all active intents.
+     *
+     * @return The unique topics associated with active intents.
+     */
+    private fun getAllTopics(): List<String> =
         activeIntents.values
             .flatMap { intent ->
                 getTopicsForIntent(intent)
