@@ -98,7 +98,7 @@ interface ArkadeClient {
     /**
      * Streams batch events from the Ark server
      */
-    fun getBatchEventStream(): Flow<BatchEvent>
+    fun getBatchEventStream(topics: List<String>): Flow<BatchEvent>
 
     /**
      * Streams transaction events from the Ark server

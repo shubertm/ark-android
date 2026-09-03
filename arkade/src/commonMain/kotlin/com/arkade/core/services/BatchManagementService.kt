@@ -63,12 +63,13 @@ class BatchManagementService(
         Log.debug(LOG_TAG, "Starting an event stream")
 
         streamId = null
-        // Get all topics
+
+        val topics = getAllTopics()
 
         intentsRepo.intentChanged = ::onIntentChanged
 
         client
-            .getBatchEventStream()
+            .getBatchEventStream(topics)
             .retryWhen { cause, retries ->
                 if (cause is CancellationException) throw cause
 
@@ -137,6 +138,12 @@ class BatchManagementService(
             emptyList()
         }
 
+    private fun getAllTopics(): List<String> =
+        activeIntents.values
+            .flatMap { intent ->
+                getTopicsForIntent(intent)
+            }.distinct()
+
     /**
      * Routes [event] to the appropriate handler based on its type.
      *
@@ -150,6 +157,11 @@ class BatchManagementService(
             is BatchEvent.StreamStartedEvent -> {
                 streamId = event.id
                 Log.info(LOG_TAG, "Batch stream started with id: $streamId")
+
+                val reconcileTopics = getAllTopics()
+                if (reconcileTopics.isNotEmpty()) {
+                    updateTopics(addTopics = reconcileTopics)
+                }
             }
             is BatchEvent.BatchStartedEvent -> {
                 handleBatchStartedForAllIntents(event)
