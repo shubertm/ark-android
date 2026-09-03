@@ -57,18 +57,26 @@ class BatchManagementService(
 
     private val disposed: Boolean = false
 
+    private var initialTopics: List<String> = emptyList()
+
+    /**
+     * Starts the batch event stream and processes incoming events.
+     *
+     * Loads active intents, subscribes to intent changes, and retries recoverable stream failures up to eight times.
+     */
     suspend fun start() {
         loadActiveIntents()
 
         Log.debug(LOG_TAG, "Starting an event stream")
 
         streamId = null
-        // Get all topics
+
+        initialTopics = getAllTopics()
 
         intentsRepo.intentChanged = ::onIntentChanged
 
         client
-            .getBatchEventStream()
+            .getBatchEventStream(initialTopics)
             .retryWhen { cause, retries ->
                 if (cause is CancellationException) throw cause
 
@@ -85,6 +93,10 @@ class BatchManagementService(
         intentsRepo.disposeOnIntentChanged()
     }
 
+    /**
+     * Called when an intent's state changes.
+     * @param intent The intent whose state has changed.
+     */
     private suspend fun onIntentChanged(intent: ArkIntent) {
         if (intent.id != null) {
             when (intent.state) {
@@ -105,6 +117,11 @@ class BatchManagementService(
         }
     }
 
+    /**
+     * Updates the stream's topic subscription.
+     * @param addTopics The topics to add to the subscription.
+     * @param removeTopics The topics to remove from the subscription.
+     */
     private suspend fun updateTopics(
         addTopics: List<String> = emptyList(),
         removeTopics: List<String> = emptyList(),
@@ -123,12 +140,23 @@ class BatchManagementService(
         }
     }
 
+    /**
+     * Generates a list of topics associated with an intent's VTXOs.
+     * @param intent the intent for which to generate topics.
+     * @return a list of topics.
+     */
     private fun getTopicsForIntent(intent: ArkIntent): List<String> {
         val vtxoTopics = intent.vtxos.map { "${it.hash.value.toHex()}:${it.index}" }
         val cosignerTopics = extractCosignerKeys(intent.registerProofMessage)
         return vtxoTopics + cosignerTopics
     }
 
+    /**
+     * Extracts cosigner public keys from a registration proof message.
+     *
+     * @param registerProofMessage The serialized registration proof message.
+     * @return The cosigner public keys, or an empty list if the message cannot be parsed.
+     */
     private fun extractCosignerKeys(registerProofMessage: String): List<String> =
         try {
             val message = RegisterIntentMessage.fromString(registerProofMessage)
@@ -138,18 +166,37 @@ class BatchManagementService(
         }
 
     /**
-     * Routes [event] to the appropriate handler based on its type.
+     * Collects the distinct event-stream topics for all active intents.
      *
-     * [BatchEvent.StreamStartedEvent] records the current [streamId]. A
-     * [BatchEvent.BatchStartedEvent] is matched against [activeIntents] to set up new
-     * [BatchSession]s. Every other event is forwarded to the sessions already associated with
-     * its batch id via [handleBatchEvent].
+     * @return The unique topics associated with active intents.
+     */
+    private fun getAllTopics(): List<String> =
+        activeIntents.values
+            .flatMap { intent ->
+                getTopicsForIntent(intent)
+            }.distinct()
+
+    /**
+     * Processes a batch stream event and updates session state or stream subscriptions as needed.
+     *
+     * Stream-start events record the stream ID and reconcile subscribed topics with the active intents.
+     * Batch-start events initialize sessions for matching intents. Other events are forwarded to their
+     * associated batch sessions.
      */
     private suspend fun processEvent(event: BatchEvent) {
         when (event) {
             is BatchEvent.StreamStartedEvent -> {
                 streamId = event.id
                 Log.info(LOG_TAG, "Batch stream started with id: $streamId")
+
+                val reconciledAddedTopics = getAllTopics()
+                val reconciledRemovedTopics =
+                    initialTopics.filter { topic ->
+                        !reconciledAddedTopics.contains(topic)
+                    }
+                if (reconciledAddedTopics.isNotEmpty() || reconciledRemovedTopics.isNotEmpty()) {
+                    updateTopics(reconciledAddedTopics, reconciledRemovedTopics)
+                }
             }
             is BatchEvent.BatchStartedEvent -> {
                 handleBatchStartedForAllIntents(event)

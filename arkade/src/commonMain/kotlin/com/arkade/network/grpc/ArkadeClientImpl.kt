@@ -169,8 +169,8 @@ class ArkadeClientImpl(
         arkadeServiceClient.SubmitSignedForfeitTxs().execute(request)
     }
 
-    override fun getBatchEventStream(): Flow<BatchEvent> {
-        val request = GetEventStreamRequest() // Supply topics
+    override fun getBatchEventStream(topics: List<String>): Flow<BatchEvent> {
+        val request = GetEventStreamRequest(topics)
         return channelFlow {
             val receiveChannel =
                 arkadeServiceClient.GetEventStream().bidirectionalStream(
